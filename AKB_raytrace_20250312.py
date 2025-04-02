@@ -46,19 +46,19 @@ option_2mirror =True
 option_rotate = True
 
 # （0ならそのまま、2なら半分、4なら1/4,、6なら1/8）
-downsample_h1 = 2
-downsample_v1 = 2
+downsample_h1 = 0
+downsample_v1 = 0
 downsample_h2 = 0
 downsample_v2 = 0
-downsample_h_f = 4
-downsample_v_f = 4
-unit = 513
+downsample_h_f = 0
+downsample_v_f = 0
+unit = 2049
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = True
-option_HighNA = True
-defocusForWave = 0.
+option_AKB = False
+option_HighNA = False
+defocusForWave = 1e-3
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
     """
     入力データを基に波面誤差を計算する関数
@@ -4825,7 +4825,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
                 source_rotated = source
             coeffs_det = np.zeros(10)
             coeffs_det[6] = 1
-            coeffs_det[9] = -(s2f_middle + defocus+defocusForWave)
+            coeffs_det[9] = -(s2f_middle + defocus)
             detcenter = plane_ray_intersection(coeffs_det, reflect2_rotated, hmirr_hyp_points_rotated)
 
             vec0to1 = normalize_vector(vmirr_hyp_points_rotated_grid - source_rotated)
@@ -4834,8 +4834,14 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
 
             vmirr_norm = normalize_vector( (-vec1to2 + vec0to1) / 2 )
             hmirr_norm = normalize_vector( (-vec2to3 + vec1to2) / 2 )
-
-            return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2
+            if np.abs(defocusForWave) > 1e-9:
+                coeffs_det2 = np.zeros(10)
+                coeffs_det2[6] = 1
+                coeffs_det2[9] = -(s2f_middle + defocus+defocusForWave)
+                detcenter2 = plane_ray_intersection(coeffs_det2, reflect2_rotated, hmirr_hyp_points_rotated)
+                return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2
+            else:
+                return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2
 
         option_tilt = True
         if option_tilt:
@@ -6680,12 +6686,17 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
         source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
     else:
         KB_debug(initial_params,1,1,'ray_wave')
-        source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
+        if np.abs(defocusForWave) > 1e-9:
+            source, vmirr_hyp, hmirr_hyp, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
+        else:
+            source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
 
     if ray_num_H%2 == 1:
         vmirr_hyp, size_v1, size_h1 = downsample_array_3_n(vmirr_hyp, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
         hmirr_hyp, size_v2, size_h2 = downsample_array_3_n(hmirr_hyp, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
         detcenter, size_v_f, size_h_f = downsample_array_3_n(detcenter, ray_num_V, ray_num_H, downsample_h_f, downsample_v_f)
+        if np.abs(defocusForWave) > 1e-9:
+            detcenter2, size_v_f, size_h_f = downsample_array_3_n(detcenter2, ray_num_V, ray_num_H, downsample_h_f, downsample_v_f)
         # vmirr_norm, _, _ = downsample_array_3_n(vmirr_norm, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
         # hmirr_norm, _, _ = downsample_array_3_n(hmirr_norm, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
         # vec0to1, _, _ = downsample_array_3_n(vec0to1, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
@@ -6757,6 +6768,8 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
     y_flattened = yy.flatten()  # 元の y の形状に戻す
     z_flattened = zz.flatten()  # 元の z の形状に戻す
     x_flattened = np.full_like(y_flattened,fill_value=np.mean(detcenter[0, :]))
+    print('yFOV',[np.min(y_flattened),np.max(y_flattened),np.max(y_flattened)-np.min(y_flattened)])
+    print('zFOV',[np.min(z_flattened),np.max(z_flattened),np.max(z_flattened)-np.min(z_flattened)])
     print('np.std(detcenter[0, :])',np.std(detcenter[0, :]))
     # 新しい detcenter として、元の形 (3, N) にデータを再構成
     new_detcenter = np.vstack([x_flattened, y_flattened, z_flattened])
@@ -6764,6 +6777,39 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
     print('new_detcenter',new_detcenter.dtype)
     np.save(os.path.join(directory_name, 'points_gridImage.npy'), new_detcenter)
 
+    if np.abs(defocusForWave) > 1e-9:
+        if option_HighNA:
+            ysize = ysize + defocusForWave*0.082*2
+            zsize = zsize + defocusForWave*0.082*2
+        else:
+            ysize = ysize + defocusForWave*0.01*2
+            zsize = zsize + defocusForWave*0.01*2
+        y2 = detcenter2[1,:]
+        z2 = detcenter2[2,:]
+        print('ysize',np.max(y2) - np.min(y2))
+        print('zsize',np.max(z2) - np.min(z2))
+        print('pixy',(np.max(y2) - np.min(y2))/(size_h_f-1))
+        print('pixz',(np.max(z2) - np.min(z2))/(size_v_f-1))
+
+        y_grid2 = np.linspace((np.min(y2) + np.max(y2))/2-ysize, (np.min(y2) + np.max(y2))/2+ysize, size_h_f)
+        z_grid2 = np.linspace((np.min(z2) + np.max(z2))/2-zsize, (np.min(z2) + np.max(z2))/2+zsize, size_v_f)
+        yy2, zz2 = np.meshgrid(y_grid2,z_grid2)
+        print('pixy', y_grid2[1] - y_grid2[0])
+        print('pixz', z_grid2[1] - z_grid2[0])
+
+        y_flattened2 = yy2.flatten()  # 元の y の形状に戻す
+        z_flattened2 = zz2.flatten()  # 元の z の形状に戻す
+        x_flattened2 = np.full_like(y_flattened2,fill_value=np.mean(detcenter2[0, :]))
+        print('yFOV2',[np.min(y_flattened2),np.max(y_flattened2),np.max(y_flattened2)-np.min(y_flattened2)])
+        print('zFOV2',[np.min(z_flattened2),np.max(z_flattened2),np.max(z_flattened2)-np.min(z_flattened2)])
+        print('np.std(detcenter2[0, :])',np.std(detcenter2[0, :]))
+        # 新しい detcenter として、元の形 (3, N) にデータを再構成
+        new_detcenter2 = np.vstack([x_flattened2, y_flattened2, z_flattened2])
+        print(new_detcenter2.shape)
+        print('new_detcenter2',new_detcenter2.dtype)
+        np.save(os.path.join(directory_name, 'points_gridDefocus.npy'), new_detcenter2)
+        print('setDefocus',defocusForWave)
+        print('Defocus',np.mean(new_detcenter2[0,:]-new_detcenter[0,:]))
     # 計算条件を保存するテキストファイルのパスを設定
     conditions_file_path = os.path.join(directory_name, 'calculation_conditions.txt')
 
@@ -6791,7 +6837,7 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
         file.write(f"defocusForWave: {defocusForWave}\n")
         file.write(f"calc both mirrors?: {option_2mirror}\n")
         file.write("====================\n")
-
+    sys.exit()
     # index = 0
     # cosi1 = np.sum(vec0to1 * vmirr_norm, axis=0)[index]
     # vmirr_hyp_here = vmirr_hyp[0:3,index]
@@ -7079,7 +7125,7 @@ auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 # abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
 # print('initial_params',initial_params)
 # print('abrr',abrr)
-# saveWaveData(initial_params)
+saveWaveData(initial_params)
 # sys.exit()
 
 option_abrr = 'inplaneadjustwithcoma'
