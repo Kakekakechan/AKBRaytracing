@@ -52,11 +52,11 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 4097
+unit = 701
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = False
+option_AKB = True
 option_HighNA = False
 defocusForWave = 1e-3
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
@@ -2797,6 +2797,59 @@ def plot_result_debug(params,option):
 
             angle = reflect4
 
+        if option == 'wave':
+            print('diverg angle H',np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))
+            print('diverg angle V',np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))
+            # 全データからランダムに10%だけを選択
+            sample_indices = np.random.choice(detcenter.shape[1], size=int(detcenter.shape[1]*0.001), replace=False)
+
+            theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
+            theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
+            source = np.zeros((3,1))
+            if option_rotate==True:
+                reflect4_rotated = rotate_vectors(reflect4, -theta_y, -theta_z)
+                focus_apprx = np.mean(detcenter,axis=1)
+                hmirr_ell_points_rotated = rotate_points(hmirr_ell, focus_apprx, -theta_y, -theta_z)
+                vmirr_ell_points_rotated = rotate_points(vmirr_ell, focus_apprx, -theta_y, -theta_z)
+                hmirr_hyp_points_rotated = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                vmirr_hyp_points_rotated = rotate_points(vmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                source_rotated = rotate_points(source, focus_apprx, -theta_y, -theta_z)
+
+                hmirr_ell_points_rotated_grid = hmirr_ell_points_rotated
+                vmirr_ell_points_rotated_grid = vmirr_ell_points_rotated
+                hmirr_hyp_points_rotated_grid = hmirr_hyp_points_rotated
+                vmirr_hyp_points_rotated_grid = vmirr_hyp_points_rotated
+
+            else:
+                reflect2_rotated = reflect2
+                hmirr_hyp_points_rotated = hmirr_hyp
+                vmirr_hyp_points_rotated = vmirr_hyp
+                source_rotated = source
+            coeffs_det = np.zeros(10)
+            coeffs_det[6] = 1
+            coeffs_det[9] = -(s2f_middle + defocus)
+            detcenter = plane_ray_intersection(coeffs_det, reflect4_rotated, hmirr_ell_points_rotated)
+
+            vec0to1 = normalize_vector(vmirr_hyp_points_rotated_grid - source_rotated)
+            vec1to2 = normalize_vector(hmirr_hyp_points_rotated_grid - vmirr_hyp_points_rotated_grid)
+            vec2to3 = normalize_vector(vmirr_ell_points_rotated_grid - hmirr_hyp_points_rotated_grid)
+            vec3to4 = normalize_vector(hmirr_ell_points_rotated_grid - vmirr_ell_points_rotated_grid)
+            vec4to5 = normalize_vector(detcenter - hmirr_ell_points_rotated_grid)
+
+            vmirr_norm = normalize_vector( (-vec1to2 + vec0to1) / 2 )
+            hmirr_norm = normalize_vector( (-vec2to3 + vec1to2) / 2 )
+            vmirr2_norm = normalize_vector( (-vec3to4 + vec2to3) / 2 )
+            hmirr2_norm = normalize_vector( (-vec4to5 + vec3to4) / 2 )
+
+            if np.abs(defocusForWave) > 1e-9:
+                coeffs_det2 = np.zeros(10)
+                coeffs_det2[6] = 1
+                coeffs_det2[9] = -(s2f_middle + defocus+defocusForWave)
+                detcenter2 = plane_ray_intersection(coeffs_det2, reflect4_rotated, hmirr_ell_points_rotated)
+                return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
+            else:
+                return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
+
         option_tilt = True
         if option_tilt:
             theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
@@ -2931,7 +2984,7 @@ def plot_result_debug(params,option):
             matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
             print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
             plt.figure()
-            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto')
+            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
             # plt.colorbar(label='\u03BB')
             plt.colorbar(label='wavefront error (nm)')
             plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
@@ -6680,12 +6733,15 @@ def calc_dS(points,ray_num_V, ray_num_H):
 
     return dS
 
-def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
+def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     if option_AKB:
-        plot_result_debug(initial_params,'ray_wave')
-        source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
+        # plot_result_debug(initial_params,'ray_wave')
+        if np.abs(defocusForWave) > 1e-9:
+            source, vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4 = plot_result_debug(initial_params,'wave')
+        else:
+            source, vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4 = plot_result_debug(initial_params,'wave')
     else:
-        KB_debug(initial_params,1,1,'ray_wave')
+        # KB_debug(initial_params,1,1,'ray_wave')
         if np.abs(defocusForWave) > 1e-9:
             source, vmirr_hyp, hmirr_hyp, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
         else:
@@ -6695,13 +6751,16 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
         vmirr_hyp, size_v1, size_h1 = downsample_array_3_n(vmirr_hyp, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
         hmirr_hyp, size_v2, size_h2 = downsample_array_3_n(hmirr_hyp, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
         detcenter, size_v_f, size_h_f = downsample_array_3_n(detcenter, ray_num_V, ray_num_H, downsample_h_f, downsample_v_f)
+        if option_AKB:
+            vmirr_ell, size_v1, size_h1 = downsample_array_3_n(vmirr_ell, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
+            hmirr_ell, size_v2, size_h2 = downsample_array_3_n(hmirr_ell, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
         if np.abs(defocusForWave) > 1e-9:
             detcenter2, size_v_f, size_h_f = downsample_array_3_n(detcenter2, ray_num_V, ray_num_H, downsample_h_f, downsample_v_f)
         # vmirr_norm, _, _ = downsample_array_3_n(vmirr_norm, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
         # hmirr_norm, _, _ = downsample_array_3_n(hmirr_norm, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
         # vec0to1, _, _ = downsample_array_3_n(vec0to1, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
         # vec1to2, _, _ = downsample_array_3_n(vec1to2, ray_num_V, ray_num_H, downsample_h2, downsample_v2)
-        del vmirr_norm, hmirr_norm, vec0to1, vec1to2
+        # del vmirr_norm, hmirr_norm, vec0to1, vec1to2
     else:
         print('without downsampling')
 
@@ -6723,25 +6782,34 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
     vmirr_hyp = np.vstack((vmirr_hyp, dS1.flatten()))
 
     np.save(os.path.join(directory_name, 'points_M1.npy'), vmirr_hyp)
-    # np.save(os.path.join(directory_name, 'norms_M1.npy'), vmirr_norm)
 
     print('vmirr_hyp',vmirr_hyp.dtype)
     print('vmirr_hyp',vmirr_hyp.shape)
-    # print('vmirr_norm',vmirr_norm.dtype)
-    # print('vmirr_norm',vmirr_norm.shape)
 
     dS2 = calc_dS(hmirr_hyp,size_v2, size_h2)
     hmirr_hyp = np.vstack((hmirr_hyp, dS2.flatten()))
 
     np.save(os.path.join(directory_name, 'points_M2.npy'), hmirr_hyp)
-    # np.save(os.path.join(directory_name, 'norms_M2.npy'), hmirr_norm)
-    # np.save(os.path.join(directory_name, 'points_M2roted.npy'), hmirr_hyp_points_rotated)
-    # np.save(os.path.join(directory_name, 'points_image.npy'), detcenter)
 
     print('hmirr_hyp',hmirr_hyp.dtype)
     print('hmirr_hyp',hmirr_hyp.shape)
-    # print('hmirr_norm',hmirr_norm.dtype)
-    # print('hmirr_norm',hmirr_norm.shape)
+
+    if option_AKB:
+        dS3 = calc_dS(vmirr_ell,size_v1, size_h1)
+        vmirr_ell = np.vstack((vmirr_ell, dS3.flatten()))
+
+        np.save(os.path.join(directory_name, 'points_M3.npy'), vmirr_ell)
+
+        print('vmirr_ell',vmirr_ell.dtype)
+        print('vmirr_ell',vmirr_ell.shape)
+
+        dS4 = calc_dS(hmirr_ell,size_v2, size_h2)
+        hmirr_ell = np.vstack((hmirr_ell, dS4.flatten()))
+
+        np.save(os.path.join(directory_name, 'points_M4.npy'), hmirr_ell)
+
+        print('hmirr_ell',hmirr_ell.dtype)
+        print('hmirr_ell',hmirr_ell.shape)
 
     y = detcenter[1,:]
     z = detcenter[2,:]
@@ -6779,11 +6847,11 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
 
     if np.abs(defocusForWave) > 1e-9:
         if option_HighNA:
-            ysize = ysize + defocusForWave*0.082*2
-            zsize = zsize + defocusForWave*0.082*2
+            ysize = 2e-7 + defocusForWave*0.082*2
+            zsize = 2e-7 + defocusForWave*0.082*2
         else:
-            ysize = ysize + defocusForWave*0.01*2
-            zsize = zsize + defocusForWave*0.01*2
+            ysize = 2e-7 + defocusForWave*0.01*2
+            zsize = 2e-7 + defocusForWave*0.01*2
         y2 = detcenter2[1,:]
         z2 = detcenter2[2,:]
         print('ysize',np.max(y2) - np.min(y2))
@@ -6833,6 +6901,7 @@ def saveWaveData(initial_params, ysize = 1e-7, zsize = 1e-7):
         file.write(f"grid pix_V1: {size_v1}\n")
         file.write(f"grid pix_H2: {size_h2}\n")
         file.write(f"grid pix_V2: {size_v2}\n")
+        file.write(f"option_AKB: {option_AKB}\n")
         file.write(f"option_HighNA: {option_HighNA}\n")
         file.write(f"defocusForWave: {defocusForWave}\n")
         file.write(f"calc both mirrors?: {option_2mirror}\n")
@@ -7120,6 +7189,10 @@ else:
         initial_params[8] = 0.5038395891681975
         initial_params[9] = 4.65100097e-8
         initial_params[10] = 1.21012885e-7
+
+        initial_params[8] = 4.93753036e-01
+        initial_params[9] = 4.65100097e-08
+        initial_params[10] = 1.21012885e-07
 
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 # abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')

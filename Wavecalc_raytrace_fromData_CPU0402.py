@@ -2,58 +2,48 @@ import os
 import shutil
 import sys
 import numpy as np
-from numpy import abs, sin, cos,tan, arcsin,arccos,arctan, sqrt, pi
-import cupy as cp
+from numpy import abs, sin, cos, tan, arcsin, arccos, arctan, sqrt, pi
 from datetime import datetime
 import h5py
 import gc
 import time
+from multiprocessing import Pool, cpu_count
+from tqdm import tqdm  # Add tqdm import for progress bar
+from concurrent.futures import ThreadPoolExecutor  # Add import for parallel execution
+from concurrent.futures import ProcessPoolExecutor  # Replace Pool with ProcessPoolExecutor
+from numba import njit, prange  # Add numba imports
 
-### GPU ###
-print(cp.cuda.runtime.getDeviceCount())  # 使用可能なGPU数を表示
+### CPU ###
 class WaveField3D:
     def __init__(self, num, _lambda, wave_num_H, wave_num_V):
-        # 各値をCuPy配列で初期化
-        ### 64
-        self.u = cp.zeros(num, dtype=cp.complex128)
-        self.x = cp.zeros(num, dtype=cp.float64)
-        self.y = cp.zeros(num, dtype=cp.float64)
-        self.z = cp.zeros(num, dtype=cp.float64)
-        ### 32
-        # self.u = cp.zeros(num, dtype=cp.complex64)
-        # self.x = cp.zeros(num, dtype=cp.float32)
-        # self.y = cp.zeros(num, dtype=cp.float32)
-        # self.z = cp.zeros(num, dtype=cp.float32)
+        # 各値をNumPy配列で初期化
+        self.u = np.zeros(num, dtype=np.complex128)
+        self.x = np.zeros(num, dtype=np.float64)
+        self.y = np.zeros(num, dtype=np.float64)
+        self.z = np.zeros(num, dtype=np.float64)
 
-        self.lambda_ = cp.float64(_lambda)
+        self.lambda_ = np.float64(_lambda)
         self.wave_num_H = wave_num_H
         self.wave_num_V = wave_num_V
-        # self.ds = cp.ones(num, dtype=cp.float64)
 
     def setdata(self, data):
-        # データをCuPy配列に変換
-        ### 64
-        self.x = cp.array(data[0, :], dtype=cp.float64)
-        self.y = cp.array(data[1, :], dtype=cp.float64)
-        self.z = cp.array(data[2, :], dtype=cp.float64)
-        ### 32
-        # self.x = cp.array(data[0, :], dtype=cp.float32)
-        # self.y = cp.array(data[1, :], dtype=cp.float32)
-        # self.z = cp.array(data[2, :], dtype=cp.float32)
+        # データをNumPy配列に変換
+        self.x = np.array(data[0, :], dtype=np.float64)
+        self.y = np.array(data[1, :], dtype=np.float64)
+        self.z = np.array(data[2, :], dtype=np.float64)
 
     def set_ds(self, data):
-        self.ds = cp.array(data, dtype=cp.float64)
+        self.ds = np.array(data, dtype=np.float64)
 
-    def forward_propagation(self, u_back):
-        k = 2.0 * cp.pi / self.lambda_  # 波数の計算
+    def forward_propagation(self, u_back, num_cores=None):
+        k = 2.0 * np.pi / self.lambda_  # 波数の計算
         start_time = time.time()  # 開始時間を記録
-        # GPUで計算を呼び出す（バッチ処理対応）
-
-        self.u = forward_propagation_cupy_batch(
+        self.u = forward_propagation_numpy_batch(
             self.x, self.y, self.z,
             u_back.x, u_back.y, u_back.z,
             u_back.u,  # 複素数配列を直接渡す
-            k, u_back.ds  # 事前計算したdsを渡す
+            k, u_back.ds,  # 事前計算したdsを渡す
+            num_cores=num_cores  # コア数を指定
         )
         end_time = time.time()  # 終了時間を記録
 
@@ -61,68 +51,82 @@ class WaveField3D:
         elapsed_time = end_time - start_time
         print(f"計算時間: {elapsed_time:.6f} 秒")
 
-def forward_propagation_cupy_batch(x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k, ds):
-    if not isinstance(u_back_u, cp.ndarray):
-        u_back_u = cp.asarray(u_back_u)
+def compute_u(i, x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k):
+    dist = np.sqrt(
+        (x[i] - u_back_x) ** 2 +
+        (y[i] - u_back_y) ** 2 +
+        (z[i] - u_back_z) ** 2
+    )
+    amplitude = 1. / dist
+    phase = -k * dist
+    factor = amplitude * np.exp(1j * phase)
+    return np.sum(factor * u_back_u)
+
+def compute_u_wrapper(args):
+    """
+    Wrapper function to unpack arguments for compute_u.
+    """
+    return compute_u(*args)
+
+@njit(parallel=True)
+def compute_u_parallel(x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k):
+    total = len(x)
+    u = np.zeros(total, dtype=np.complex128)
+    for i in prange(total):
+        dist = np.sqrt(
+            (x[i] - u_back_x) ** 2 +
+            (y[i] - u_back_y) ** 2 +
+            (z[i] - u_back_z) ** 2
+        )
+        amplitude = 1. / dist
+        phase = -k * dist
+        factor = amplitude * np.exp(1j * phase)
+        u[i] = np.sum(factor * u_back_u)
+    return u
+
+def forward_propagation_numpy_batch(x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k, ds, num_cores=None):
+    """
+    Perform forward propagation using parallel processing.
+
+    Parameters:
+    x, y, z: Coordinates of the current wave field.
+    u_back_x, u_back_y, u_back_z: Coordinates of the previous wave field.
+    u_back_u: Complex amplitude of the previous wave field.
+    k: Wave number.
+    ds: Precomputed ds values.
+    num_cores: Number of cores to use for parallel processing (optional).
+
+    Returns:
+    u: Computed complex amplitude of the current wave field.
+    """
     u_back_u = u_back_u * ds
     del ds
-    num = len(x)
-    num_back = len(u_back_x)
 
-    # GPUメモリの空き容量を取得してバッチサイズを決定
-    mem_info = cp.cuda.Device().mem_info
-    free_mem = mem_info[0]
-    overhead = 3.5  # メモリの余裕率
-    element_size = 16  # 複素数1要素あたりのメモリ使用量（バイト）
-    max_batch_size = int((free_mem / overhead) / element_size / num_back)
-    print(f"free memory: {free_mem}")
-    print(f"Max batch size based on free memory: {max_batch_size}")
+    if num_cores:
+        import os
+        os.environ["NUMBA_NUM_THREADS"] = str(num_cores)
+        print(f"Using {num_cores} cores for parallel processing.")
+    else:
+        print("Using default number of cores for parallel processing.")
 
-    # 出力配列を初期化（複素数型）
-    u = cp.zeros(num, dtype=cp.complex128)  # 精度許容ならcomplex128を使用
+    print("Using numba prange for parallel processing.")
+    print("Progress will be displayed in 1/100 increments.")
+    total = len(x)
+    progress_step = max(total // 100, 1)  # Calculate step for 1/100 progress
 
-    # ストリームを準備
-    compute_stream = cp.cuda.Stream()
-    cleanup_stream = cp.cuda.Stream()
-
-    # バッチごとに計算
-    for i in range(0, num, max_batch_size):
-        batch_end = min(i + max_batch_size, num)
-        if i % 23 == 0:
-            print(f"batch: {i}/{num}")
-
-        # 部分データをスライス
-        x_batch = x[i:batch_end]
-        y_batch = y[i:batch_end]
-        z_batch = z[i:batch_end]
-        # ds_batch = ds[i:batch_end]
-
-        # メインストリームで計算を実行
-        with compute_stream:
-            dist = cp.sqrt(
-                (x_batch[:, None] - u_back_x[None, :]) ** 2 +
-                (y_batch[:, None] - u_back_y[None, :]) ** 2 +
-                (z_batch[:, None] - u_back_z[None, :]) ** 2
-            )
-            # amplitude = ds_batch[None, :] / dist
-            amplitude = 1. / dist
-            phase = -k * dist
-            factor = amplitude * cp.exp(1j * phase)
-            interaction = cp.dot(u_back_u, factor.T)
-            u[i:batch_end] = interaction
-
-        # メモリ解放を別ストリームで処理
-        with cleanup_stream:
-            del x_batch, y_batch, z_batch, dist, amplitude, phase, factor, interaction
-            cp.get_default_memory_pool().free_all_blocks()
-
-        # 同期ポイントを設定
-        compute_stream.synchronize()
-        cleanup_stream.synchronize()
-
+    u = np.zeros(total, dtype=np.complex128)
+    for i in range(0, total, progress_step):
+        u[i:i+progress_step] = compute_u_parallel(
+            x[i:i+progress_step], y[i:i+progress_step], z[i:i+progress_step],
+            u_back_x, u_back_y, u_back_z, u_back_u, k
+        )
+        print(f"Progress: {((i + progress_step) / total) * 100:.2f}%")
     return u
 
 ##########
+# Add a cache dictionary to store loaded files
+file_cache = {}
+
 def load_file(folder_path, file_name):
     file_path = os.path.join(folder_path, file_name)
     """
@@ -134,26 +138,29 @@ def load_file(folder_path, file_name):
     Returns:
     内容またはデータ（適切な場合）
     """
+    # Check if the file is already cached
+    if file_path in file_cache:
+        return file_cache[file_path]
+
     # ファイルが存在するか確認
     if os.path.exists(file_path):
         print(f"Reading file: {file_path}")
 
         # ファイル拡張子によって処理を分ける
         if file_path.endswith('.txt'):
-            # テキストファイル（.txt）の読み込み
             with open(file_path, 'r') as file:
                 content = file.read()
+            file_cache[file_path] = content  # Cache the content
             return content
 
         elif file_path.endswith('.npy'):
-            # NumPyのバイナリファイル（.npy）の読み込み
             data = np.load(file_path)
+            file_cache[file_path] = data  # Cache the data
             return data
 
         elif file_path.endswith('.npz'):
-            # NumPyの圧縮バイナリファイル（.npz）の読み込み
             data = np.load(file_path)
-            # .npzファイルは複数の配列を持っているので、キーを確認
+            file_cache[file_path] = data  # Cache the data
             return data
 
         else:
@@ -257,10 +264,11 @@ if __name__ == '__main__':
         Field_1.u = data
     else:
         print("source => M1 計算を行います")
-        Field_1.forward_propagation(LightSource)
+        num_cores = 17  # Adjust this value as needed
+        Field_1.forward_propagation(LightSource, num_cores=num_cores)
         np.savez_compressed(os.path.join(directory_name, "complex_data_M1.npz"), data=Field_1.u)
         del data, LightSource # メモリ解放
-        cp.get_default_memory_pool().free_all_blocks()
+
 
     # sys.exit()
 
@@ -280,7 +288,6 @@ if __name__ == '__main__':
         Field_2.forward_propagation(Field_1)
         np.savez_compressed(os.path.join(directory_name, "complex_data_M2.npz"), data=Field_2.u)
         del Field_1, data  # 不要な変数を削除
-        cp.get_default_memory_pool().free_all_blocks()
 
     # 画像グリッド計算
     Image_grid_org = load_file(folder_path, file_names[3])
@@ -302,7 +309,6 @@ if __name__ == '__main__':
             Field_3.forward_propagation(Field_2)
             np.savez_compressed(os.path.join(directory_name, "complex_data_M3.npz"), data=Field_3.u)
             del Field_2, data  # 不要な変数を削除
-            cp.get_default_memory_pool().free_all_blocks()
 
         # M4計算
         hmirr_ell = load_file(folder_path, 'points_M4.npy')
@@ -320,7 +326,6 @@ if __name__ == '__main__':
             Field_4.forward_propagation(Field_3)
             np.savez_compressed(os.path.join(directory_name, "complex_data_M4.npz"), data=Field_4.u)
             del Field_3, data  # 不要な変数を削除
-            cp.get_default_memory_pool().free_all_blocks()
     #リサイズ
     if True:
         mean_val = [np.mean(Image_grid_org[0,:]),np.mean(Image_grid_org[1,:]),np.mean(Image_grid_org[2,:])]
@@ -341,7 +346,7 @@ if __name__ == '__main__':
         Image_grid.forward_propagation(Field_2)
     np.savez_compressed(os.path.join(directory_name, "complex_data_Image.npz"), data=Image_grid.u)
     del Image_grid # メモリ解放
-    cp.get_default_memory_pool().free_all_blocks()
+
     # 画像グリッド計算
     Image_grid_org2 = load_file(folder_path, file_names[4])
 
@@ -366,9 +371,7 @@ if __name__ == '__main__':
 
     if option_AKB:
         del Field_4, Image_grid2  # メモリ解放
-        cp.get_default_memory_pool().free_all_blocks()
     else:
         del Field_2, Image_grid2  # メモリ解放
-        cp.get_default_memory_pool().free_all_blocks()
 
     print("すべての計算が完了しました。")
