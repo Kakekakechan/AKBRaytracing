@@ -42,9 +42,10 @@ global option_2mirror
 global option_rotate
 global option_HighNA
 global defocusForWave
+global option_avrgsplt
 option_2mirror =True
 option_rotate = True
-
+option_avrgsplt = True
 # （0ならそのまま、2なら半分、4なら1/4,、6なら1/8）
 downsample_h1 = 0
 downsample_v1 = 0
@@ -52,11 +53,11 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 701
+unit = 2049
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = True
+option_AKB = False
 option_HighNA = False
 defocusForWave = 1e-3
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
@@ -415,8 +416,8 @@ def generate_grid_on_mirror_with_normal(mirror_coeffs, points, num_divisions_H,n
     v = np.linspace(0, 1, num_divisions_V)
     grid_points = []
 
-    for i in u:
-        for j in v:
+    for j in v:
+        for i in u:
             point = (1 - i) * (1 - j) * p1 + i * (1 - j) * p2 + i * j * p3 + (1 - i) * j * p4
             grid_points.append(point)
 
@@ -425,7 +426,7 @@ def generate_grid_on_mirror_with_normal(mirror_coeffs, points, num_divisions_H,n
     # グリッドをミラー上に投影
     projected_grid = []
     for grid_point in grid_points.T:
-        source = grid_point  # 各点を光源とする
+        source = grid_point.copy()  # 各点を光源とする
         # ray = normal  # 平均法線を方向ベクトルとして使用
         ray = np.array([-1,0,0])
         intersection = mirr_ray_intersection(mirror_coeffs, ray, source.reshape(3, 1))
@@ -4248,6 +4249,96 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
     y2_h = yv_e
     x2_h = xv_e
 
+    if option == 'ray':
+        def RoC(x,a,b):
+            c = np.sqrt(a**2-b**2)
+            x0 = x-c
+            theta = np.arccos(x0/a)
+            # print('theta',theta)
+            # print(b*np.sin(theta))
+            R = ((a*np.sin(theta))**2+(b*np.cos(theta))**2)**(3/2)/(a*b)
+            print('R',R)
+            # R = (a**4 * (1 - x0**2/a**2) + b**2 * x0**2)/(b * (1 - x0**2/a**2)**(3/2))
+            # print('R',R)
+            # R = 1/0.014e-3
+            # print('rgen',a**2/b)
+            return R
+        def Focuslength(x,a,b,theta=0.):
+            # # R = RoC(x,a,b)
+            # # f = x * R* (1/(2*x - R/cos**2))
+            #
+            # c = np.sqrt(a**2-b**2)
+            # y = b*np.sqrt(1 - (x-c)**2/a**2)
+            # ix0 = x/np.sqrt(x**2+y**2)
+            # iy0 = y/np.sqrt(x**2+y**2)
+            # iz0 = ix0.copy() * np.tan(theta)
+            # ix = ix0/np.sqrt(ix0**2 + iy0**2 + iz0**2)
+            # iy = iy0/np.sqrt(ix0**2 + iy0**2 + iz0**2)
+            # iz = iz0/np.sqrt(ix0**2 + iy0**2 + iz0**2)
+            # # print('theta',theta)
+            # # print('ix0',ix0)
+            # # print('iy0',iy0)
+            # # print('ix',ix)
+            #
+            # nx= b**2 * (x-c)/(a**2 * y)/np.sqrt(1 + (b**2 * (x-c)/(a**2 * y))**2)
+            # ny= 1/np.sqrt(1 + (b**2 * (x-c)/(a**2 * y))**2)
+            # rx = ix-2*(ix*nx+iy*ny)*nx
+            # ry = iy-2*(ix*nx+iy*ny)*ny
+            # f = x - rx/ry*y
+            # fz = - iz/ry*y
+            # print('fz',fz)
+
+            f0 = 2*np.sqrt(a**2-b**2)
+            s0 = x.copy()
+            s0_ = f0 - s0
+            f0 = s0*s0_/(s0 + s0_)
+            f = s0/(s0*np.cos(theta)**2/f0 - 1.)
+
+            return f
+        print('x1_v',x1_v)
+        print('x2_v',x2_v)
+        print('a_hyp_v',a_hyp_v)
+        print('b_hyp_v',b_hyp_v)
+        angle_h = (np.arctan(y1_h / x1_h)-np.arctan(y2_h / x2_h))/2
+        angle_v = (np.arctan(y1_v / x1_v)-np.arctan(y2_v / x2_v))/2
+        print('angle_v',angle_v)
+        print('angle_h',angle_h)
+        print('design f  ',2*np.sqrt(a_hyp_v**2-b_hyp_v**2))
+        f1_v_analy = Focuslength(x1_v,a_hyp_v,b_hyp_v)
+        f2_v_analy = Focuslength(x2_v,a_hyp_v,b_hyp_v)
+        fc_v_analy = Focuslength((x2_v+x1_v)/2,a_hyp_v,b_hyp_v)
+        f1_v_analy_edge = Focuslength(x1_v,a_hyp_v,b_hyp_v,theta=angle_h)
+        f2_v_analy_edge = Focuslength(x2_v,a_hyp_v,b_hyp_v,theta=angle_h)
+        fc_v_analy_edge = Focuslength((x2_v+x1_v)/2,a_hyp_v,b_hyp_v,theta=angle_h)
+        print('f1_v_analy',f1_v_analy)
+        print('f2_v_analy',f2_v_analy)
+        print('fc_v_analy',fc_v_analy)
+        print('dif_f1_v_analy',f1_v_analy_edge-f1_v_analy)
+        print('dif_f2_v_analy',f2_v_analy_edge-f2_v_analy)
+        print('dif_fc_v_analy',fc_v_analy_edge-fc_v_analy)
+
+        print('x1_h',x1_h)
+        print('x2_h',x2_h)
+        print('a_hyp_h',a_hyp_h)
+        print('b_hyp_h',b_hyp_h)
+        print('design f  ',2*np.sqrt(a_hyp_h**2-b_hyp_h**2))
+        f1_h_analy = Focuslength(x1_h,a_hyp_h,b_hyp_h)
+        f2_h_analy = Focuslength(x2_h,a_hyp_h,b_hyp_h)
+        fc_h_analy = Focuslength((x2_h+x1_h)/2,a_hyp_h,b_hyp_h)
+        f1_h_analy_edge = Focuslength(x1_h,a_hyp_h,b_hyp_h,theta=angle_v)
+        f2_h_analy_edge = Focuslength(x2_h,a_hyp_h,b_hyp_h,theta=angle_v)
+        fc_h_analy_edge = Focuslength((x2_h+x1_h)/2,a_hyp_h,b_hyp_h,theta=angle_v)
+        print('f1_h_analy',f1_h_analy)
+        print('f2_h_analy',f2_h_analy)
+        print('fc_h_analy',fc_h_analy)
+        print('dif_f1_h_analy',f1_h_analy_edge-f1_h_analy)
+        print('dif_f2_h_analy',f2_h_analy_edge-f2_h_analy)
+        print('dif_fc_h_analy',fc_h_analy_edge-fc_h_analy)
+
+        delta_xc = 1/np.cos(angle_h)*(np.sqrt(a_hyp_v**2 - b_hyp_v**2) - np.sqrt(a_hyp_v**2 - (b_hyp_v*np.cos(angle_h))**2))
+        print('delta_xc',delta_xc)
+        # sys.exit()
+
     theta1_v = sita1h
     theta1_h = sita1v
     # astig_v = (org_hyp_v - org_hyp_h)/2
@@ -4782,9 +4873,10 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
         coeffs_det[9] = -(s2f_middle + defocus)
         detcenter = plane_ray_intersection(coeffs_det, reflect2, hmirr_hyp)
 
-        angle = reflect2
+        angle = reflect2.copy()
 
         if option == 'sep' or option == 'wave' or option == 'ray':
+            vmirr_hyp_spltavg = vmirr_hyp.copy()
             # 範囲内の値を間引く
             original_array = list(range(ray_num_H*ray_num_V))
             thinned_array_v_y = original_array[round((ray_num_H-1)/2)::ray_num_H]
@@ -4792,29 +4884,34 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             start = round(ray_num_H*(ray_num_V-1)/2)
             end = round(ray_num_H*(ray_num_V+1)/2)
             thinned_array_h_y = crop(start, end, 1)
-            angle_h = np.arctan(angle[1, :]/angle[0, :])
-            angle_v = np.arctan(angle[2, :]/angle[0, :])
+            def reset_p0(angle,rand_p0v,rand_p0h,thinned_array_v_y,thinned_array_h_y,ray_num_V,ray_num_H):
+                angle_h = np.arctan(angle[1, :]/angle[0, :])
+                angle_v = np.arctan(angle[2, :]/angle[0, :])
 
-            angle_v_sep_y = angle_v[thinned_array_v_y]
-            angle_h_sep_y = angle_h[thinned_array_h_y]
+                angle_v_sep_y = angle_v[thinned_array_v_y]
+                angle_h_sep_y = angle_h[thinned_array_h_y]
 
-            output_equal_v = np.linspace(angle_v_sep_y[0],angle_v_sep_y[-1],len(angle_v_sep_y))
-            output_equal_h = np.linspace(angle_h_sep_y[0],angle_h_sep_y[-1],len(angle_h_sep_y))
+                output_equal_v = np.linspace(angle_v_sep_y[0],angle_v_sep_y[-1],len(angle_v_sep_y))
+                output_equal_h = np.linspace(angle_h_sep_y[0],angle_h_sep_y[-1],len(angle_h_sep_y))
 
-            interp_func_v = interp1d(angle_v_sep_y, rand_p0v, kind='linear')
-            interp_func_h = interp1d(angle_h_sep_y, rand_p0h, kind='linear')
+                interp_func_v = interp1d(angle_v_sep_y, rand_p0v, kind='linear')
+                interp_func_h = interp1d(angle_h_sep_y, rand_p0h, kind='linear')
 
-            rand_p0v_new = interp_func_v(output_equal_v)
-            rand_p0h_new = interp_func_h(output_equal_h)
+                rand_p0v_new = interp_func_v(output_equal_v)
+                rand_p0h_new = interp_func_h(output_equal_h)
 
-            phai0 = np.zeros((3, ray_num_H * ray_num_V))
-            for i in range(ray_num_V):
-                rand_p0v_here = rand_p0v_new[i]
-                phai0[1, ray_num_H * i:ray_num_H * (i + 1)] = np.tan(rand_p0h_new)
-                phai0[2, ray_num_H * i:ray_num_H * (i + 1)] = np.tan(rand_p0v_here)
-                phai0[0, ray_num_H * i:ray_num_H * (i + 1)] = 1.
+                phai0 = np.zeros((3, ray_num_H * ray_num_V))
+                for i in range(ray_num_V):
+                    rand_p0v_here = rand_p0v_new[i]
+                    phai0[1, ray_num_H * i:ray_num_H * (i + 1)] = np.tan(rand_p0h_new)
+                    phai0[2, ray_num_H * i:ray_num_H * (i + 1)] = np.tan(rand_p0v_here)
+                    phai0[0, ray_num_H * i:ray_num_H * (i + 1)] = 1.
 
-            phai0 = normalize_vector(phai0)
+                phai0 = normalize_vector(phai0)
+                return phai0
+
+            ### 焦点面への入射角を均等に
+            phai0 = reset_p0(angle,rand_p0v,rand_p0h,thinned_array_v_y,thinned_array_h_y,ray_num_V,ray_num_H)
 
             vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source)
             reflect1 = reflect_ray(phai0, norm_vector(coeffs_hyp_v, vmirr_hyp))
@@ -4832,54 +4929,68 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             coeffs_det[6] = 1
             coeffs_det[9] = -(s2f_middle + defocus)
             detcenter = plane_ray_intersection(coeffs_det, reflect2, hmirr_hyp)
-
-            angle = reflect2
+            angle1to2 = reflect1.copy()
+            angle = reflect2.copy()
+            source_org = source.copy()
 
         if option == 'wave':
             print('diverg angle H',np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))
             print('diverg angle V',np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))
-            # 全データからランダムに10%だけを選択
-            sample_indices = np.random.choice(detcenter.shape[1], size=int(detcenter.shape[1]*0.001), replace=False)
-
+            # # 全データからランダムに10%だけを選択
+            # sample_indices = np.random.choice(detcenter.shape[1], size=int(detcenter.shape[1]*0.001), replace=False)
             theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
             theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
             source = np.zeros((3,1))
             if option_rotate==True:
-                reflect2_rotated = rotate_vectors(reflect2, -theta_y, -theta_z)
+                reflect2_rotated_org = rotate_vectors(reflect2, -theta_y, -theta_z)
                 focus_apprx = np.mean(detcenter,axis=1)
-                hmirr_hyp_points_rotated = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
-                vmirr_hyp_points_rotated = rotate_points(vmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                hmirr_hyp_points_rotated_org = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
                 source_rotated = rotate_points(source, focus_apprx, -theta_y, -theta_z)
+                if option_avrgsplt: ### 均等分割
+                    vmirr_hyp_points_rotated = rotate_points(vmirr_hyp_spltavg, focus_apprx, -theta_y, -theta_z)
 
-                coeffs_hyp_h = rotate_y(coeffs_hyp_h,-theta_y,focus_apprx)
-                coeffs_hyp_h = rotate_z(coeffs_hyp_h,-theta_z,focus_apprx)
-                coeffs_hyp_v = rotate_y(coeffs_hyp_v,-theta_y,focus_apprx)
-                coeffs_hyp_v = rotate_z(coeffs_hyp_v,-theta_z,focus_apprx)
+                    phai0 = reset_p0(angle1to2,rand_p0v,rand_p0h,thinned_array_v_y,thinned_array_h_y,ray_num_V,ray_num_H)
+                    vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source_org)
+                    reflect1 = reflect_ray(phai0, norm_vector(coeffs_hyp_v, vmirr_hyp))
+                    hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect1, vmirr_hyp)
+
+                    hmirr_hyp_points_rotated = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                else:
+                    vmirr_hyp_points_rotated = rotate_points(vmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                    hmirr_hyp_points_rotated = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
+                # coeffs_hyp_h = rotate_z(coeffs_hyp_h,-theta_z,focus_apprx)
+                # coeffs_hyp_h = rotate_y(coeffs_hyp_h,-theta_y,focus_apprx)
+                # coeffs_hyp_v = rotate_z(coeffs_hyp_v,-theta_z,focus_apprx)
+                # coeffs_hyp_v = rotate_y(coeffs_hyp_v,-theta_y,focus_apprx)
                 # if False:  ### この方法原因でエラーなるっぽい
                 #     points = np.vstack([hmirr_hyp_points_rotated[:,0], hmirr_hyp_points_rotated[:,ray_num_H-1], hmirr_hyp_points_rotated[:,-1], hmirr_hyp_points_rotated[:,-ray_num_H]])
                 #     print('hmirr_hyp_points_rotated[:,0]',hmirr_hyp_points_rotated[:,0])
                 #     print('points',points.T)
-                #     hmirr_hyp_points_rotated_grid = generate_grid_on_mirror_with_normal(coeffs_hyp_h, points.T, downsample_h2,downsample_v2)
+                #     hmirr_hyp_points_rotated_grid = generate_grid_on_mirror_with_normal(coeffs_hyp_h, points.T, ray_num_V,ray_num_H)
                 #     points = np.vstack([vmirr_hyp_points_rotated[:,0], vmirr_hyp_points_rotated[:,ray_num_H-1], vmirr_hyp_points_rotated[:,-1], vmirr_hyp_points_rotated[:,-ray_num_H]])
-                #     vmirr_hyp_points_rotated_grid = generate_grid_on_mirror_with_normal(coeffs_hyp_v, points.T, downsample_h1,downsample_v1)
+                #     vmirr_hyp_points_rotated_grid = generate_grid_on_mirror_with_normal(coeffs_hyp_v, points.T, ray_num_V,ray_num_H)
                 #
                 #     print('1st V mirror')
-                #     CalcDataPitch(vmirr_hyp_points_rotated_grid,downsample_h1,downsample_v1)
+                #     CalcDataPitch(vmirr_hyp_points_rotated_grid, ray_num_V,ray_num_H)
                 #     print('2nd H mirror')
-                #     CalcDataPitch(hmirr_hyp_points_rotated_grid,downsample_h2,downsample_v2)
+                #     CalcDataPitch(hmirr_hyp_points_rotated_grid, ray_num_V,ray_num_H)
                 # else:
-                hmirr_hyp_points_rotated_grid = hmirr_hyp_points_rotated
-                vmirr_hyp_points_rotated_grid = vmirr_hyp_points_rotated
+                hmirr_hyp_points_rotated_grid = hmirr_hyp_points_rotated.copy()
+                vmirr_hyp_points_rotated_grid = vmirr_hyp_points_rotated.copy()
+                print('1st V mirror')
+                CalcDataPitch(vmirr_hyp_points_rotated_grid, ray_num_V,ray_num_H)
+                print('2nd H mirror')
+                CalcDataPitch(hmirr_hyp_points_rotated_grid, ray_num_V,ray_num_H)
 
             else:
-                reflect2_rotated = reflect2
+                reflect2_rotated_org = reflect2
                 hmirr_hyp_points_rotated = hmirr_hyp
                 vmirr_hyp_points_rotated = vmirr_hyp
                 source_rotated = source
             coeffs_det = np.zeros(10)
             coeffs_det[6] = 1
             coeffs_det[9] = -(s2f_middle + defocus)
-            detcenter = plane_ray_intersection(coeffs_det, reflect2_rotated, hmirr_hyp_points_rotated)
+            detcenter = plane_ray_intersection(coeffs_det, reflect2_rotated_org, hmirr_hyp_points_rotated_org)
 
             vec0to1 = normalize_vector(vmirr_hyp_points_rotated_grid - source_rotated)
             vec1to2 = normalize_vector(hmirr_hyp_points_rotated_grid - vmirr_hyp_points_rotated_grid)
@@ -4891,7 +5002,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
                 coeffs_det2 = np.zeros(10)
                 coeffs_det2[6] = 1
                 coeffs_det2[9] = -(s2f_middle + defocus+defocusForWave)
-                detcenter2 = plane_ray_intersection(coeffs_det2, reflect2_rotated, hmirr_hyp_points_rotated)
+                detcenter2 = plane_ray_intersection(coeffs_det2, reflect2_rotated_org, hmirr_hyp_points_rotated_org)
                 return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2
             else:
                 return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2
@@ -6785,6 +6896,9 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
 
     print('vmirr_hyp',vmirr_hyp.dtype)
     print('vmirr_hyp',vmirr_hyp.shape)
+    print('xFOV vmirr_hyp',[np.min(vmirr_hyp[0,:]),np.max(vmirr_hyp[0,:]),np.max(vmirr_hyp[0,:])-np.min(vmirr_hyp[0,:])])
+    print('yFOV vmirr_hyp',[np.min(vmirr_hyp[1,:]),np.max(vmirr_hyp[1,:]),np.max(vmirr_hyp[1,:])-np.min(vmirr_hyp[1,:])])
+    print('zFOV vmirr_hyp',[np.min(vmirr_hyp[2,:]),np.max(vmirr_hyp[2,:]),np.max(vmirr_hyp[2,:])-np.min(vmirr_hyp[2,:])])
 
     dS2 = calc_dS(hmirr_hyp,size_v2, size_h2)
     hmirr_hyp = np.vstack((hmirr_hyp, dS2.flatten()))
@@ -6793,6 +6907,9 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
 
     print('hmirr_hyp',hmirr_hyp.dtype)
     print('hmirr_hyp',hmirr_hyp.shape)
+    print('xFOV hmirr_hyp',[np.min(hmirr_hyp[0,:]),np.max(hmirr_hyp[0,:]),np.max(hmirr_hyp[0,:])-np.min(hmirr_hyp[0,:])])
+    print('yFOV hmirr_hyp',[np.min(hmirr_hyp[1,:]),np.max(hmirr_hyp[1,:]),np.max(hmirr_hyp[1,:])-np.min(hmirr_hyp[1,:])])
+    print('zFOV hmirr_hyp',[np.min(hmirr_hyp[2,:]),np.max(hmirr_hyp[2,:]),np.max(hmirr_hyp[2,:])-np.min(hmirr_hyp[2,:])])
 
     if option_AKB:
         dS3 = calc_dS(vmirr_ell,size_v1, size_h1)
@@ -6905,8 +7022,9 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
         file.write(f"option_HighNA: {option_HighNA}\n")
         file.write(f"defocusForWave: {defocusForWave}\n")
         file.write(f"calc both mirrors?: {option_2mirror}\n")
+        file.write(f"option_avrgsplt: {option_avrgsplt}\n")
         file.write("====================\n")
-    sys.exit()
+
     # index = 0
     # cosi1 = np.sum(vec0to1 * vmirr_norm, axis=0)[index]
     # vmirr_hyp_here = vmirr_hyp[0:3,index]
@@ -6964,14 +7082,25 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     # # plt.axis('equal')
     # plt.show()
 
-    # # dS = calc_dS(vmirr_hyp,size_v1, size_h1)
-    # # dS_flatten = dS.flatten()
+    # # # dS = calc_dS(vmirr_hyp,size_v1, size_h1)
+    # # # dS_flatten = dS.flatten()
     # plt.figure()
-    # scatter = plt.scatter(vmirr_hyp[0, :], vmirr_hyp[1, :],c=dS_flatten, cmap='jet')
+    # scatter = plt.scatter(vmirr_hyp[1, :], vmirr_hyp[2, :],c=vmirr_hyp[3, :], cmap='jet')
     # plt.colorbar(scatter, label='ds')
-    # # plt.axis('equal')
+    # plt.axis('equal')
+    # plt.show()
+    # plt.figure()
+    # scatter = plt.scatter(hmirr_hyp[1, :], hmirr_hyp[2, :],c=np.arange(hmirr_hyp.shape[1]), cmap='jet')
+    # plt.colorbar(scatter, label='ds')
+    # plt.axis('equal')
     # plt.show()
     #
+    # plt.figure()
+    # scatter = plt.scatter(hmirr_hyp[1, :], hmirr_hyp[2, :],c=hmirr_hyp[3, :], cmap='jet')
+    # plt.colorbar(scatter, label='ds')
+    # plt.axis('equal')
+    # plt.show()
+    # #
     #
     #
     # dS = calc_dS(vmirr_hyp,size_v1, size_h1)
@@ -7003,6 +7132,7 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     # plt.colorbar(scatter, label='OPL error (nm)')
     # plt.axis('equal')
     # plt.show()
+    sys.exit()
     return
 #####################################
 # defocus, astigH, \
