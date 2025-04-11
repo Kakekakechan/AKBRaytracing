@@ -182,7 +182,7 @@ def load_npz_data(filename):
 
 if __name__ == '__main__':
     # folder_path = r'\\HPC-PC3\Users\OP_User\Desktop\akb\output_20241129_4096_4096'  # 読み込みたいフォルダ名を指定
-    folder_path = r'output_20250409_sNAKB2049_spltds'
+    folder_path = r'output_20250411_sNAKB2049'
     file_names = ['points_source.npy','points_M1.npy','points_M2.npy','points_gridImage.npy','points_gridDefocus.npy']  # 読み込みたいファイル名をリストで指定
     source = load_file(folder_path, file_names[0])
     vmirr_hyp = load_file(folder_path, file_names[1])
