@@ -59,6 +59,9 @@ def equations(p):
     # 式2: 楕円の焦点条件
     eq2 = (x_1 + x_2 + x_3) - 2 * np.sqrt(a**2 - b2)
 
+    print("eq1:", eq1)
+    print("eq2:", eq2)
+
     return [eq1, eq2]
 
 # --- fsolveで非線形連立方程式を解く ---
