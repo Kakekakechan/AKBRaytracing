@@ -10,7 +10,7 @@ import gc
 import time
 
 ### GPU ###
-print(cp.cuda.runtime.getDeviceCount())  # 使用可能なGPU数を表示
+print(f"free GPU: {cp.cuda.runtime.getDeviceCount()}")  # 使用可能なGPU数を表示
 class WaveField3D:
     def __init__(self, num, _lambda, wave_num_H, wave_num_V):
         # 各値をCuPy配列で初期化
@@ -49,7 +49,7 @@ class WaveField3D:
         start_time = time.time()  # 開始時間を記録
         # GPUで計算を呼び出す（バッチ処理対応）
 
-        self.u = forward_propagation_cupy_batch(
+        self.u = forward_propagation_cupy_batch_multi_gpu(
             self.x, self.y, self.z,
             u_back.x, u_back.y, u_back.z,
             u_back.u,  # 複素数配列を直接渡す
@@ -60,6 +60,81 @@ class WaveField3D:
         # 実行時間を表示
         elapsed_time = end_time - start_time
         print(f"計算時間: {elapsed_time:.6f} 秒")
+
+def forward_propagation_cupy_batch_multi_gpu(x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k, ds):
+    if not isinstance(u_back_u, cp.ndarray):
+        u_back_u = cp.asarray(u_back_u)
+    u_back_u = u_back_u * ds
+    del ds
+    num = len(x)
+    num_back = len(u_back_x)
+
+    # GPUの数を取得
+    num_gpus = cp.cuda.runtime.getDeviceCount()
+    print(f"Number of GPUs available: {num_gpus}")
+
+    # データをGPU数で分割
+    split_x = cp.array_split(x, num_gpus)
+    split_y = cp.array_split(y, num_gpus)
+    split_z = cp.array_split(z, num_gpus)
+
+    # 各GPUで計算結果を格納するリスト
+    results = []
+    streams = [cp.cuda.Stream() for _ in range(num_gpus)]
+
+    # 各GPUで並列計算
+    for gpu_id in range(num_gpus):
+        with cp.cuda.Device(gpu_id), streams[gpu_id]:
+            x_batch = split_x[gpu_id]
+            y_batch = split_y[gpu_id]
+            z_batch = split_z[gpu_id]
+
+            # GPUメモリの空き容量を取得してバッチサイズを決定
+            mem_info = cp.cuda.Device().mem_info
+            free_mem = mem_info[0]
+            overhead = 4.0  # メモリの余裕率
+            element_size = 16  # 複素数1要素あたりのメモリ使用量（バイト）
+            max_batch_size = int((free_mem / overhead) / element_size / num_back)
+            print(f"GPU {gpu_id} free memory: {free_mem}")
+            print(f"GPU {gpu_id} max batch size: {max_batch_size}")
+
+            # 出力配列を初期化（複素数型）
+            u_partial = cp.zeros(len(x_batch), dtype=cp.complex128)
+
+            # バッチごとに計算
+            for i in range(0, len(x_batch), max_batch_size):
+                batch_end = min(i + max_batch_size, len(x_batch))
+                x_sub_batch = x_batch[i:batch_end]
+                y_sub_batch = y_batch[i:batch_end]
+                z_sub_batch = z_batch[i:batch_end]
+
+                # 距離計算と波動伝播
+                dist = cp.sqrt(
+                    (x_sub_batch[:, None] - u_back_x[None, :]) ** 2 +
+                    (y_sub_batch[:, None] - u_back_y[None, :]) ** 2 +
+                    (z_sub_batch[:, None] - u_back_z[None, :]) ** 2
+                )
+                amplitude = 1. / dist
+                phase = -k * dist
+                factor = amplitude * cp.exp(1j * phase)
+                interaction = cp.dot(u_back_u, factor.T)
+                u_partial[i:batch_end] = interaction
+
+                # メモリ解放
+                del x_sub_batch, y_sub_batch, z_sub_batch, dist, amplitude, phase, factor, interaction
+                cp.get_default_memory_pool().free_all_blocks()
+
+            # 部分結果を保存
+            results.append(u_partial)
+
+    # ストリームの同期
+    for stream in streams:
+        stream.synchronize()
+
+    # 各GPUの結果を結合
+    u = cp.concatenate(results)
+    return u
+
 
 def forward_propagation_cupy_batch(x, y, z, u_back_x, u_back_y, u_back_z, u_back_u, k, ds):
     if not isinstance(u_back_u, cp.ndarray):
@@ -72,7 +147,7 @@ def forward_propagation_cupy_batch(x, y, z, u_back_x, u_back_y, u_back_z, u_back
     # GPUメモリの空き容量を取得してバッチサイズを決定
     mem_info = cp.cuda.Device().mem_info
     free_mem = mem_info[0]
-    overhead = 8.0  # メモリの余裕率
+    overhead = 4.0  # メモリの余裕率
     element_size = 16  # 複素数1要素あたりのメモリ使用量（バイト）
     max_batch_size = int((free_mem / overhead) / element_size / num_back)
     print(f"free memory: {free_mem}")
@@ -88,8 +163,11 @@ def forward_propagation_cupy_batch(x, y, z, u_back_x, u_back_y, u_back_z, u_back
     # バッチごとに計算
     for i in range(0, num, max_batch_size):
         batch_end = min(i + max_batch_size, num)
-        if i % 23 == 0:
+        if i % 239 == 0:
             print(f"batch: {i}/{num}")
+            mem_info = cp.cuda.Device().mem_info
+            free_mem = mem_info[0]
+            print(f"free memory: {free_mem}")
 
         # 部分データをスライス
         x_batch = x[i:batch_end]
@@ -182,7 +260,7 @@ def load_npz_data(filename):
 
 if __name__ == '__main__':
     # folder_path = r'\\HPC-PC3\Users\OP_User\Desktop\akb\output_20241129_4096_4096'  # 読み込みたいフォルダ名を指定
-    folder_path = r'output_20250411_sNAKB2501'
+    folder_path = r'output_20250416_sNAKB4097'
     file_names = ['points_source.npy','points_M1.npy','points_M2.npy','points_gridImage.npy','points_gridDefocus.npy']  # 読み込みたいファイル名をリストで指定
     source = load_file(folder_path, file_names[0])
     vmirr_hyp = load_file(folder_path, file_names[1])
