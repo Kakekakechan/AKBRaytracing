@@ -40,7 +40,7 @@ class Ell:
         print('self.omega_cnt_m_wid',self.omega_cnt_m_wid)
         print('self.omega_cnt_o_angle',self.omega_cnt_o_angle)
 
-        
+
     def ell_design(self):
         self.a = (self.l_i1 + self.l_o1)/2
         self.b2 = self.l_i1 * self.l_o1 * np.sin(self.theta_g1)**2
@@ -88,7 +88,7 @@ class Ell:
             self.omega_cnt_o_angle = self.theta_i_cnt_o_angle + self.theta_o_cnt_o_angle
             ### input center
             self.theta_i_cnt_angle = (self.theta_i1+self.theta_i2)/2
-            
+
 
         pass  # Placeholder for actual calculations
 def ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin):
@@ -147,8 +147,11 @@ def ELL_H_design(Ell1, target_l_o2, target_gap, ast):
     return Ell1, Ell2
 def KB_design(l_i1, l_o1, theta_g1, na_o_sin,target_l_o2, target_gap, ast):
     Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin)
+    print('Ell1 design')
     Ell1.print()
     Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast)
+    print('Ell2 design')
+    Ell2.print()
     return Ell1, Ell2
 def plot_ellipses(Ell1, Ell2):
     print('Ell1 design')
@@ -162,7 +165,7 @@ def plot_ellipses(Ell1, Ell2):
     # plt.plot([0, Ell2.x_1], [0, Ell2.y_1], 'r', label='input beam')
     plt.plot([Ell2.x_1, Ell2.x_1+Ell2.x_2], [Ell2.y_1, Ell2.y_2], 'r--')
     plt.plot(2*Ell2.f, 0, 'ro')
-    
+
     fig, ax = plt.subplots(1,2)
     ax[0].plot([0, Ell1.x_2],[np.rad2deg((Ell1.theta_i1+Ell1.theta_o1)/2), np.rad2deg((Ell1.theta_i2+Ell1.theta_o2)/2)], 'r--')
     ax[1].plot([0, Ell2.x_2],[np.rad2deg((Ell2.theta_i1+Ell2.theta_o1)/2), np.rad2deg((Ell2.theta_i2+Ell2.theta_o2)/2)], 'r--')
@@ -182,4 +185,3 @@ if __name__ == '__main__':
     Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin)
     Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast)
     plot_ellipses(Ell1, Ell2)
-    

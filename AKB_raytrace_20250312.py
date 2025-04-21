@@ -3027,15 +3027,31 @@ class KBDesignManager:
         if self.Ell1 is None or self.Ell2 is None:
             l_i1 = np.float64(145.7500024376426)
             l_o1 = np.float64(1.0499975623574187)
-            theta_g1 = np.float64(0.211)
-            na_o_sin = np.float64(0.082)
-            target_l_o2 = np.float64(0.04)  # WD
-            target_gap = np.float64(0.02)
-            ast = np.float64(0.)
+            theta_g1 = np.float64(0.026207694380368848)*4
+            na_o_sin = np.float64(0.01)*4
+            target_l_o2 = np.float64(0.3199999032106779)  # WD
+            target_gap = np.float64(0.22868328628430845)
+            ast = np.float64(0.09)
+            # l_i1 = np.float64(145.750155679735)
+            # l_o1 = np.float64(1.049844320265004)
+            # theta_g1 = np.float64(0.21093460929217367)
+            # na_o_sin = np.float64(0.082)
+            # target_l_o2 = np.float64(0.3199948756376758)  # WD
+            # target_gap = np.float64(0.3658793853926454)
+            # ast = np.float64(0.)
+            # ファイルに保存
+            with open("ParamsDesign.txt", "w") as file:
+                file.write(f"l_i1 = {l_i1}\n")
+                file.write(f"l_o1 = {l_o1}\n")
+                file.write(f"theta_g1 = {theta_g1}\n")
+                file.write(f"na_o_sin = {na_o_sin}\n")
+                file.write(f"target_l_o2 = {target_l_o2}\n")
+                file.write(f"target_gap = {target_gap}\n")
+                file.write(f"ast = {ast}\n")
             self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
         return self.Ell1, self.Ell2
 kb_manager = KBDesignManager()
-def KB_debug_old(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
+def KB_debug_old(params,na_ratio_h,na_ratio_v,option):
     defocus, astigH, \
     pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
     pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -4724,7 +4740,7 @@ def KB_debug_old(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
 # 焦点面での標準偏差を計算
     return vmirr_hyp, hmirr_hyp, detcenter, angle
 
-def KB_debug(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
+def KB_debug(params,na_ratio_h,na_ratio_v,option):
     defocus, astigH, \
     pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
     pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -4772,6 +4788,8 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
         # omega_V = Ell1.omega_default
         # omega_V = Ell1.omega_cnt_m_wid ### ミラー中心光線基準　昔これ基準で面内回転調整量大きかった
         omega_V = Ell1.omega_cnt_o_angle ### 反射光中心基準
+        # omega_V = + 8e-4
+        # omega_V = 0.
         NA_h = np.sin(Ell1.na_o/2)
         NA_v = np.sin(Ell2.na_o/2)
 
@@ -4976,128 +4994,6 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
             bufray[1, :] = np.tan(theta1_h)
             bufray[2, :] = np.tan(theta1_v)
         source = np.zeros((3, 2))
-        if option_alignment and option_axial:
-            bufray = np.zeros((3, 5))
-            ### 4隅の光線
-            theta_cntr_h = (np.arctan(y2_h / x2_h) + np.arctan(y1_h / x1_h))/2.
-            theta_cntr_v = (np.arctan(y2_v / x2_v) + np.arctan(y1_v / x1_v))/2.
-            def print_optical_design(a_ell_h,b_ell_h,org_ell_h,theta1_h):
-
-                l4_h = ((org_ell_h)**2 - 2*org_ell_h*a_ell_h*np.cos(theta1_h) + a_ell_h**2)/(a_ell_h - org_ell_h*np.cos(theta1_h))
-                # l4_v = ((org_ell_v)**2 - 2*org_ell_v*a_ell_v*np.cos(theta3_v) + a_ell_v**2)/(a_ell_v - org_ell_v*np.cos(theta3_v))
-
-                l1_h = 2*a_ell_h - l4_h
-                # l3_v = 2*a_ell_v - l2_v - l4_v
-
-                theta5_h = np.arcsin((2*a_ell_h - l4_h)*np.sin(theta1_h)/l4_h)
-                # theta5_v = np.arcsin((2*a_ell_v - l4_v)*np.sin(theta3_v)/l4_v)
-
-                theta4_h = (theta5_h+theta1_h)/2.
-                # # theta4_v = (theta5_v+theta3_v)/2.
-                # print('theta1',theta1_h)
-                # # print('l2_v',l2_v)
-                # print('l1',l1_h)
-                # # print('l1_v',l1_v)
-                # print('l4',l4_h)
-                # # print('l4_v',l4_v)
-                # print('theta4 incidence ell',theta4_h)
-                # # print('theta4_v incidence ell',theta4_v)
-                theta4_h = np.arcsin(2*org_ell_h*np.sin(theta1_h)/l4_h)/2
-                # # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
-                # print('theta4 incidence ell',theta4_h)
-                # # print('theta4_v incidence ell',theta4_v)
-                # print('theta5 focal',theta5_h)
-                # # print('theta5_v focal',theta5_v)
-                # print('width1',l1_h*np.cos(theta1_h))
-                # print('width3',l4_h*np.cos(theta5_h))
-                # print('')
-                return l1_h*np.cos(theta1_h),l4_h*np.cos(theta5_h),theta5_h, l1_h, l4_h,theta4_h
-            width1_h,width3_h,theta5_h, l1_h, l4_h,theta4_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,theta1_h)
-            width1_h1,width3_h1,theta5_h1, l1_h1, l4_h1,theta4_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,np.arctan(y1_h / x1_h))
-            width1_h2,width3_h2,theta5_h2, l1_h2, l4_h2,theta4_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,np.arctan(y2_h / x2_h))
-            width1_v,width3_v,theta5_v, l1_v, l4_v,theta4_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,theta1_v)
-            width1_v1,width3_v1,theta5_v1, l1_v1, l4_v1,theta4_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y1_v / x1_v))
-            width1_v2,width3_v2,theta5_v2, l1_v2, l4_v2,theta4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y2_v / x2_v))
-            # omega_V = ((np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v)) + theta5_v1 + theta5_v2)/2
-            # if option == 'ray':
-            #
-            #
-            #     print('===== Horizontal center =====')
-            #     width1_h,width3_h,theta5_h, l1_h, l4_h,theta4_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,theta1_h)
-            #     print('===== Horizontal edge1 =====')
-            #     width1_h1,width3_h1,theta5_h1, l1_h1, l4_h1,theta4_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,np.arctan(y1_h / x1_h))
-            #     print('===== Horizontal edge2 =====')
-            #     width1_h2,width3_h2,theta5_h2, l1_h2, l4_h2,theta4_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,np.arctan(y2_h / x2_h))
-            #
-            #     print('===== Vertical center =====')
-            #     width1_v,width3_v,theta5_v, l1_v, l4_v,theta4_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,theta1_v)
-            #     print('===== Vertical edge1 =====')
-            #     width1_v1,width3_v1,theta5_v1, l1_v1, l4_v1,theta4_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y1_v / x1_v))
-            #     print('===== Vertical edge2 =====')
-            #     width1_v2,width3_v2,theta5_v2, l1_v2, l4_v2,theta4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y2_v / x2_v))
-            #
-            #     print('===== ===== =====')
-            #     omega_V = ((np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v)) + theta5_v1 + theta5_v2)/2
-            #     print('omega_V',omega_V)
-            #     print('===== ===== =====')
-            #     print('na_h',np.sin((theta5_h1 - theta5_h2))/2.)
-            #     print('na_v',np.sin((theta5_v1 - theta5_v2))/2.)
-            #     print('div_h',(arctan(y2_h / x2_h) - arctan(y1_h / x1_h)))
-            #     print('div_v',(arctan(y2_v / x2_v) - arctan(y1_v / x1_v)))
-            #     print('1stmrr width',width1_v2 - width1_v1)
-            #     print('2ndmrr width',width1_h2 - width1_h1)
-            #     print('sorce to center 1stmrr',width1_v)
-            #     print('center 1stmrr to focus',width3_v)
-            #     print('sorce to center 2ndmrr',width1_h)
-            #     print('center 2ndmrr to focus',width3_h)
-            #     print('distance 1stmrr 2ndmrr',width1_h-width1_v)
-            #     print('inc 1stmrr',[theta4_v1,theta4_v2])
-            #     print('inc 2ndmrr',[theta4_h1,theta4_h2])
-            #     print('WD',width3_h2)
-            #     print('===== ===== =====')
-            #     na0_h = (np.arctan(y2_h / x2_h) - np.arctan(y1_h / x1_h))/2.
-            #     na0_v = (np.arctan(y2_v / x2_v) - np.arctan(y1_v / x1_v))/2.
-            #     na_h = (theta5_h1 - theta5_h2)/2.
-            #     na_v = (theta5_v1 - theta5_v2)/2.
-            #     dif_l1_h = l1_h * (1/np.cos(na0_v) - 1)
-            #     dif_l4_h = l4_h * (1/np.cos(na_v) - 1)
-            #     dif_l1_v = l1_v * (1/np.cos(na0_h) - 1)
-            #     dif_l4_v = l4_v * (1/np.cos(na_h) - 1)
-            #     print('dif_l1_h',dif_l1_h)
-            #     print('dif_l4_h',dif_l4_h)
-            #     print('dif_l1_v',dif_l1_v)
-            #     print('dif_l4_v',dif_l4_v)
-
-            width1_v1,width3_v1,theta5_v1, l1_v1, l4_v1,_ = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y1_v / x1_v))
-            width1_v2,width3_v2,theta5_v2, l1_v2, l4_v2,_ = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y2_v / x2_v))
-            # omega_V = ((np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v)) + theta5_v1 + theta5_v2)/2
-
-            theta_source_1_h = np.arctan(y1_h / x1_h) - theta_cntr_h
-            theta_source_2_h = np.arctan(y2_h / x2_h) - theta_cntr_h
-            theta_source_1_v = np.arctan(y1_v / x1_v) - theta_cntr_v
-            theta_source_2_v = np.arctan(y2_v / x2_v) - theta_cntr_v
-
-            bufray[0, 0] = 1.
-            bufray[1, 0] = np.tan(theta1_h)
-            bufray[2, 0] = np.tan(theta1_v)
-
-            bufray[0, 1] = 1.
-            bufray[1, 1] = np.tan(theta_source_1_h)
-            bufray[2, 1] = np.tan(theta_source_1_v)
-
-            bufray[0, 2] = 1.
-            bufray[1, 2] = np.tan(theta_source_2_h)
-            bufray[2, 2] = np.tan(theta_source_1_v)
-
-            bufray[0, 3] = 1.
-            bufray[1, 3] = np.tan(theta_source_2_h)
-            bufray[2, 3] = np.tan(theta_source_1_v)
-
-            bufray[0, 4] = 1.
-            bufray[1, 4] = np.tan(theta_source_2_h)
-            bufray[2, 4] = np.tan(theta_source_2_v)
-
-            source = np.zeros((3, 5))
     else:
         if option_alignment and option_axial:
             bufray = np.zeros((3, 5))
@@ -5373,7 +5269,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
     axis_y_global = np.float64([0.,1.,0.])
     axis_z_global = np.float64([0.,0.,1.])
     if option_axial:
-        coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_z_2nd, -theta1_h, [0, 0, 0])
+        coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_z_global, -theta1_h, [0, 0, 0])
         if optionLocalRotation:
             axis_x_2nd, axis_y_2nd, axis_z_2nd = rotatematrix(rotation_matrix, axis_x_2nd, axis_y_2nd, axis_z_2nd)
 
@@ -5390,13 +5286,13 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,optKBdesign=False):
             # center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect1, center_hyp_v)
             if optionLocalRotation:
                 if optionLocalRotationonlyAll:
-                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_y_2nd, -omega_V, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_y_2nd, omega_V, np.mean(center_hyp_h[:, 1:],axis=1))
                     axis_x_2nd, axis_y_2nd, axis_z_2nd = rotatematrix(rotation_matrix, axis_x_2nd, axis_y_2nd, axis_z_2nd)
                 else:
-                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_y_global, -omega_V, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis_y_global, omega_V, np.mean(center_hyp_h[:, 1:],axis=1))
                     axis_x_2nd, axis_y_2nd, axis_z_2nd = rotatematrix(rotation_matrix, axis_x_2nd, axis_y_2nd, axis_z_2nd)
             else:
-                coeffs_hyp_h = rotate_y(coeffs_hyp_h, -bufreflangle1_y, np.mean(center_hyp_h[:, 1:],axis=1))
+                coeffs_hyp_h = rotate_y(coeffs_hyp_h, omega_V, np.mean(center_hyp_h[:, 1:],axis=1))
             center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect1, center_hyp_v)
 
     bufreflect2 = reflect_ray(bufreflect1, norm_vector(coeffs_hyp_h, center_hyp_h))
@@ -6365,9 +6261,9 @@ def objective_function(var_params, fixed_params, var_indices, num_params,option_
     area_min = auto_focus_NA(50, params,1,1, False,'D')
     return area_min
 #####################################
-def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray',optKBdesign=optKBdesign):
-    initial_a_min = -0.3   # Initial minimum value for 'a'
-    initial_a_max = 0.3  # Initial maximum value for 'a'
+def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray'):
+    initial_a_min = -0.3 + initial_params[0].copy()  # Initial minimum value for 'a'
+    initial_a_max = 0.3 + initial_params[0].copy() # Initial maximum value for 'a'
     shrink_factor = 0.1    # Range reduction factor per loop
     num_adj_astg = 100      # Number of steps for each range
     max_attempts = 20     # Maximum attempts to avoid infinite loop
@@ -6393,7 +6289,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
             if option_AKB:
                 vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
             else:
-                vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test',optKBdesign=optKBdesign)
+                vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
             size_v_[i] = np.std(detcenter[2, :])
             size_h_[i] = np.std(detcenter[1, :])
 
@@ -6412,7 +6308,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
                 if option_AKB:
                     vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
                 else:
-                    vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test',optKBdesign=optKBdesign)
+                    vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
                 size_v_[i] = np.std(detcenter[2, :])
                 size_h_[i] = np.std(detcenter[1, :])
                 if option_param == 'D':
@@ -6460,7 +6356,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
             vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,option_disp)
 
         else:
-            vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params,na_ratio_h,na_ratio_v, option_disp, optKBdesign=optKBdesign)
+            vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params,na_ratio_h,na_ratio_v, option_disp)
         # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
 
 
@@ -6480,7 +6376,7 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
         if option_AKB:
             c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = plot_result_debug(initial_params,'sep')
         else:
-            c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = KB_debug(initial_params,1,1, 'sep',optKBdesign=optKBdesign)
+            c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = KB_debug(initial_params,1,1, 'sep')
         # c1,c2,c3,c4,c5,c6 = KB_debug(initial_params,na_ratio_h,na_ratio_v, 'sep_direct')
         focus_v0, focus_h0, pos_v0, pos_h0, std_v0, std_h0, focus_v0_l, focus_h0_l, focus_v0_u, focus_h0_u, focus_std_obl1, focus_std_obl2 = c1,c2,c3[:,0,:],c4[:,0,:],c5,c6,c7,c8,c9,c10,c11,c12
 
@@ -6601,7 +6497,7 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
         if option_AKB:
             c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = plot_result_debug(initial_params,'sep')
         else:
-            c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = KB_debug(initial_params,na_ratio_h,na_ratio_v, 'sep',optKBdesign=optKBdesign)
+            c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12 = KB_debug(initial_params,na_ratio_h,na_ratio_v, 'sep')
         # c1,c2,c3,c4,c5,c6 = KB_debug(initial_params,na_ratio_h,na_ratio_v, 'sep_direct')
         focus_v0[j,:], focus_h0[j,:], pos_v0[j,:,:], pos_h0[j,:,:], std_v0[j,:], std_h0[j,:], focus_v0_l[j,:], focus_h0_l[j,:], focus_v0_u[j,:], focus_h0_u[j,:], focus_std_obl1[j], focus_std_obl2[j] = c1,c2,c3[:,0,:],c4[:,0,:],c5,c6,c7,c8,c9,c10,c11,c12
         astig[j] = initial_params[1]
@@ -7056,9 +6952,9 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     else:
         # KB_debug(initial_params,1,1,'ray_wave')
         if np.abs(defocusForWave) > 1e-9:
-            source, vmirr_hyp, hmirr_hyp, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave',optKBdesign=optKBdesign)
+            source, vmirr_hyp, hmirr_hyp, detcenter, detcenter2, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
         else:
-            source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave',optKBdesign=optKBdesign)
+            source, vmirr_hyp, hmirr_hyp, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vec0to1, vec1to2 = KB_debug(initial_params,1,1,'wave')
 
     if ray_num_H%2 == 1:
         vmirr_hyp, size_v1, size_h1 = downsample_array_3_n(vmirr_hyp, ray_num_V, ray_num_H, downsample_h1, downsample_v1)
@@ -7426,8 +7322,8 @@ else:
         # initial_params[1] = 9.03591711e-02
         # initial_params[0] = -6.65102105e-03
         print('')
-        initial_params[0] = -0.0066147
-        initial_params[1] = 0.08293528
+        # initial_params[0] = -0.0066147
+        # initial_params[1] = 0.08293528
     else:
         # initial_params[0] = -7.63301786e-05
         # initial_params[1] = 9.23475843e-04
@@ -7529,6 +7425,8 @@ else:
         # initial_params[9] = 4.65100097e-08
         # initial_params[10] = 1.21012885e-07
         print('KB L')
+        # initial_params[0] = -0.09
+        # initial_params[1] = -0.09
 
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
