@@ -3031,7 +3031,7 @@ class KBDesignManager:
             na_o_sin = np.float64(0.01)*4
             target_l_o2 = np.float64(0.3199999032106779)  # WD
             target_gap = np.float64(0.22868328628430845)
-            ast = np.float64(0.09)
+            ast = np.float64(-0.09)
             # l_i1 = np.float64(145.750155679735)
             # l_o1 = np.float64(1.049844320265004)
             # theta_g1 = np.float64(0.21093460929217367)
@@ -7425,7 +7425,7 @@ else:
         # initial_params[9] = 4.65100097e-08
         # initial_params[10] = 1.21012885e-07
         print('KB L')
-        # initial_params[0] = -0.09
+        initial_params[0] = -0.12
         # initial_params[1] = -0.09
 
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
