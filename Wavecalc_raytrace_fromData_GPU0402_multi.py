@@ -141,7 +141,7 @@ def forward_propagation_cupy_batch_multi_gpu(x, y, z, u_back_x, u_back_y, u_back
     # results = []
     # streams = [cp.cuda.Stream() for _ in range(num_gpus)]
     # cleanup_streams = [cp.cuda.Stream() for _ in range(num_gpus)]  # メモリ解放用ストリーム
-    
+
     # # 各GPUで並列計算
     # for gpu_id in range(num_gpus):
     #     with cp.cuda.Device(gpu_id):  # GPUデバイスを切り替え
@@ -374,12 +374,12 @@ if __name__ == '__main__':
 
     try:
         # folder_path = r'\\HPC-PC3\Users\OP_User\Desktop\akb\output_20241129_4096_4096'  # 読み込みたいフォルダ名を指定
-        folder_path = r'output_20250416_sNAKB4097'
+        folder_path = r'output_20250501_LNA4097'
         file_names = ['points_source.npy','points_M1.npy','points_M2.npy','points_gridImage.npy','points_gridDefocus.npy']  # 読み込みたいファイル名をリストで指定
         source = load_file(folder_path, file_names[0])
         vmirr_hyp = load_file(folder_path, file_names[1])
 
-        
+
         directory_name = f"output_{timestamp}"
         # 新しいフォルダを作成
         os.makedirs(directory_name, exist_ok=True)

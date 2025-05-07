@@ -3022,33 +3022,44 @@ class KBDesignManager:
     def __init__(self):
         self.Ell1 = None
         self.Ell2 = None
+    
+    def set_design(self, l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast):
+        self.l_i1 = np.float64(l_i1)
+        self.l_o1 = np.float64(l_o1)
+        self.theta_g1 = np.float64(theta_g1)
+        self.na_o_sin = np.float64(na_o_sin)
+        self.target_l_o2 = np.float64(target_l_o2)  # WD
+        self.target_gap = np.float64(target_gap)
+        self.ast = np.float64(ast)
 
     def get_design(self):
         if self.Ell1 is None or self.Ell2 is None:
-            l_i1 = np.float64(145.7500024376426)
-            l_o1 = np.float64(1.0499975623574187)
-            theta_g1 = np.float64(0.026207694380368848)*4
-            na_o_sin = np.float64(0.01)*4
-            target_l_o2 = np.float64(0.3199999032106779)  # WD
-            target_gap = np.float64(0.22868328628430845)
-            ast = np.float64(-0.09)
-            # l_i1 = np.float64(145.750155679735)
-            # l_o1 = np.float64(1.049844320265004)
-            # theta_g1 = np.float64(0.21093460929217367)
-            # na_o_sin = np.float64(0.082)
-            # target_l_o2 = np.float64(0.3199948756376758)  # WD
-            # target_gap = np.float64(0.3658793853926454)
-            # ast = np.float64(0.)
+            # self.l_i1 = np.float64(145.7500024376426)
+            # self.l_o1 = np.float64(1.0499975623574187)
+            # # self.theta_g1 = np.float64(0.026207694380368848)*10
+            # self.theta_g1 = np.float64(0.21093460929217367)
+            # self.na_o_sin = np.float64(0.01)*8.2
+            # self.target_l_o2 = np.float64(0.3199999032106779)  # WD
+            # self.target_gap = np.float64(0.22868328628430845)
+            # # self.target_gap = np.float64(0.3658793853926454)
+            # self.ast = np.float64(0.)
+            # self.l_i1 = np.float64(145.750155679735)
+            # self.l_o1 = np.float64(1.049844320265004)
+            # self.theta_g1 = np.float64(0.21093460929217367)
+            # self.na_o_sin = np.float64(0.082)
+            # self.target_l_o2 = np.float64(0.3199948756376758)  # WD
+            # self.target_gap = np.float64(0.3658793853926454)
+            # self.ast = np.float64(0.)
             # ファイルに保存
             with open("ParamsDesign.txt", "w") as file:
-                file.write(f"l_i1 = {l_i1}\n")
-                file.write(f"l_o1 = {l_o1}\n")
-                file.write(f"theta_g1 = {theta_g1}\n")
-                file.write(f"na_o_sin = {na_o_sin}\n")
-                file.write(f"target_l_o2 = {target_l_o2}\n")
-                file.write(f"target_gap = {target_gap}\n")
-                file.write(f"ast = {ast}\n")
-            self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+                file.write(f"l_i1 = {self.l_i1}\n")
+                file.write(f"l_o1 = {self.l_o1}\n")
+                file.write(f"theta_g1 = {self.theta_g1}\n")
+                file.write(f"na_o_sin = {self.na_o_sin}\n")
+                file.write(f"target_l_o2 = {self.target_l_o2}\n")
+                file.write(f"target_gap = {self.target_gap}\n")
+                file.write(f"ast = {self.ast}\n")
+            self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin, self.target_l_o2, self.target_gap, self.ast)
         return self.Ell1, self.Ell2
 kb_manager = KBDesignManager()
 def KB_debug_old(params,na_ratio_h,na_ratio_v,option):
@@ -5039,7 +5050,37 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             width1_v2,width3_v2,theta5_v2, l1_v2, l4_v2,theta4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,np.arctan(y2_v / x2_v))
             omega_V = ((np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v)) + theta5_v1 + theta5_v2)/2
             if option == 'ray':
+                def print_optical_design(a_ell_h,b_ell_h,org_ell_h,theta1_h):
 
+                    l4_h = ((org_ell_h)**2 - 2*org_ell_h*a_ell_h*np.cos(theta1_h) + a_ell_h**2)/(a_ell_h - org_ell_h*np.cos(theta1_h))
+                    # l4_v = ((org_ell_v)**2 - 2*org_ell_v*a_ell_v*np.cos(theta3_v) + a_ell_v**2)/(a_ell_v - org_ell_v*np.cos(theta3_v))
+
+                    l1_h = 2*a_ell_h - l4_h
+                    # l3_v = 2*a_ell_v - l2_v - l4_v
+
+                    theta5_h = np.arcsin((2*a_ell_h - l4_h)*np.sin(theta1_h)/l4_h)
+                    # theta5_v = np.arcsin((2*a_ell_v - l4_v)*np.sin(theta3_v)/l4_v)
+
+                    theta4_h = (theta5_h+theta1_h)/2.
+                    # theta4_v = (theta5_v+theta3_v)/2.
+                    print('theta1',theta1_h)
+                    # print('l2_v',l2_v)
+                    print('l1',l1_h)
+                    # print('l1_v',l1_v)
+                    print('l4',l4_h)
+                    # print('l4_v',l4_v)
+                    print('theta4 incidence ell',theta4_h)
+                    # print('theta4_v incidence ell',theta4_v)
+                    theta4_h = np.arcsin(2*org_ell_h*np.sin(theta1_h)/l4_h)/2
+                    # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
+                    print('theta4 incidence ell',theta4_h)
+                    # print('theta4_v incidence ell',theta4_v)
+                    print('theta5 focal',theta5_h)
+                    # print('theta5_v focal',theta5_v)
+                    print('width1',l1_h*np.cos(theta1_h))
+                    print('width3',l4_h*np.cos(theta5_h))
+                    print('')
+                    return l1_h*np.cos(theta1_h),l4_h*np.cos(theta5_h),theta5_h, l1_h, l4_h,theta4_h
 
                 print('===== Horizontal center =====')
                 width1_h,width3_h,theta5_h, l1_h, l4_h,theta4_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,theta1_h)
@@ -6264,9 +6305,9 @@ def objective_function(var_params, fixed_params, var_indices, num_params,option_
 def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray'):
     initial_a_min = -0.3 + initial_params[0].copy()  # Initial minimum value for 'a'
     initial_a_max = 0.3 + initial_params[0].copy() # Initial maximum value for 'a'
-    shrink_factor = 0.1    # Range reduction factor per loop
+    shrink_factor = 0.3    # Range reduction factor per loop
     num_adj_astg = 100      # Number of steps for each range
-    max_attempts = 20     # Maximum attempts to avoid infinite loop
+    max_attempts = 30     # Maximum attempts to avoid infinite loop
 
     # Set the initial range
     a_min = initial_a_min
@@ -6300,6 +6341,16 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         # Get the minimum values
         size_v_param = np.min(size_v_)
         size_h_param = np.min(size_h_)
+
+        # # plt
+        # plt.plot(a, size_v_, label='size_v_')
+        # plt.plot(a, size_h_, label='size_h_')
+        # plt.xlabel('a')
+        # plt.ylabel('Size')
+        # plt.title('Size vs a')
+        # plt.legend()
+        # # plt.grid()
+        # plt.show()
 
         # Second check if not converged
         if not np.argmin(size_h_) == np.argmin(size_v_):
@@ -7425,10 +7476,60 @@ else:
         # initial_params[9] = 4.65100097e-08
         # initial_params[10] = 1.21012885e-07
         print('KB L')
-        initial_params[0] = -0.12
+        # initial_params[0] = -0.12
         # initial_params[1] = -0.09
+num_a = 10
+a = np.linspace(0.08, 0.3, num_a)
+size = a.copy()*np.nan
+MrrLen_V = a.copy()*np.nan
+MrrLen_H = a.copy()*np.nan
+theta_H1 = a.copy()*np.nan
+theta_H2 = a.copy()*np.nan
+for i in range(num_a):
+    l_i1 = np.float64(145.7500024376426) # 固定
+    l_o1 = np.float64(1.0499975623574187) # 変数
+    theta_g1 = np.float64(0.21093460929217367) # 変数
+    # theta_g1 = np.float64(a[i]) # 変数
+    na_o_sin = np.float64(0.01)*8.2 # 固定
+    # target_l_o2 = np.float64(0.10000512336116031)  # WD
+    target_l_o2 = np.float64(a[i]) # 変数
+    target_gap = np.float64(0.1458793853059035) # 変数
+    # target_gap = np.float64(a[i]) # 変数
+    ast = np.float64(0.)
+    kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+    
+    size[i] = auto_focus_NA(50, initial_params,1,1, False,'D',option_disp='ray')
+    MrrLen_V[i] = kb_manager.Ell1.x_2
+    MrrLen_H[i] = kb_manager.Ell2.x_2
+    theta_H1[i] = (kb_manager.Ell2.theta_o1 + kb_manager.Ell2.theta_i1)/2
+    theta_H2[i] = (kb_manager.Ell2.theta_o2 + kb_manager.Ell2.theta_i2)/2
+    # if i == num_a - 1:
+    #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+    kb_manager = KBDesignManager()
 
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+print('size',size)
+
+fig,axs = plt.subplots(1, 4)
+axs[0].plot(a, size, marker='o')
+axs[0].set_xlabel('theta_g1')
+axs[0].set_ylabel('size')
+axs[0].set_title('size')
+axs[1].plot(a, MrrLen_V, marker='o')
+axs[1].set_xlabel('theta_g1')
+axs[1].set_ylabel('MrrLen_V')
+axs[1].set_title('MrrLen_V')
+axs[2].plot(a, MrrLen_H, marker='o')
+axs[2].set_xlabel('theta_g1')
+axs[2].set_ylabel('MrrLen_H')
+axs[2].set_title('MrrLen_H')
+axs[3].plot(a, theta_H1, marker='o')
+axs[3].plot(a, theta_H2, marker='o')
+axs[3].set_xlabel('theta_g1')
+axs[3].set_ylabel('theta_H')
+plt.show()
+
 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
