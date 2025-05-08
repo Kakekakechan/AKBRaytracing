@@ -39,6 +39,8 @@ class Ell:
         print('self.omega_default',self.omega_default)
         print('self.omega_cnt_m_wid',self.omega_cnt_m_wid)
         print('self.omega_cnt_o_angle',self.omega_cnt_o_angle)
+        print('self.x_cent_o_angle',self.x_cent_o_angle)
+        print('self.y_cent_o_angle',self.y_cent_o_angle)
 
 
     def ell_design(self):

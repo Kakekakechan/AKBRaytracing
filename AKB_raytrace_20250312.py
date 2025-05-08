@@ -4803,12 +4803,94 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
         # omega_V = 0.
         NA_h = np.sin(Ell1.na_o/2)
         NA_v = np.sin(Ell2.na_o/2)
+        if option == 'ray':
+            print('NA',NA_h)
+            print('NA',NA_v)
+            print('theta_g_V1',(Ell1.theta_i1+Ell1.theta_o1)/2)
+            print('theta_g_V2',(Ell1.theta_i2+Ell1.theta_o2)/2)
+            print('theta_g_H1',(Ell2.theta_i1+Ell2.theta_o1)/2)
+            print('theta_g_H2',(Ell2.theta_i2+Ell2.theta_o2)/2)
+            print('mirrLenV',Ell1.x_2)
+            print('mirrLenH',Ell2.x_2)
+            div_V = Ell1.theta_i1-Ell1.theta_i2
+            div_H = Ell2.theta_i1-Ell2.theta_i2
+            print('div_V',div_V)
+            print('div_H',div_H)
+            print('Ell1.x_3',Ell1.x_3)
+            gap = Ell2.x_1 - Ell1.x_1 - Ell1.x_2
+            print('Gap',gap)
+            print('WD',Ell2.l_o2)
+            P_V1 = 1/Ell1.x_1 + 1/(Ell1.x_2+Ell1.x_3)
+            P_V2 = 1/(Ell1.x_1+Ell1.x_2) + 1/Ell1.x_3
+            P_H1 = 1/Ell2.x_1 + 1/(Ell2.x_2+Ell2.x_3)
+            P_H2 = 1/(Ell2.x_1+Ell2.x_2) + 1/Ell2.x_3
+            P_VC = 1/Ell1.x_cent_o_angle + 1/(2*Ell1.f - Ell1.x_cent_o_angle)
+            P_HC = 1/Ell2.x_cent_o_angle + 1/(2*Ell2.f - Ell2.x_cent_o_angle)
+            print('P_V1',P_V1)
+            print('P_V2',P_V2)
+            print('P_H1',P_H1)
+            print('P_H2',P_H2)
+            print('P_VC',P_VC)
+            print('P_HC',P_HC)
+            def delta_so(P0,P,s_i):
+                return 1/(P-1/s_i) - 1/(P0-1/s_i)
+            
+            delta_so_H1 = delta_so(P_VC, P_VC*np.cos(div_H/2)**2, Ell1.x_cent_o_angle)
+            delta_so_V2 = delta_so(P_HC, P_HC*np.cos(div_V/2)**2, Ell2.x_cent_o_angle)
+            
+            div_H = div_H
+            div_V = div_V
+            P_VC1_dash = P_VC*np.cos(div_H/2)**2
+            P_VC2_dash = -P_HC*np.sin(Ell1.na_o/2)**2
+            P_HC1_dash = -P_VC*np.sin(div_H/2)**2
+            P_HC2_dash = P_HC*np.cos(Ell1.na_o/2)**2
+            print('P_VC1_dash',P_VC1_dash)
+            print('P_VC2_dash',P_VC2_dash)
+            print('P_HC1_dash',P_HC1_dash)
+            print('P_HC2_dash',P_HC2_dash)
+            # delta_so_V1 = 1/(P_VC*np.sin(div_H/2)**2-1/Ell1.x_cent_o_angle) + Ell1.x_cent_o_angle
+            print('delta_so_H1',delta_so_H1)
+            print('delta_so_V2',delta_so_V2)
+            gap_C = Ell2.x_cent_o_angle - Ell1.x_cent_o_angle
+            so_1_H = 1/(P_HC1_dash-1/Ell1.x_cent_o_angle)
+            print('so_1_H',so_1_H)
+            si_2_H = gap_C - 1/(P_HC1_dash-1/Ell1.x_cent_o_angle)
+            so_fin_H = 1/(P_HC2_dash - 1/si_2_H)
+            so_1_V = 1/(P_VC1_dash-1/Ell1.x_cent_o_angle)
+            print('so_1_V',so_1_V)
+            si_2_V = gap_C - 1/(P_VC1_dash-1/Ell1.x_cent_o_angle)
+            so_fin_V = gap_C + 1/(P_VC2_dash - 1/si_2_V)
+            print('si_2_H',si_2_H)
+            print('si_2_V',si_2_V)
+            print('gap_C',gap_C)
+            print('Ell1.x_cent_o_angle',Ell1.x_cent_o_angle)
+            print('Ell2.x_cent_o_angle',Ell2.x_cent_o_angle)
+            print('2*Ell1.f - Ell1.x_cent_o_angle',2*Ell1.f - Ell1.x_cent_o_angle)
+            print('2*Ell2.f - Ell2.x_cent_o_angle',2*Ell2.f - Ell2.x_cent_o_angle)
+            print('so_fin_H',so_fin_H)
+            delta_fin_H = so_fin_H-(2*Ell2.f - Ell2.x_cent_o_angle)
+            print('delta_fin_H',delta_fin_H)
+            print('so_fin_V',so_fin_V)
+            delta_fin_V = so_fin_V-(2*Ell1.f - Ell1.x_cent_o_angle)
+            print('delta_fin_V',delta_fin_V)
 
+            # delta_w_fin_V = delta_fin_V*2*np.sin(Ell1.na_o/4)**2
+            # delta_w_fin_H = delta_fin_H*2*np.sin(Ell2.na_o/4)**2
+            # print('delta_w_fin_V',delta_w_fin_V)
+            # print('delta_w_fin_H',delta_w_fin_H)
+            # P_VCtotal_dash = P_VC1_dash + P_VC2_dash - gap*P_VC1_dash*P_VC2_dash
+            # P_HCtotal_dash = P_HC1_dash + P_HC2_dash - gap*P_HC1_dash*P_HC2_dash
+            # print('P_VCtotal_dash',P_VCtotal_dash)
+            # print('P_HCtotal_dash',P_HCtotal_dash)
+
+            
+            
     else:
         if option_HighNA == True:
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
             l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128*0.5), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
         else:
             # gapf = -0.230
@@ -4848,10 +4930,6 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
         x2_h = xv_e
         theta1_v = sita1h
         theta1_h = sita1v
-    if option == 'ray':
-        print('NA',NA_h)
-        print('NA',NA_v)
-
 
     if option == 'ray':
         def RoC(x,a,b):
@@ -5700,6 +5778,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
 
             plt.figure()
             plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1,vmax = 1)
+            # plt.axis('equal')
             # plt.colorbar(label='\u03BB')
             plt.colorbar(label='wavefront error (nm)')
             plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
@@ -7478,22 +7557,40 @@ else:
         print('KB L')
         # initial_params[0] = -0.12
         # initial_params[1] = -0.09
-num_a = 10
-a = np.linspace(0.08, 0.3, num_a)
+num_a = 4
+a = np.linspace(0.8, 1.2, num_a)
 size = a.copy()*np.nan
 MrrLen_V = a.copy()*np.nan
 MrrLen_H = a.copy()*np.nan
 theta_H1 = a.copy()*np.nan
 theta_H2 = a.copy()*np.nan
+na_i_H = a.copy()*np.nan
+## original
+l_i1 = np.float64(145.7500024376426) # 固定 original
+l_o1 = np.float64(1.0499975623574187) # 変数 original
+theta_g1 = np.float64(0.21093460929217367) # 変数 original
+na_o_sin = np.float64(0.01)*8.2 # 固定 original
+target_l_o2 = np.float64(0.10000512336116031) # 変数 original
+target_gap = np.float64(0.1458793853059035) # 変数 original
+ast = np.float64(0.)
+
+l_o1 = np.float64(0.8) # 変数 
+target_l_o2 = np.float64(0.025) # 変数 
+target_gap = np.float64(0.2) # 変数 
+kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
 for i in range(num_a):
     l_i1 = np.float64(145.7500024376426) # 固定
-    l_o1 = np.float64(1.0499975623574187) # 変数
+    # l_o1 = np.float64(1.0499975623574187) # 変数
+    l_o1 = np.float64(a[i]) # 変数
     theta_g1 = np.float64(0.21093460929217367) # 変数
     # theta_g1 = np.float64(a[i]) # 変数
     na_o_sin = np.float64(0.01)*8.2 # 固定
     # target_l_o2 = np.float64(0.10000512336116031)  # WD
-    target_l_o2 = np.float64(a[i]) # 変数
-    target_gap = np.float64(0.1458793853059035) # 変数
+    target_l_o2 = np.float64(0.025) # 変数
+    target_gap = np.float64(0.1458793853059035+ (a[i]-np.min(a))/2.2) # 変数 
     # target_gap = np.float64(a[i]) # 変数
     ast = np.float64(0.)
     kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
@@ -7504,6 +7601,7 @@ for i in range(num_a):
     MrrLen_H[i] = kb_manager.Ell2.x_2
     theta_H1[i] = (kb_manager.Ell2.theta_o1 + kb_manager.Ell2.theta_i1)/2
     theta_H2[i] = (kb_manager.Ell2.theta_o2 + kb_manager.Ell2.theta_i2)/2
+    na_i_H[i] = kb_manager.Ell2.theta_i1 - kb_manager.Ell2.theta_i2
     # if i == num_a - 1:
     #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
     #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
@@ -7511,23 +7609,32 @@ for i in range(num_a):
 
 print('size',size)
 
-fig,axs = plt.subplots(1, 4)
-axs[0].plot(a, size, marker='o')
-axs[0].set_xlabel('theta_g1')
-axs[0].set_ylabel('size')
-axs[0].set_title('size')
-axs[1].plot(a, MrrLen_V, marker='o')
-axs[1].set_xlabel('theta_g1')
-axs[1].set_ylabel('MrrLen_V')
-axs[1].set_title('MrrLen_V')
-axs[2].plot(a, MrrLen_H, marker='o')
-axs[2].set_xlabel('theta_g1')
-axs[2].set_ylabel('MrrLen_H')
-axs[2].set_title('MrrLen_H')
-axs[3].plot(a, theta_H1, marker='o')
-axs[3].plot(a, theta_H2, marker='o')
-axs[3].set_xlabel('theta_g1')
-axs[3].set_ylabel('theta_H')
+fig,axs = plt.subplots(3, 3)
+axs[0,0].plot(a, size, marker='o')
+axs[0,0].set_xlabel('a')
+axs[0,0].set_ylabel('size')
+axs[0,0].set_title('size')
+axs[0,1].plot(a, MrrLen_V, marker='o')
+axs[0,1].set_xlabel('a')
+axs[0,1].set_ylabel('MrrLen_V')
+axs[0,1].set_title('MrrLen_V')
+axs[0,2].plot(a, MrrLen_H, marker='o')
+axs[0,2].set_xlabel('a')
+axs[0,2].set_ylabel('MrrLen_H')
+axs[0,2].set_title('MrrLen_H')
+axs[1,0].plot(a, theta_H1, marker='o')
+axs[1,0].plot(a, theta_H2, marker='o')
+axs[1,0].set_xlabel('a')
+axs[1,0].set_ylabel('theta_H')
+axs[1,1].plot(MrrLen_H, size, marker='o')
+axs[1,1].set_xlabel('MrrLen_H')
+axs[1,1].set_ylabel('size')
+axs[1,2].plot(MrrLen_V, size, marker='o')
+axs[1,2].set_xlabel('MrrLen_V')
+axs[1,2].set_ylabel('size')
+axs[2,0].plot(na_i_H, size, marker='o')
+axs[2,0].set_xlabel('na_i_H')
+axs[2,0].set_ylabel('size')
 plt.show()
 
 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
