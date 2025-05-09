@@ -44,7 +44,7 @@ global option_HighNA
 global defocusForWave
 global option_avrgsplt
 global optKBdesign
-optKBdesign=True
+optKBdesign=False
 option_2mirror =True
 option_rotate = True
 option_avrgsplt = False
@@ -4836,7 +4836,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
                 return 1/(P-1/s_i) - 1/(P0-1/s_i)
             
             delta_so_H1 = delta_so(P_VC, P_VC*np.cos(div_H/2)**2, Ell1.x_cent_o_angle)
-            delta_so_V2 = delta_so(P_HC, P_HC*np.cos(div_V/2)**2, Ell2.x_cent_o_angle)
+            delta_so_V2 = delta_so(P_HC, P_HC*np.cos(Ell1.na_o/2)**2, Ell2.x_cent_o_angle)
             
             div_H = div_H
             div_V = div_V
@@ -4852,14 +4852,80 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             print('delta_so_H1',delta_so_H1)
             print('delta_so_V2',delta_so_V2)
             gap_C = Ell2.x_cent_o_angle - Ell1.x_cent_o_angle
-            so_1_H = 1/(P_HC1_dash-1/Ell1.x_cent_o_angle)
+            
+            so_1_H = 1/(P_HC1_dash-1/Ell1.x_cent_o_angle) ### Ell1.x_cent_o_angle = Ell2.x_cent_o_angle - gap
             print('so_1_H',so_1_H)
-            si_2_H = gap_C - 1/(P_HC1_dash-1/Ell1.x_cent_o_angle)
+            si_2_H = gap_C - so_1_H
             so_fin_H = 1/(P_HC2_dash - 1/si_2_H)
+            
             so_1_V = 1/(P_VC1_dash-1/Ell1.x_cent_o_angle)
             print('so_1_V',so_1_V)
-            si_2_V = gap_C - 1/(P_VC1_dash-1/Ell1.x_cent_o_angle)
+            si_2_V = gap_C - so_1_V
             so_fin_V = gap_C + 1/(P_VC2_dash - 1/si_2_V)
+            
+            def calc_so_V(si_1_V, gap_C, P_VC1_dash, P_VC2_dash):
+                so_1_V = 1/(P_VC1_dash-1/si_1_V)
+                si_2_V = gap_C - so_1_V
+                so_fin_V = gap_C + 1/(P_VC2_dash - 1/si_2_V)
+                return so_fin_V
+
+            div_i_H_array = np.linspace(-div_H/2, div_H/2, 3)
+            # div_o_V_array = np.linspace(-div_V/2, div_V/2, 10)
+            div_o_V_array = np.linspace(-Ell1.na_o/2, Ell1.na_o/2, 3)
+            div_i_H_matrix, div_o_V_matrix = np.meshgrid(div_i_H_array, div_o_V_array)
+
+            P_VC_array = np.array([P_V1,P_VC,P_V2])
+            P_HC_array = np.array([P_H1,P_HC,P_H2])
+            P_HC_matrix, P_VC_matrix = np.meshgrid(P_HC_array, P_VC_array)
+
+            P_VC1_dash_matrix = P_VC_matrix*np.cos(div_i_H_matrix)**2
+            P_VC2_dash_matrix = -P_HC_matrix*np.sin(div_o_V_matrix)**2
+            so_fin_V_matrix = calc_so_V(Ell1.x_cent_o_angle, gap_C, P_VC1_dash_matrix, P_VC2_dash_matrix)
+
+            plt.figure()
+            # plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_V_matrix, cmap='jet')
+            plt.imshow(so_fin_V_matrix, extent=(np.min(div_i_H_array), np.max(div_i_H_array), np.min(div_o_V_array), np.max(div_o_V_array)), aspect='auto')
+            plt.colorbar(label='so_fin_V')
+            plt.xlabel('div_i_H')
+            plt.ylabel('div_o_V')
+            plt.title('Contour Plot of so_fin_V')
+            # plt.show()
+
+            plt.figure()
+            plt.plot(div_o_V_array, np.mean(so_fin_V_matrix, axis=1), label='Mean so_fin_V')
+            plt.xlabel('div_o_V')
+            plt.ylabel('Mean so_fin_V')
+            plt.title('Mean so_fin_V vs div_o_V')
+            # plt.show()
+
+            def calc_so_H(si_1_H, gap_C, P_HC1_dash, P_HC2_dash):
+                so_1_H = 1/(P_HC1_dash-1/si_1_H)
+                si_2_H = gap_C - so_1_H
+                so_fin_H = 1/(P_HC2_dash - 1/si_2_H)
+                return so_fin_H
+            
+            P_HC1_dash_matrix = -P_VC_matrix*np.sin(div_i_H_matrix)**2
+            P_HC2_dash_matrix = P_HC_matrix*np.cos(div_o_V_matrix)**2
+            so_fin_H_matrix = calc_so_H(Ell1.x_cent_o_angle, gap_C, P_HC1_dash_matrix, P_HC2_dash_matrix)
+
+            plt.figure()
+            plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_H_matrix, cmap='jet')
+            plt.colorbar(label='so_fin_H')
+            plt.xlabel('div_i_H')
+            plt.ylabel('div_o_V')
+            plt.title('Contour Plot of so_fin_H')
+            # plt.show()
+
+            np.savetxt('so_fin_H_matrix.txt', so_fin_H_matrix)
+            np.savetxt('so_fin_V_matrix.txt', so_fin_V_matrix)
+
+            plt.figure()
+            plt.plot(div_i_H_array, np.mean(so_fin_H_matrix, axis=0), label='Mean so_fin_H')
+            plt.xlabel('div_i_H')
+            plt.ylabel('Mean so_fin_H')
+            plt.title('Mean so_fin_H vs div_i_H')
+            plt.show()
+
             print('si_2_H',si_2_H)
             print('si_2_V',si_2_V)
             print('gap_C',gap_C)
@@ -4890,8 +4956,44 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
             l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128*0.5), np.float64(0.22)]
+            
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+
+            # from scipy.optimize import fsolve
+            # # `fsolve` を使用して `inc_h` を調整
+            # # def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
+            # #     # `KB_define` を呼び出して `NA_h` を計算
+            # #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # #     NA_h = params[7]  # `params` の 7 番目の要素が `NA_h`
+            # #     return NA_h - target_NA_h  # 目標値との差を返す
+            # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5*1.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            # # initial_inc_h = inc_h.copy()
+            # # target_NA_h = NA_h.copy()  # 目標とする NA_h の値を設定
+            # # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # # optimized_inc_h = fsolve(calculate_NA_h, initial_inc_h, args=(target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v))[0]
+
+            # # print(f"目標 NA_h: {target_NA_h}")
+            # # print(f"調整後の inc_h: {optimized_inc_h}")
+            # # inc_h = optimized_inc_h.copy()
+
+            # def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
+            #     # `KB_define` を呼び出して `NA_h` を計算
+            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            #     NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
+            #     return NA_v - target_NA_v  # 目標値との差を返す
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22/2)]
+            # initial_inc_v = inc_v.copy()
+            # target_NA_v = NA_v.copy()  # 目標とする NA_h の値を設定
+            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # optimized_inc_v = fsolve(calculate_NA_v, initial_inc_v, args=(target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v))[0]
+
+            # print(f"目標 NA_v: {target_NA_v}")
+            # print(f"調整後の inc_v: {optimized_inc_v}")
+            # inc_v = optimized_inc_v.copy()
+            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+
+
         else:
             # gapf = -0.230
             l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.029 * LowNAratio), np.float64(0.5), np.float64(0.1), np.float64(0.016 * LowNAratio), np.float64(0.22)]
