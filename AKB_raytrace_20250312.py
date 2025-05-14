@@ -133,18 +133,41 @@ def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num):
     # 範囲内の値を間引く
     thinned_array3 = crop(ray_num**2 - ray_num, ray_num**2, mabiki)
 
-    plt.figure()
+    # 範囲内の値を間引く
+    original_array = list(range(len(detcenter1[0,:])))
+    first_thinned_array = original_array[::ray_num]
+    thinned_array1_v = first_thinned_array[::mabiki]
+    # 範囲内の値を間引く
+    original_array = list(range(len(detcenter1[0,:])))
+    first_thinned_array = original_array[round((ray_num-1)/2)::ray_num]
+    thinned_array2_v = first_thinned_array[::mabiki]
+    # 範囲内の値を間引く
+    original_array = list(range(len(detcenter1[0,:])))
+    first_thinned_array = original_array[ray_num-1::ray_num]
+    thinned_array3_v = first_thinned_array[::mabiki]
+
+    # plt.figure()
+    fig,axs = plt.subplots(2, 1,sharex=True)
+
     # for i in range(detcenter1.shape[1]):
     #     if i % mabiki == 0:
     #         plt.plot([detcenter1[0,i],detcenter2[0,i]],[detcenter1[1,i],detcenter2[1,i]])
 
-    plt.plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
+    axs[0].plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
+    axs[0].plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
+    axs[0].plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
+
+    axs[1].plot([detcenter1[0,thinned_array1_v],detcenter2[0,thinned_array1_v]],[detcenter1[2,thinned_array1_v],detcenter2[2,thinned_array1_v]],'r')
+    axs[1].plot([detcenter1[0,thinned_array3_v],detcenter2[0,thinned_array3_v]],[detcenter1[2,thinned_array3_v],detcenter2[2,thinned_array3_v]],'g')
+    axs[1].plot([detcenter1[0,thinned_array2_v],detcenter2[0,thinned_array2_v]],[detcenter1[2,thinned_array2_v],detcenter2[2,thinned_array2_v]],'y')
     # plt.plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
-    plt.plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
     # plt.plot([np.mean(detcenter[0,:]),np.mean(detcenter[0,:])],[np.min(detcenter2[1,:]),np.max(detcenter1[1,:])],color='k')
-    plt.title('Virtual focus of 2nd mirror')
-    plt.xlabel('Axial (m)')
-    plt.ylabel('Horizontal Position (m)')
+    axs[0].set_title('Virtual focus of 2nd mirror')
+    axs[0].set_xlabel('Axial (m)')
+    axs[0].set_ylabel('Horizontal Position (m)')
+    axs[1].set_title('Virtual focus of 2nd mirror')
+    axs[1].set_xlabel('Axial (m)')
+    axs[1].set_ylabel('Vertical Position (m)')
     plt.savefig('virtualSource.png', dpi=300)
     plt.show()
 
@@ -317,7 +340,7 @@ def CalcDataPitch(points_array,h_num,v_num):
     print('dif_z1 data pitch',np.mean(dif_z1))
     return
 
-def mirr_ray_intersection(coeffs, ray, source):
+def mirr_ray_intersection(coeffs, ray, source,negative=False):
     a, b, c, d, e, f, g, h, i, j = coeffs
     l, m, n = ray
     p, q, r = source
@@ -334,7 +357,10 @@ def mirr_ray_intersection(coeffs, ray, source):
         point = np.full(source.shape, np.nan)
         return point
 
-    t = (-B + np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+    if negative:
+        t = (-B - np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+    else:
+        t = (-B + np.sqrt(B**2 - 4 * A * C)) / (2 * A)
 
     point = np.zeros_like(source)
     point[0, :] = t * l + p
@@ -342,46 +368,6 @@ def mirr_ray_intersection(coeffs, ray, source):
     point[2, :] = t * n + r
 
     return point
-
-def mirr_ray_intersection_with_angle(coeffs, ray, source):
-    a, b, c, d, e, f, g, h, i, j = coeffs
-    l, m, n = ray
-    p, q, r = source
-
-    A = a * l**2 + b * m**2 + c * n**2 + d * m * l + e * n * l + f * m * n
-    B = (2 * a * p * l + 2 * b * q * m + 2 * c * r * n +
-         d * (p * m + q * l) + e * (p * n + r * l) + f * (r * m + q * n) +
-         g * l + h * m + i * n)
-    C = (a * p**2 + b * q**2 + c * r**2 + d * p * q + e * p * r + f * q * r +
-         g * p + h * q + i * r + j)
-
-    A = np.where(A == 0, 1e-10, A)  # Avoid division by zero
-    D = B**2 - 4 * A * C
-    if not all(x > 0 for x in D):
-        point = np.full(source.shape, np.nan)
-        return point
-
-    t = (-B + np.sqrt(D)) / (2 * A)
-
-    point = np.zeros_like(source)
-    point[0, :] = t * l + p
-    point[1, :] = t * m + q
-    point[2, :] = t * n + r
-
-    # Calculate the normal vector at the intersection points
-    N = np.zeros_like(point)
-    N[0, :] = 2 * a * point[0, :] + d * point[1, :] + e * point[2, :] + g
-    N[1, :] = 2 * b * point[1, :] + d * point[0, :] + f * point[2, :] + h
-    N[2, :] = 2 * c * point[2, :] + e * point[0, :] + f * point[1, :] + i
-
-    # Normalize the normal vector
-    N = N / np.linalg.norm(N, axis=0)
-
-    # Calculate the angle of incidence
-    dot_product = np.einsum('ij,ij->j', ray, N)
-    angle_of_incidence = np.arccos(dot_product / (np.linalg.norm(ray, axis=0) * np.linalg.norm(N, axis=0)))
-
-    return point, angle_of_incidence
 
 def generate_grid_on_mirror_with_normal(mirror_coeffs, points, num_divisions_H,num_divisions_V):
     """
@@ -834,35 +820,37 @@ if option_wolter_3_1:
         pitch_ell_v, roll_ell_v, yaw_ell_v, decenterX_ell_v, decenterY_ell_v, decenterZ_ell_v,\
         pitch_ell_h, roll_ell_h, yaw_ell_h, decenterX_ell_h, decenterY_ell_h, decenterZ_ell_h  = params ### 3型 1st 1型 4th 3型 2nd 1型 3rd
 
-        # Mirror parameters EUV
-        a_hyp_v = np.float64(72.96002945938)
-        b_hyp_v = np.float64(0.134829747201017)
-        a_ell_v = np.float64(0.442)
-        b_ell_v = np.float64(0.0607128830733533)
-        length_hyp_v = np.float64(0.115)
-        length_ell_v = np.float64(0.229790269646258)
-        theta1_v = np.float64(4.73536529533549E-05)
+        # # Mirror parameters EUV
+        # a_hyp_v = np.float64(72.96002945938)
+        # b_hyp_v = np.float64(0.134829747201017)
+        # a_ell_v = np.float64(0.442)
+        # b_ell_v = np.float64(0.0607128830733533)
+        # length_hyp_v = np.float64(0.115)
+        # length_ell_v = np.float64(0.229790269646258)
+        # theta1_v = np.float64(4.73536529533549E-05)
+        #
+        # a_hyp_h = np.float64(73.018730871665)
+        # b_hyp_h = np.float64(0.0970536727319812)
+        # a_ell_h = np.float64(0.38125)
+        # b_ell_h = np.float64(0.0397791317992322)
+        # length_hyp_h = np.float64(0.25)
+        # length_ell_h = np.float64(0.0653872838592807)
+        # theta1_h = np.float64(5.6880350884129E-05)
 
-        a_hyp_h = np.float64(73.018730871665)
-        b_hyp_h = np.float64(0.0970536727319812)
-        a_ell_h = np.float64(0.38125)
-        b_ell_h = np.float64(0.0397791317992322)
-        length_hyp_h = np.float64(0.25)
-        length_ell_h = np.float64(0.0653872838592807)
-        theta1_h = np.float64(5.6880350884129E-05)
 
+        ### 初期設定
         ### 3型
-        a_hyp_v  =   72.985
-        b_hyp_v  =   0.250539088918923
-        a_ell_v  =   0.0833
-        b_ell_v  =   0.0211103685691917
-        length_hyp_v  =   0.0345
-        length_ell_v  =   0.0530861729741616
-        theta1_v  =   4.88527559126772E-05
-        theta2_v  =   0.12
-        theta3_v  =   0.240048852755913
-        theta4_v  =   0.256751946233106
-        theta5_v  =   -0.2734550397103
+        a_hyp_v  =   np.float64(72.985)
+        b_hyp_v  =   np.float64(0.250539088918923)
+        a_ell_v  =   np.float64(0.0833)
+        b_ell_v  =   np.float64(0.0211103685691917)
+        length_hyp_v  =   np.float64(0.0345)
+        length_ell_v  =   np.float64(0.0530861729741616)
+        theta1_v  =   np.float64(4.88527559126772E-05)
+        theta2_v  =   np.float64(0.12)
+        theta3_v  =   np.float64(0.240048852755913)
+        theta4_v  =   np.float64(0.256751946233106)
+        theta5_v  =   np.float64(-0.2734550397103)
         phai_hyp_v  =   -0.120048852755913
         phai_ell_v  =   0.00826201408949603
         F_eff_v  =   0.0254480654760698
@@ -870,29 +858,131 @@ if option_wolter_3_1:
         NA_v  =   0.0820569070569736
         Aperture_v  =   0.01348071947248
         F0_F2_v  =   146.13202134964
-
         ### 1型
-        a_ell_h  =   73.02705
-        b_ell_h  =   0.419987623027446
-        a_hyp_h  =   0.0072
-        b_hyp_h  =   0.00369271288745449
-        length_hyp_h  =   0.0113
-        length_ell_h  =   0.026
-        theta1_h  =   0.000109465654287937
-        theta2_h  =   0.15
-        theta3_h  =   0.299890534345712
-        theta4_h  =   0.218423083516244
-        theta5_h  =   0.7367367013782
-        phai_ell_h  =   -0.149890534345712
-        phai_hyp_h  =   -0.509211811176037
-        F_eff_h  =   0.017620474948302
-        Mag_h =    8286.83001271893
-        NA_h =    0.0821659700833336
-        Aperture_h =    0.00388539144431358
-        F0_F2_h =    146.035501114899
+        a_ell_h  =     np.float64(73.07505)
+        b_ell_h  =     np.float64(0.420125678460643)
+        a_hyp_h  =     np.float64(0.0072)
+        b_hyp_h  =     np.float64(0.00369271404399535)
+        length_hyp_h  =   np.float64(0.01008239076)
+        length_ell_h  =   np.float64(0.026)
+        theta1_h  =     np.float64(0.000109393749605896)
+        theta2_h  =    np.float64(0.15)
+        theta3_h  =     np.float64(0.299890606250394)
+        theta4_h  =     np.float64(0.193862238668175)
+        theta5_h  =     np.float64(0.736736912319257)
+        phai_ell_h  =     -0.149890606250394
+        phai_hyp_h  =     -0.509211953516557
+        F_eff_h  =     0.0176204701590166
+        Mag_h  =     8292.28047404524
+        NA_h  =     0.0815169628107427
+        Aperture_h  =     0.00388539144431358
+        F0_F2_h  =     146.131501113269
+
+        # ### ミラー長くした
+        # ### 3型
+        # a_hyp_v =     72.9445
+        # b_hyp_v =     0.349791433380448
+        # a_ell_v =     0.1993
+        # b_ell_v =     0.0457667709628384
+        # length_hyp_v =     0.115
+        # length_ell_v =    0.107443175045138
+        # theta1_v =     0.000131719787632208
+        # theta2_v =     0.087
+        # theta3_v =     0.174131719787632
+        # theta4_v =     0.240992539115602
+        # theta5_v =     -0.307853358443571
+        # phai_hyp_v =     -0.0871317197876322
+        # phai_ell_v =     -0.0444805243183651
+        # F_eff_v =     0.0605726395581883
+        # Mag_v =     2413.92902261282
+        # NA_v =     0.0817586100259336
+        # Aperture_v =     0.0256430972940032
+        # F0_F2_v =     146.278625245334
+        #
+        # a_hyp_v =     72.9495
+        # b_hyp_v =     0.356610270833153
+        # a_ell_v =     0.1905
+        # b_ell_v =     0.045312267576958
+        # length_hyp_v =     0.105
+        # length_ell_v =     0.104317045348504
+        # theta1_v =     0.000128017628801362
+        # theta2_v =     0.093
+        # theta3_v =     0.186128017628801
+        # theta4_v =     0.247807479365351
+        # theta5_v =     -0.3094869411019
+        # phai_hyp_v =     -0.0931280176288014
+        # phai_ell_v =     -0.0390065068226956
+        # F_eff_v =     0.0585365197785563
+        # Mag_v =     2497.7957763223
+        # NA_v =     0.0825396891889615
+        # Aperture_v =     0.0255867811737287
+        # F0_F2_v =     146.270808383263
+        #
+        # a_hyp_v =     72.9495
+        # b_hyp_v =     0.38336551954637
+        # a_ell_v =     0.198
+        # b_ell_v =     0.0486368300272184
+        # length_hyp_v =     0.105
+        # length_ell_v =     0.109735860116989
+        # theta1_v =     0.00013752887545671
+        # theta2_v =     0.1
+        # theta3_v =     0.200137528875457
+        # theta4_v =     0.253798442194187
+        # theta5_v =     -0.307459355512918
+        # phai_hyp_v =     -0.100137528875457
+        # phai_ell_v =     -0.0311323291314553
+        # F_eff_v =     0.0633319193845807
+        # Mag_v =     2308.81285624414
+        # NA_v =     0.0820773641558992
+        # Aperture_v =     0.0275527566699558
+        # F0_F2_v =     146.284881605122
+        #
+        #
+        # ### 1型
+        # a_ell_h  =     73.15205
+        # b_ell_h  =     0.567554936631599
+        # a_hyp_h  =     0.0132
+        # b_hyp_h  =     0.00646078271831603
+        # length_hyp_h  =   np.float64(0.02071617837)
+        # length_ell_h  =   np.float64(0.052)
+        # theta1_h  =     0.000204833463513953
+        # theta2_h  =     0.146
+        # theta3_h  =     0.291795166536486
+        # theta4_h  =     0.177970855205531
+        # theta5_h  =     0.700007136857608
+        # phai_ell_h  =     -0.145795166536486
+        # phai_hyp_h  =     -0.486451342696638
+        # F_eff_h  =     0.0355618526271826
+        # Mag_h  =     4112.12384151236
+        # NA_h  =     0.081656129902967
+        # Aperture_h  =     0.00756505688667416
+        # F0_F2_h  =     146.270303889214
+        #
+        # # a_ell_h  =     73.2065
+        # # b_ell_h  =     0.833921017463864
+        # # a_hyp_h  =     0.0275
+        # # b_hyp_h  =     0.0132864670578314
+        # # length_hyp_h  =   np.float64(0.05591377645)
+        # # length_ell_h  =   np.float64(0.110)
+        # # theta1_h  =     0.000429947411574959
+        # # theta2_h  =     0.15
+        # # theta3_h  =     0.299570052588425
+        # # theta4_h  =     0.155160673115584
+        # # theta5_h  =     0.668398388492131
+        # # phai_ell_h  =     -0.149570052588425
+        # # phai_hyp_h  =     -0.474330534596479
+        # # F_eff_h  =     0.0796368783933872
+        # # Mag_h  =     1836.62121588582
+        # # NA_h  =     0.0816052530848184
+        # # Aperture_h  =     0.0164381945720959
+        # # F0_F2_h  =     146.342417302607
 
 
-
+        omega_v = theta1_v - theta5_v
+        # print('omega_v',omega_v)
+        # omega_v = omega_v/4
+        # #
+        omega_v = 0.
 
         org_hyp_v = np.sqrt(a_hyp_v**2 + b_hyp_v**2)
         org_hyp_h = np.sqrt(a_hyp_h**2 + b_hyp_h**2)
@@ -940,6 +1030,7 @@ if option_wolter_3_1:
             ray_num_H = 53
             ray_num_V = 53
             # ray_num = 1
+            print('omega_v',omega_v)
         if option == 'wave' or option == 'ray_wave':
             ray_num_H = wave_num_H
             ray_num_V = wave_num_V
@@ -992,6 +1083,33 @@ if option_wolter_3_1:
         accept_h = np.abs(y2_h - y1_h)
         l1h = np.linalg.norm(c_h)
 
+        if False:
+            ratio_here = 0.25
+            xw_v = x2_v - x1_v
+            yw_v = y2_v - y1_v
+            x1_v = x1_v + xw_v*ratio_here
+            y1_v = y1_v + yw_v*ratio_here
+            x2_v = x2_v - xw_v*ratio_here
+            y2_v = y2_v - yw_v*ratio_here
+
+            xw_h = x2_h - x1_h
+            yw_h = y2_h - y1_h
+            x1_h = x1_h + xw_h*ratio_here
+            y1_h = y1_h + yw_h*ratio_here
+            x2_h = x2_h - xw_h*ratio_here
+            y2_h = y2_h - yw_h*ratio_here
+
+
+        if option == 'ray':
+            print('x1_v',x1_v)
+            print('y1_v',y1_v)
+            print('x2_v',x2_v)
+            print('y2_v',y2_v)
+            print('x1_h',x1_h)
+            print('y1_h',y1_h)
+            print('x2_h',x2_h)
+            print('y2_h',y2_h)
+
         # Raytrace (X = x-ray direction)
 
         # V hyp mirror set (1st)
@@ -1009,153 +1127,90 @@ if option_wolter_3_1:
             axis_x, axis_y, axis_z = rotatematrix(rotation_matrix, axis_x, axis_y, axis_z)
 
         if option_alignment and option_axial:
-            # bufray = np.zeros((3, 5))
-            # ### 4隅の光線
+            bufray = np.zeros((3, 3))
+            ### 4隅の光線
             # theta_cntr_h = (np.arctan(y2_h / x2_h) + np.arctan(y1_h / x1_h))/2.
-            # theta_cntr_v = (np.arctan(y2_v / x2_v) + np.arctan(y1_v / x1_v))/2.
-            # if option == 'ray':
-            #
-            #     def print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h):
-            #         l2_h = (4*a_hyp_h**2 + (org_hyp_h*2)**2 -4*a_hyp_h*(org_hyp_h*2)*np.cos(theta1_h))/(4*org_hyp_h - 4*a_hyp_h)
-            #         # l2_v = (4*a_hyp_v**2 + (org_hyp_v*2)**2 -4*a_hyp_v*(org_hyp_v*2)*np.cos(theta1_v))/(4*org_hyp_v - 4*a_hyp_v)
-            #
-            #         l1_h = 2*a_hyp_h +l2_h
-            #         # l1_v = 2*a_hyp_v +l2_v
-            #
-            #         theta2_h = np.arcsin(org_hyp_h*2*np.sin(theta1_h)/l2_h)/2
-            #         # theta2_v = np.arcsin(org_hyp_v*2*np.sin(theta1_v)/l2_v)/2
-            #
-            #         theta3_h = np.arcsin(l1_h*np.sin(theta1_h)/l2_h)
-            #         # theta3_v = np.arcsin(l1_v*np.sin(theta1_v)/l2_v)
-            #
-            #         l4_h = ((org_ell_h)**2 - 2*org_ell_h*a_ell_h*np.cos(theta3_h) + a_ell_h**2)/(a_ell_h - org_ell_h*np.cos(theta3_h))
-            #         # l4_v = ((org_ell_v)**2 - 2*org_ell_v*a_ell_v*np.cos(theta3_v) + a_ell_v**2)/(a_ell_v - org_ell_v*np.cos(theta3_v))
-            #
-            #         l3_h = 2*a_ell_h - l2_h - l4_h
-            #         # l3_v = 2*a_ell_v - l2_v - l4_v
-            #
-            #         theta5_h = np.arcsin((2*a_ell_h - l4_h)*np.sin(theta3_h)/l4_h)
-            #         # theta5_v = np.arcsin((2*a_ell_v - l4_v)*np.sin(theta3_v)/l4_v)
-            #
-            #         theta4_h = (theta5_h+theta3_h)/2.
-            #         # theta4_v = (theta5_v+theta3_v)/2.
-            #         print('theta1',theta1_h)
-            #         print('l2',l2_h)
-            #         # print('l2_v',l2_v)
-            #         print('l1',l1_h)
-            #         # print('l1_v',l1_v)
-            #         print('theta2 incidence hyp',theta2_h)
-            #         # print('theta2_v incidence hyp',theta2_v)
-            #         print('theta3',theta3_h)
-            #         # print('theta3_v',theta3_v)
-            #         print('l3',l3_h)
-            #         # print('l3_v',l3_v)
-            #         print('l4',l4_h)
-            #         # print('l4_v',l4_v)
-            #         print('hyp to ell',np.cos(theta3_h)*(l3_h))
-            #         # print('hyp to ell v',np.cos(theta3_v)*(l3_v))
-            #         print('theta4 incidence ell',theta4_h)
-            #         # print('theta4_v incidence ell',theta4_v)
-            #         theta4_h = np.arcsin(2*org_ell_h*np.sin(theta3_h)/l4_h)/2
-            #         # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
-            #         print('theta4 incidence ell',theta4_h)
-            #         # print('theta4_v incidence ell',theta4_v)
-            #         print('theta5 focal',theta5_h)
-            #         # print('theta5_v focal',theta5_v)
-            #         print('width1',l1_h*np.cos(theta1_h))
-            #         print('width2',l3_h*np.cos(theta3_h))
-            #         print('width3',l4_h*np.cos(theta5_h))
-            #         print('')
-            #         return theta3_h, theta5_h
-            #
-            #     print('===== Horizontal center =====')
-            #     theta3_h, theta5_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
-            #     print('===== Horizontal edge1 =====')
-            #     theta3_h1, theta5_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
-            #     print('===== Horizontal edge2 =====')
-            #     theta3_h2, theta5_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
-            #
-            #     print('===== Vertical center =====')
-            #     theta3_v, theta5_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
-            #     print('===== Vertical edge1 =====')
-            #     theta3_v1, theta5_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
-            #     print('===== Vertical edge2 =====')
-            #     theta3_v2, theta5_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
-            #
-            #     print('===== ===== =====')
-            #     omegav1 = (theta3_v1 + theta3_v2 - np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))/2
-            #     print('omegav1',omegav1)
-            #     omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
-            #     print('omegah1',omegah1)
-            #     omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
-            #     print('omegav2',omegav2)
-            #
-            #     print('===== ===== =====')
-            #     print('na_h',np.sin((theta5_h1 - theta5_h2))/2.)
-            #     print('na_v',np.sin((theta5_v1 - theta5_v2))/2.)
-            #     print('div_h',(theta5_h1 - theta5_h2))
-            #     print('div_v',(theta5_v1 - theta5_v2))
-            #     print('div0_h',np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))
-            #     print('div0_v',np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))
-            #     print('===== ===== =====')
-            #     # print('theta_edge1_h1', theta_cntr_h)
-            #     # print('theta_cntr_h1', theta_cntr_h)
-            #     # print('theta_edge1_h1', np.arctan(y2_h / x2_h))
-            # else:
-            #     def print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h):
-            #         l2_h = (4*a_hyp_h**2 + (org_hyp_h*2)**2 -4*a_hyp_h*(org_hyp_h*2)*np.cos(theta1_h))/(4*org_hyp_h - 4*a_hyp_h)
-            #         # l2_v = (4*a_hyp_v**2 + (org_hyp_v*2)**2 -4*a_hyp_v*(org_hyp_v*2)*np.cos(theta1_v))/(4*org_hyp_v - 4*a_hyp_v)
-            #
-            #         l1_h = 2*a_hyp_h +l2_h
-            #         # l1_v = 2*a_hyp_v +l2_v
-            #
-            #         theta2_h = np.arcsin(org_hyp_h*2*np.sin(theta1_h)/l2_h)/2
-            #         # theta2_v = np.arcsin(org_hyp_v*2*np.sin(theta1_v)/l2_v)/2
-            #
-            #         theta3_h = np.arcsin(l1_h*np.sin(theta1_h)/l2_h)
-            #         # theta3_v = np.arcsin(l1_v*np.sin(theta1_v)/l2_v)
-            #
-            #         l4_h = ((org_ell_h)**2 - 2*org_ell_h*a_ell_h*np.cos(theta3_h) + a_ell_h**2)/(a_ell_h - org_ell_h*np.cos(theta3_h))
-            #         # l4_v = ((org_ell_v)**2 - 2*org_ell_v*a_ell_v*np.cos(theta3_v) + a_ell_v**2)/(a_ell_v - org_ell_v*np.cos(theta3_v))
-            #
-            #         l3_h = 2*a_ell_h - l2_h - l4_h
-            #         # l3_v = 2*a_ell_v - l2_v - l4_v
-            #
-            #         theta5_h = np.arcsin((2*a_ell_h - l4_h)*np.sin(theta3_h)/l4_h)
-            #         # theta5_v = np.arcsin((2*a_ell_v - l4_v)*np.sin(theta3_v)/l4_v)
-            #
-            #         theta4_h = (theta5_h+theta3_h)/2.
-            #         # theta4_v = (theta5_v+theta3_v)/2.
-            #         # print('theta4_v incidence ell',theta4_v)
-            #         theta4_h = np.arcsin(2*org_ell_h*np.sin(theta3_h)/l4_h)/2
-            #         # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
-            #         return theta3_h, theta5_h
-            #
-            #     theta3_h, theta5_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
-            #     theta3_h1, theta5_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
-            #     theta3_h2, theta5_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
-            #     theta3_v, theta5_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
-            #     theta3_v1, theta5_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
-            #     theta3_v2, theta5_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
-            #     omegav1 = (theta3_v1 + theta3_v2 - np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))/2
-            #     omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
-            #     omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
+            theta_cntr_v = (np.arctan(y2_v / x2_v) + np.arctan(y1_v / x1_v))/2.
+            def print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h):
+                l2_h = (4*a_hyp_h**2 + (org_hyp_h*2)**2 -4*a_hyp_h*(org_hyp_h*2)*np.cos(theta1_h))/(4*org_hyp_h - 4*a_hyp_h)
+                # l2_v = (4*a_hyp_v**2 + (org_hyp_v*2)**2 -4*a_hyp_v*(org_hyp_v*2)*np.cos(theta1_v))/(4*org_hyp_v - 4*a_hyp_v)
+
+                l1_h = 2*a_hyp_h +l2_h
+                # l1_v = 2*a_hyp_v +l2_v
+
+                theta2_h = np.arcsin(org_hyp_h*2*np.sin(theta1_h)/l2_h)/2
+                # theta2_v = np.arcsin(org_hyp_v*2*np.sin(theta1_v)/l2_v)/2
+
+                theta3_h = np.arcsin(l1_h*np.sin(theta1_h)/l2_h)
+                # theta3_v = np.arcsin(l1_v*np.sin(theta1_v)/l2_v)
+
+                l4_h = ((org_ell_h)**2 - 2*org_ell_h*a_ell_h*np.cos(theta3_h) + a_ell_h**2)/(a_ell_h - org_ell_h*np.cos(theta3_h))
+                # l4_v = ((org_ell_v)**2 - 2*org_ell_v*a_ell_v*np.cos(theta3_v) + a_ell_v**2)/(a_ell_v - org_ell_v*np.cos(theta3_v))
+
+                l3_h = 2*a_ell_h - l2_h - l4_h
+                # l3_v = 2*a_ell_v - l2_v - l4_v
+
+                theta5_h = np.arcsin((2*a_ell_h - l4_h)*np.sin(theta3_h)/l4_h)
+                # theta5_v = np.arcsin((2*a_ell_v - l4_v)*np.sin(theta3_v)/l4_v)
+
+                theta4_h = (theta5_h+theta3_h)/2.
+                # theta4_v = (theta5_v+theta3_v)/2.
+                # print('theta4_v incidence ell',theta4_v)
+                theta4_h = np.arcsin(2*org_ell_h*np.sin(theta3_h)/l4_h)/2
+                # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
+                return theta2_h, theta3_h, theta4_h, theta5_h
+            # theta3_h, theta5_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
+            # theta3_h1, theta5_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
+            # theta3_h2, theta5_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
+            theta2_v, theta3_v, theta4_v, theta5_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
+            theta2_v1, theta3_v1, theta4_v1, theta5_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
+            theta2_v2, theta3_v2, theta4_v2, theta5_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
+            omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
+            # omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
+            # omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
+            # omega_v = omega_v*0.6
+            if option == 'ray':
+                print('===== ===== =====')
+                print('theta1_v',theta1_v)
+                print('theta1_v1',np.arctan(y1_v / x1_v))
+                print('theta1_v2',np.arctan(y2_v / x2_v))
+                print('theta2_v',theta2_v)
+                print('theta2_v1',theta2_v1)
+                print('theta2_v2',theta2_v2)
+                print('theta3_v',theta3_v)
+                print('theta3_v1',theta3_v1)
+                print('theta3_v2',theta3_v2)
+                print('theta4_v',theta4_v)
+                print('theta4_v1',theta4_v1)
+                print('theta4_v2',theta4_v2)
+                print('theta5_v',theta5_v)
+                print('theta5_v1',theta5_v1)
+                print('theta5_v2',theta5_v2)
+                print('omega_v',omega_v)
+                # print('na_h',np.sin((theta5_h1 - theta5_h2))/2.)
+                print('na_v',np.sin((theta5_v1 - theta5_v2))/2.)
+                # print('div_h',(theta5_h1 - theta5_h2))
+                print('div_v',(theta5_v1 - theta5_v2))
+                print('div0_h',np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))
+                print('div0_v',np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))
+                print('===== ===== =====')
+
+
+
             # theta_source_1_h = np.arctan(y1_h / x1_h) - theta_cntr_h
             # theta_source_2_h = np.arctan(y2_h / x2_h) - theta_cntr_h
-            # theta_source_1_v = np.arctan(y1_v / x1_v) - theta_cntr_v
-            # theta_source_2_v = np.arctan(y2_v / x2_v) - theta_cntr_v
-            #
-            # bufray[0, 0] = 1.
-            # bufray[1, 0] = np.tan(theta1_h)
-            # bufray[2, 0] = np.tan(theta1_v)
-            #
-            # bufray[0, 1] = 1.
+            theta_source_1_v = np.arctan(y1_v / x1_v) - theta_cntr_v
+            theta_source_2_v = np.arctan(y2_v / x2_v) - theta_cntr_v
+
+            bufray[0, 0] = 1.
+
+            bufray[0, 1] = 1.
             # bufray[1, 1] = np.tan(theta_source_1_h)
-            # bufray[2, 1] = np.tan(theta_source_1_v)
-            #
-            # bufray[0, 2] = 1.
+            bufray[2, 1] = np.tan(theta_source_1_v)
+
+            bufray[0, 2] = 1.
             # bufray[1, 2] = np.tan(theta_source_2_h)
-            # bufray[2, 2] = np.tan(theta_source_1_v)
+            bufray[2, 2] = np.tan(theta_source_2_v)
             #
             # bufray[0, 3] = 1.
             # bufray[1, 3] = np.tan(theta_source_2_h)
@@ -1165,16 +1220,16 @@ if option_wolter_3_1:
             # bufray[1, 4] = np.tan(theta_source_2_h)
             # bufray[2, 4] = np.tan(theta_source_2_v)
 
-            source = np.zeros((3, 5))
+            # source = np.zeros((3, 5))
 
-            bufray = np.zeros((3, 2))
-            bufray[0, 0] = 1.
-            bufray[1, 0] = np.tan(theta1_h)
-            bufray[2, 0] = np.tan(theta1_v)
-            bufray[0, 1] = 1.
-            bufray[1, 1] = np.tan(theta1_h)
-            bufray[2, 1] = np.tan(theta1_v)
-            source = np.zeros((3, 2))
+            # bufray = np.zeros((3, 2))
+            # bufray[0, 0] = 1.
+            # bufray[1, 0] = np.tan(theta1_h)
+            # bufray[2, 0] = np.tan(theta1_v)
+            # bufray[0, 1] = 1.
+            # bufray[1, 1] = np.tan(theta1_h)
+            # bufray[2, 1] = np.tan(theta1_v)
+            source = np.zeros((3, 3))
 
         else:
             bufray = np.zeros((3, 2))
@@ -1277,7 +1332,7 @@ if option_wolter_3_1:
         coeffs_ell_v = np.zeros(10)
         coeffs_ell_v[0] = 1 / a_ell_v**2
         coeffs_ell_v[2] = 1 / b_ell_v**2
-        coeffs_hyp_v[9] = -1.
+        coeffs_ell_v[9] = -1.
         org_ell_v1 = org_ell_v
         if option == 'ray':
             print('coeffs_ell_v',coeffs_ell_v)
@@ -1345,7 +1400,7 @@ if option_wolter_3_1:
             if optin_axialrotation:
                 if option_rotateLocal:
                     ### 正確に言うと　omega_h
-                    coeffs_ell_h, rotation_matrix = rotate_general_axis(coeffs_ell_h, axis3_y, theta1_v + theta5_v, np.mean(center_ell_h[:, 1:],axis=1))
+                    coeffs_ell_h, rotation_matrix = rotate_general_axis(coeffs_ell_h, axis3_y, omega_v, np.mean(center_ell_v[:, 1:],axis=1))
                     axis3_x, axis3_y, axis3_z = rotatematrix(rotation_matrix, axis3_x, axis3_y, axis3_z)
                 else:
                     coeffs_ell_h = rotate_y(coeffs_ell_h, -bufreflangle2_y, center_ell_h[:, 0])
@@ -1377,7 +1432,7 @@ if option_wolter_3_1:
             coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis4_z, -theta1_h, [0, 0, 0])
             axis4_x, axis4_y, axis4_z = rotatematrix(rotation_matrix, axis4_x, axis4_y, axis4_z)
 
-        center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect3, center_ell_h)
+        center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect3, center_ell_h,negative=True)
         if not np.isreal(center_hyp_h).all():
             return np.inf
         if option_alignment:
@@ -1385,11 +1440,11 @@ if option_wolter_3_1:
                 coeffs_hyp_h = rotate_y(coeffs_hyp_h, -bufreflangle3_y, np.mean(center_hyp_v[:, 1:],axis=1))
             if optin_axialrotation:
                 if option_rotateLocal:
-                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis4_y, theta1_v + theta5_v, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, rotation_matrix = rotate_general_axis(coeffs_hyp_h, axis4_y, omega_v, np.mean(center_ell_v[:, 1:],axis=1))
                     axis4_x, axis4_y, axis4_z = rotatematrix(rotation_matrix, axis4_x, axis4_y, axis4_z)
                 else:
                     coeffs_hyp_h = rotate_y(coeffs_hyp_h, -bufreflangle3_y, np.mean(center_hyp_h[:, 1:],axis=1))
-                center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect3, center_ell_h)
+                center_hyp_h = mirr_ray_intersection(coeffs_hyp_h, bufreflect3, center_ell_h,negative=True)
         bufreflect4 = reflect_ray(bufreflect3, norm_vector(coeffs_hyp_h, center_hyp_h))
         bufreflangle4_z = np.arctan(np.mean(bufreflect4[1, 1:]) / np.mean(bufreflect4[0, 1:]))
         bufreflangle4_y = np.arctan(np.mean(bufreflect4[2, 1:]) / np.mean(bufreflect4[0, 1:]))
@@ -1413,6 +1468,18 @@ if option_wolter_3_1:
             print('center_ell_v',center_ell_v)
             print('center_ell_h',center_ell_h)
             print('center_hyp_h',center_hyp_h)
+            print('s2f_H',s2f_H)
+            print('s2f_V',s2f_V)
+            print('s2f_middle + defocus',s2f_middle + defocus)
+        if center_ell_v[0,0]<center_hyp_v[0,0]:
+            print('conflict 1st 2nd')
+            return np.inf
+        if center_ell_h[0,0]<center_ell_v[0,0]:
+            print('conflict 2nd 3rd')
+            return np.inf
+        if center_hyp_h[0,0]<center_ell_h[0,0]:
+            print('conflict 3rd 4th')
+            return np.inf
 
         detcenter = plane_ray_intersection(coeffs_det, bufreflect4, center_hyp_h)
         detcenter = detcenter[:, 0]
@@ -1596,13 +1663,17 @@ if option_wolter_3_1:
 
             vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
             reflect2 = reflect_ray(reflect1, norm_vector(coeffs_ell_v, vmirr_ell))
-
+            # if option == 'ray':
+            #     plot_ray_sideview(75,85,2,reflect2,vmirr_ell,ray_num)
 
             hmirr_ell = mirr_ray_intersection(coeffs_ell_h, reflect2, vmirr_ell)
             reflect3 = reflect_ray(reflect2, norm_vector(coeffs_ell_h, hmirr_ell))
 
-            hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect3, hmirr_ell)
+            hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect3, hmirr_ell,negative=True)
             reflect4 = reflect_ray(reflect3, norm_vector(coeffs_hyp_h, hmirr_hyp))
+
+            # if option == 'ray':
+            #     plot_ray_sideview(146,1,2,reflect4,hmirr_hyp,ray_num)
 
             mean_reflect4 = np.mean(reflect4,1)
             # print(mean_reflect2)
@@ -1618,7 +1689,6 @@ if option_wolter_3_1:
             coeffs_det[6] = 1
             coeffs_det[9] = -(s2f_middle + defocus)
             detcenter = plane_ray_intersection(coeffs_det, reflect4, hmirr_hyp)
-
             # angle = reflect2-mean_reflect2[:, np.newaxis]
             angle = reflect4
 
@@ -1659,19 +1729,16 @@ if option_wolter_3_1:
 
                 dist0to1 = np.linalg.norm(vmirr_hyp - source,axis=0)
 
-                if option_2mirror ==True:
-                    vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
-                    reflect2 = reflect_ray(reflect1, norm_vector(coeffs_hyp_v, vmirr_ell))
-                else:
-                    vmirr_ell = vmirr_hyp
-                    reflect2 = reflect1
+
+                vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
+                reflect2 = reflect_ray(reflect1, norm_vector(coeffs_ell_v, vmirr_ell))
 
                 dist1to2 = np.linalg.norm(vmirr_ell - vmirr_hyp,axis=0)
                 hmirr_ell = mirr_ray_intersection(coeffs_ell_h, reflect2, vmirr_ell)
                 reflect3 = reflect_ray(reflect2, norm_vector(coeffs_ell_h, hmirr_ell))
                 dist2to3 = np.linalg.norm(hmirr_ell - vmirr_ell,axis=0)
 
-                hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect3, hmirr_ell)
+                hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect3, hmirr_ell,negative=True)
                 reflect4 = reflect_ray(reflect3, norm_vector(coeffs_hyp_h, hmirr_hyp))
                 dist3to4 = np.linalg.norm(hmirr_hyp - hmirr_ell,axis=0)
 
@@ -1682,6 +1749,23 @@ if option_wolter_3_1:
                 coeffs_det[6] = 1
                 coeffs_det[9] = -(s2f_middle + defocus)
                 detcenter = plane_ray_intersection(coeffs_det, reflect4, hmirr_hyp)
+
+                if option == 'ray':
+                    fig,axs = plt.subplots(2,1,sharex=True)
+                    axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
+                    axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
+                    axs[0].plot(hmirr_ell[0,:],hmirr_ell[1,:])
+                    axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
+                    axs[0].plot(detcenter[0,:],detcenter[1,:])
+                    axs[0].set_ylabel('Horizontal')
+
+                    axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
+                    axs[1].plot(vmirr_ell[0,:],vmirr_ell[2,:])
+                    axs[1].plot(hmirr_ell[0,:],hmirr_ell[2,:])
+                    axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
+                    axs[1].plot(detcenter[0,:],detcenter[2,:])
+                    axs[1].set_ylabel('Vertical')
+                    plt.show()
 
                 angle = reflect4
 
@@ -1741,6 +1825,10 @@ if option_wolter_3_1:
             option_tilt = True
             if option_tilt:
                 theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
+                # if option == 'ray':
+                #     plt.figure()
+                #     plt.plot(np.arctan(angle[2, :]/angle[0, :]))
+                #     plt.show()
                 theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
                 reflect4_rotated = rotate_vectors(reflect4, -theta_y, -theta_z)
                 focus_apprx = np.mean(detcenter,axis=1)
@@ -1871,11 +1959,20 @@ if option_wolter_3_1:
 
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
+
                 plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+                plt.colorbar(label='\u03BB')
+                plt.title(f'PV 6σ ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                # plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
+                plt.show()
+
+                plt.figure()
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto')
                 # plt.colorbar(label='\u03BB')
                 plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
+                # plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
+                plt.title(f'PV 6σ ={np.nanstd(matrixWave2_Corrected)*6}')
                 plt.savefig('waveRaytrace_Corrected.png')
                 plt.show()
 
@@ -1898,6 +1995,12 @@ if option_wolter_3_1:
                 return
 
             if option == 'ray':
+                print('work srs 1st',np.min(dist0to1))
+                print('work 1st 2nd',np.min(dist1to2))
+                print('work 2nd 3rd',np.min(dist2to3))
+                print('work 3rd 4th',np.min(dist3to4))
+                print('work 4th fcs',np.min(np.linalg.norm(detcenter - hmirr_hyp,axis=0)))
+
                 print(theta1_v)
                 print(np.cos(theta1_v)*s2f_middle)
                 print(theta1_h)
@@ -2092,7 +2195,7 @@ if option_wolter_3_1:
                 plt.close()
 
                 # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
-                # plot_ray_sideview(-5,35,mabiki,reflect1,vmirr_hyp,ray_num)
+                plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
                 # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
                 # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
 
@@ -2461,6 +2564,7 @@ if option_wolter_3_1:
                 print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
 
 
+
     # 焦点面での標準偏差を計算
         return vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle
 
@@ -2711,6 +2815,8 @@ else:
                 print('div_v',(theta5_v1 - theta5_v2))
                 print('div0_h',np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))
                 print('div0_v',np.arctan(y1_v / x1_v) - np.arctan(y2_v / x2_v))
+                print('div_int_h',theta3_h1-theta3_h2)
+                print('div_int_v',theta3_v1-theta3_v2)
                 print('===== ===== =====')
                 # print('theta_edge1_h1', theta_cntr_h)
                 # print('theta_cntr_h1', theta_cntr_h)
@@ -8128,9 +8234,9 @@ def objective_function(var_params, fixed_params, var_indices, num_params,option_
 def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray'):
     initial_a_min = -0.3 + initial_params[0].copy()  # Initial minimum value for 'a'
     initial_a_max = 0.3 + initial_params[0].copy() # Initial maximum value for 'a'
-    shrink_factor = 0.3    # Range reduction factor per loop
+    shrink_factor = 0.1    # Range reduction factor per loop
     num_adj_astg = 100      # Number of steps for each range
-    max_attempts = 30     # Maximum attempts to avoid infinite loop
+    max_attempts = 16     # Maximum attempts to avoid infinite loop
 
     # Set the initial range
     a_min = initial_a_min
@@ -8159,6 +8265,8 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
 
         # Calculate astig_shift
         astig_shift = a[np.argmin(size_h_)] - a[np.argmin(size_v_)]
+        # if option_wolter_3_1:
+        #     astig_shift = -astig_shift
         initial_params[1] = initial_params[1] - astig_shift
 
         # Get the minimum values
@@ -8170,7 +8278,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         # plt.plot(a, size_h_, label='size_h_')
         # plt.xlabel('a')
         # plt.ylabel('Size')
-        # plt.title('Size vs a')
+        # plt.title(f'initial_params[1]={initial_params[1]}')
         # plt.legend()
         # # plt.grid()
         # plt.show()
@@ -8189,6 +8297,8 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
                     distance_[i] = np.mean(np.sqrt((detcenter[1, :] - np.mean(detcenter[1, :]))**2 + (detcenter[2, :] - np.mean(detcenter[2, :]))**2))
 
             astig_shift = a[np.argmin(size_h_)] - a[np.argmin(size_v_)]
+            # if option_wolter_3_1:
+            #     astig_shift = -astig_shift
             initial_params[1] = initial_params[1] - astig_shift
             size_v_param = np.min(size_v_)
             size_h_param = np.min(size_h_)
@@ -8218,6 +8328,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
     print(f"  Optimal 'a': {best_a}, distance: {axial_distance}")
     print(f"  size_v_param: {size_v_param}, size_h_param: {size_h_param}\n")
     print(f"       v_shift: {a[np.argmin(size_v_)]},      h_shift: {a[np.argmin(size_h_)]}\n")
+    print(f"  astigmatism: {initial_params[1]}")
 
     if attempt == max_attempts:
         print("Warning: Maximum attempts reached. Returning current best result.")
@@ -9275,6 +9386,24 @@ if option_AKB == True:
         # initial_params[21] = -0.00675583
         # initial_params[22] = -0.0011852
         print('')
+        if option_wolter_3_1:
+            print('set astigmatism')
+            # initial_params[0] = -0.00379837
+            # initial_params[1] = -0.00117666
+            # # initial_params[0] = 5.
+            # # initial_params[1] = 10.09
+            # # ## Plane rotation
+            # # initial_params[8] = 5e-3
+            # # initial_params[20] = 5e-3
+            # # initial_params[9] = -2.7884310768453647e-05
+            # # initial_params[21] = -2.7884310768453647e-05
+            # initial_params[9] = -5.45e-05
+            # initial_params[21] = -5.45e-05
+            # # initial_params[14] = -5e-2
+            # # initial_params[2] = -5e-2
+            #
+            # initial_params[22] =  -6e-5
+            # initial_params[10] =  -6e-5
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -9302,9 +9431,19 @@ else:
         # initial_params[0] = -0.12
         # initial_params[1] = -0.09
 
+# plot_result_debug(initial_params,'ray')
+
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+initial_params1 = initial_params.copy()
+# M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
+M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-5,1e-5,option = 'matrix', option_eval = '3')
+M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = '3')
 
+print('M8',M8)
+print('M9',M9)
+print('M10',M10)
 
 num_a = 4
 a = np.linspace(0.8, 1.2, num_a)
