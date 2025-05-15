@@ -55,7 +55,7 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 513
+unit = 1025
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
@@ -1158,19 +1158,33 @@ if option_wolter_3_1:
                 # print('theta4_v incidence ell',theta4_v)
                 theta4_h = np.arcsin(2*org_ell_h*np.sin(theta3_h)/l4_h)/2
                 # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
-                return theta2_h, theta3_h, theta4_h, theta5_h
+                return theta2_h, theta3_h, theta4_h, theta5_h, l1_h, l2_h, l3_h, l4_h
             # theta3_h, theta5_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
             # theta3_h1, theta5_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
             # theta3_h2, theta5_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
-            theta2_v, theta3_v, theta4_v, theta5_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
-            theta2_v1, theta3_v1, theta4_v1, theta5_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
-            theta2_v2, theta3_v2, theta4_v2, theta5_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
+            theta2_v, theta3_v, theta4_v, theta5_v, l1_v, l2_v, l3_v, l4_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
+            theta2_v1, theta3_v1, theta4_v1, theta5_v1, l1_v1, l2_v1, l3_v1, l4_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
+            theta2_v2, theta3_v2, theta4_v2, theta5_v2, l1_v2, l2_v2, l3_v2, l4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
             omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
             # omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
             # omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
             # omega_v = omega_v*0.6
             if option == 'ray':
                 print('===== ===== =====')
+                print('l1_v',l1_v)
+                print('l2_v',l2_v)
+                print('l3_v',l3_v)
+                print('l4_v',l4_v)
+                print('l1_v1',l1_v1)
+                print('l2_v1',l2_v1)
+                print('l3_v1',l3_v1)
+                print('l4_v1',l4_v1)
+                print('l1_v2',l1_v2)
+                print('l2_v2',l2_v2)
+                print('l3_v2',l3_v2)
+                print('l4_v2',l4_v2)
+
+
                 print('theta1_v',theta1_v)
                 print('theta1_v1',np.arctan(y1_v / x1_v))
                 print('theta1_v2',np.arctan(y2_v / x2_v))
@@ -1751,6 +1765,24 @@ if option_wolter_3_1:
                 detcenter = plane_ray_intersection(coeffs_det, reflect4, hmirr_hyp)
 
                 if option == 'ray':
+                    from scipy.spatial import cKDTree
+                    def mindist(A,B):
+                        tree = cKDTree(B.T)
+                        dist, idx = tree.query(A.T, k=1)  # Aの各点からBへの最近点距離
+                        min_dist = np.min(dist)
+                        return min_dist
+                    print('======================')
+                    print('workX srs 1st',np.min(vmirr_hyp[0,:]) - np.max(source[0,:]))
+                    print('workX 1st 2nd',np.min(vmirr_ell[0,:]) - np.max(vmirr_hyp[0,:]))
+                    print('workX 2nd 3rd',np.min(hmirr_ell[0,:]) - np.max(vmirr_ell[0,:]))
+                    print('workX 3rd 4th',np.min(hmirr_hyp[0,:]) - np.max(hmirr_ell[0,:]))
+                    print('workX 4th fcs',np.min(detcenter[0,:]) - np.max(hmirr_hyp[0,:]))
+                    print('======================')
+                    print('workAbs srs 1st',mindist(source,vmirr_hyp))
+                    print('workAbs 1st 2nd',mindist(vmirr_hyp,vmirr_ell))
+                    print('workAbs 2nd 3rd',mindist(vmirr_ell,hmirr_ell))
+                    print('workAbs 3rd 4th',mindist(hmirr_ell,hmirr_hyp))
+                    print('workAbs 4th fcs',mindist(hmirr_hyp,detcenter))
                     fig,axs = plt.subplots(2,1,sharex=True)
                     axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
                     axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
@@ -1823,13 +1855,32 @@ if option_wolter_3_1:
                     return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
 
             option_tilt = True
+            hmirr_hyp0 = hmirr_hyp.copy()
             if option_tilt:
-                theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
-                # if option == 'ray':
-                #     plt.figure()
-                #     plt.plot(np.arctan(angle[2, :]/angle[0, :]))
-                #     plt.show()
-                theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
+
+                if option == 'ray':
+                    angles_between_rad, angles_yx_rad, angles_zx_rad = angle_between_2vector(reflect4,norm_vector(coeffs_det, detcenter))
+                    theta_z = (np.max(angles_yx_rad) + np.min(angles_yx_rad))/2
+                    theta_y = -(np.max(angles_zx_rad) + np.min(angles_zx_rad))/2
+                    print('NA_h')
+                    print(np.sin((np.max(angles_yx_rad) - np.min(angles_yx_rad))/2))
+                    print('angles_yx_rad',np.sort(angles_yx_rad)[:5][::-1])
+                    print('angles_yx_rad',np.sort(angles_yx_rad)[-5:][::-1])
+                    print('NA_v')
+                    print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
+                    print('angles_zx_rad',np.sort(angles_zx_rad)[:5][::-1])
+                    print('angles_zx_rad',np.sort(angles_zx_rad)[-5:][::-1])
+                    print('type(detcenter[0,0])',type(detcenter[0,0]))
+                    print('theta_y',theta_y)
+                    print('theta_z',theta_z)
+                else:
+                    theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
+                    # if option == 'ray':
+                    #     plt.figure()
+                    #     plt.plot(np.arctan(angle[2, :]/angle[0, :]))
+                    #     plt.show()
+                    theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
+
                 reflect4_rotated = rotate_vectors(reflect4, -theta_y, -theta_z)
                 focus_apprx = np.mean(detcenter,axis=1)
                 hmirr_hyp_points_rotated = rotate_points(hmirr_hyp, focus_apprx, -theta_y, -theta_z)
@@ -1838,9 +1889,11 @@ if option_wolter_3_1:
                 coeffs_det[9] = -(s2f_middle + defocus)
                 detcenter = plane_ray_intersection(coeffs_det, reflect4_rotated, hmirr_hyp_points_rotated)
 
-                hmirr_hyp = hmirr_hyp_points_rotated
-                reflect4 = reflect4_rotated
-                angle = reflect4
+
+                hmirr_hyp = hmirr_hyp_points_rotated.copy()
+                reflect4 = reflect4_rotated.copy()
+                angle = reflect4.copy()
+
 
             if option == 'sep':
                 focus_v0, focus_h0, pos_v0, pos_h0, std_v0, std_h0, focus_v0_l, focus_h0_l, focus_v0_u, focus_h0_u, focus_std_obl1, focus_std_obl2 = compare_sep(reflect4_rotated, hmirr_hyp_points_rotated, coeffs_det,ray_num_H,1e-4)
@@ -1995,12 +2048,6 @@ if option_wolter_3_1:
                 return
 
             if option == 'ray':
-                print('work srs 1st',np.min(dist0to1))
-                print('work 1st 2nd',np.min(dist1to2))
-                print('work 2nd 3rd',np.min(dist2to3))
-                print('work 3rd 4th',np.min(dist3to4))
-                print('work 4th fcs',np.min(np.linalg.norm(detcenter - hmirr_hyp,axis=0)))
-
                 print(theta1_v)
                 print(np.cos(theta1_v)*s2f_middle)
                 print(theta1_h)
@@ -2012,6 +2059,7 @@ if option_wolter_3_1:
                 print('s2f_H',s2f_H)
                 print('s2f_V',s2f_V)
                 mabiki = round(np.sqrt(ray_num_H*ray_num_V)/50)
+                mabiki =  1
                 defocussize = 4e-6
                 coeffs_det = np.zeros(10)
                 coeffs_det[6] = 1
@@ -2194,10 +2242,10 @@ if option_wolter_3_1:
                 # plt.show()
                 plt.close()
 
-                # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
-                plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
-                # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
-                # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
+                # # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
+                # plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
+                # # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
+                # # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
 
                 phai0 = normalize_vector(phai0)
 
@@ -2238,8 +2286,17 @@ if option_wolter_3_1:
 
                 detcenter0 = plane_ray_intersection(coeffs_det, reflect4, hmirr_hyp)
 
-                angles_between_rad, angles_yx_rad, angles_zx_rad = angle_between_2vector(reflect_ray(reflect4, norm_vector(coeffs_det, detcenter0)),norm_vector(coeffs_det, detcenter0))
-
+                # angles_between_rad, angles_yx_rad, angles_zx_rad = angle_between_2vector(reflect_ray(reflect4, norm_vector(coeffs_det, detcenter0)),norm_vector(coeffs_det, detcenter0))
+                angles_between_rad, angles_yx_rad, angles_zx_rad = angle_between_2vector(reflect4,norm_vector(coeffs_det, detcenter0))
+                print('NA_h')
+                print(np.sin((np.max(angles_yx_rad) - np.min(angles_yx_rad))/2))
+                print('angles_yx_rad',np.sort(angles_yx_rad)[:5][::-1])
+                print('angles_yx_rad',np.sort(angles_yx_rad)[-5:][::-1])
+                print('NA_v')
+                print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
+                print('angles_zx_rad',np.sort(angles_zx_rad)[:5][::-1])
+                print('angles_zx_rad',np.sort(angles_zx_rad)[-5:][::-1])
+                print('type(detcenter[0,0])',type(detcenter[0,0]))
                 if option_tilt:
                     reflect4_rotated = rotate_vectors(reflect4, -theta_y, -theta_z)
                     focus_apprx = np.mean(detcenter,axis=1)
@@ -2558,10 +2615,7 @@ if option_wolter_3_1:
                 plt.savefig('multipleAroundFocus.png', dpi=300)
                 plt.show()
 
-                print('NA_h')
-                print(np.sin((np.max(angles_yx_rad) - np.min(angles_yx_rad))/2))
-                print('NA_v')
-                print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
+
 
 
 
@@ -9395,8 +9449,8 @@ if option_AKB == True:
             # # ## Plane rotation
             # # initial_params[8] = 5e-3
             # # initial_params[20] = 5e-3
-            # # initial_params[9] = -2.7884310768453647e-05
-            # # initial_params[21] = -2.7884310768453647e-05
+            initial_params[9] = -2.7884310768453647e-05
+            initial_params[21] = -2.7884310768453647e-05
             # initial_params[9] = -5.45e-05
             # initial_params[21] = -5.45e-05
             # # initial_params[14] = -5e-2
