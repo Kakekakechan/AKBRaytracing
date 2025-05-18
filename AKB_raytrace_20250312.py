@@ -153,9 +153,12 @@ def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num):
     #     if i % mabiki == 0:
     #         plt.plot([detcenter1[0,i],detcenter2[0,i]],[detcenter1[1,i],detcenter2[1,i]])
 
-    axs[0].plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
-    axs[0].plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
-    axs[0].plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
+    # axs[0].plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
+    # axs[0].plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
+    # axs[0].plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
+
+    axs[0].plot([detcenter1[0,:],detcenter2[0,:]],[detcenter1[1,:],detcenter2[1,:]],'k')
+
 
     axs[1].plot([detcenter1[0,thinned_array1_v],detcenter2[0,thinned_array1_v]],[detcenter1[2,thinned_array1_v],detcenter2[2,thinned_array1_v]],'r')
     axs[1].plot([detcenter1[0,thinned_array3_v],detcenter2[0,thinned_array3_v]],[detcenter1[2,thinned_array3_v],detcenter2[2,thinned_array3_v]],'g')
@@ -2243,7 +2246,7 @@ if option_wolter_3_1:
                 plt.close()
 
                 # # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
-                # plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
+                plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
                 # # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
                 # # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
 
