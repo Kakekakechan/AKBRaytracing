@@ -102,21 +102,21 @@ class Wolter3:
         self.hyp_design()
 
         # self.na_o = na_o ### constant
-        
+
         self.x_3 = x_3 ### constant
         ### constant values based on hyp_design
         self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)
 
         ### variable values for estimation
         self.l_4a = 0.11196128532403424
-        
+
         self.theta_4a = estimate_theta_4a
-        
+
         self.theta_5a = self.theta_4a*2 - self.theta_3a
         self.ell_design()
 
         target_na_o = na_o ### target constant
-        
+
     def optimize(self, l_1a, x_3, tar_na_o, tar_l_4b, var_theta_2a, var_na_i, est_l_2a, est_theta_4a):
         init_params =[est_l_2a, est_theta_4a]
         self.target_params = [tar_na_o, tar_l_4b]
@@ -126,7 +126,7 @@ class Wolter3:
         self.na_i = var_na_i ### variable
 
         self.x_3 = x_3 ### constant
-        
+
         # self.l_3a(constant) self.l_4a(constant) self.theta_4a(variable) ### variable
         # 最小化対象関数（目的関数）
         def objective(params):
@@ -190,7 +190,7 @@ class Wolter3:
         C = self.f_hyp**2/self.a_hyp**2 - 1
         self.l_1b = (-B + np.sqrt(B**2 - 4*A*C))/(2*A)
         self.l_2b = self.l_1b - self.a_hyp*2
-        
+
         self.theta_2b = arcsin(self.b_hyp/sqrt(self.l_1b*self.l_2b))
         self.theta_3b = self.theta_1b + self.theta_2b*2
         self.na_int = self.theta_3a - self.theta_3b
@@ -202,7 +202,7 @@ class Wolter3:
         self.b_ell = sqrt(self.l_3a * self.l_4a) * np.sin(self.theta_4a)
         self.f_ell = np.sqrt(self.a_ell**2 - self.b_ell**2)
         self.l_4a =  self.a_ell*2 - self.l_3a
-        
+
 
         A = 1./self.a_ell**2 * cos(self.theta_3b)**2 + 1./self.b_ell**2 * sin(self.theta_3b)**2
         B = -2 * self.f_ell/self.a_ell**2 * cos(self.theta_3b)
@@ -248,13 +248,13 @@ class Wolter3:
         print('self.l_3b',self.l_3b)
         print('self.l_4a',self.l_4a)
         print('self.l_4b',self.l_4b)
-        
+
         print('self.x_1',self.x_1)
         print('self.x_2',self.x_2)
         print('self.x_3',self.x_3)
         print('self.x_4',self.x_4)
         print('self.x_5',self.x_5)
-        
+
 def ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin):
     na_o = np.float64(np.arcsin(na_o_sin)*2)
     Ell1 = Ell(l_i1, l_o1, theta_g1, na_o)
