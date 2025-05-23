@@ -816,7 +816,7 @@ def rotatematrix(rotation_matrix, axis_x, axis_y, axis_z):
     return axis_x_new, axis_y_new, axis_z_new
 
 if option_wolter_3_1:
-    def plot_result_debug(params,option):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -862,26 +862,85 @@ if option_wolter_3_1:
         Aperture_v  =   0.01348071947248
         F0_F2_v  =   146.13202134964
 
-        ### 3型 Setting1
+        # ### 3型 Setting1
+        # a_hyp_v  =     72.985
+        # b_hyp_v  =     0.25261675784047
+        # a_ell_v  =     0.0933
+        # b_ell_v  =     0.0236745564714402
+        # length_hyp_v  =     0.0345
+        # length_ell_v  =     0.0594385752478948
+        # theta1_v  =     4.92519127861222E-05
+        # theta2_v  =     0.121
+        # theta3_v  =     0.242049251912786
+        # theta4_v  =     0.256975971148682
+        # theta5_v  =     -0.271902690384578
+        # phai_hyp_v  =     -0.121049251912786
+        # phai_ell_v  =     0.00989215579059824
+        # F_eff_v  =     0.0258133633376474
+        # Mag_v  =     5660.84906496756
+        # NA_v  =     0.0816159686218418
+        # Aperture_v  =     0.0151067293572333
+        # F0_F2_v  =     146.151367076927
+
+        ### 3型 Setting2
         a_hyp_v  =     72.985
         b_hyp_v  =     0.25261675784047
-        a_ell_v  =     0.0933
-        b_ell_v  =     0.0236745564714402
+        a_ell_v  =     0.104
+        b_ell_v  =     0.0264132202381823
         length_hyp_v  =     0.0345
-        length_ell_v  =     0.0594385752478948
+        length_ell_v  =     0.0662598019783809
         theta1_v  =     4.92519127861222E-05
         theta2_v  =     0.121
         theta3_v  =     0.242049251912786
-        theta4_v  =     0.256975971148682
-        theta5_v  =     -0.271902690384578
+        theta4_v  =     0.25722413024862
+        theta5_v  =     -0.272399008584454
         phai_hyp_v  =     -0.121049251912786
-        phai_ell_v  =     0.00989215579059824
-        F_eff_v  =     0.0258133633376474
-        Mag_v  =     5660.84906496756
-        NA_v  =     0.0816159686218418
-        Aperture_v  =     0.0151067293572333
-        F0_F2_v  =     146.151367076927
+        phai_ell_v  =     0.00969021318203535
+        F_eff_v  =     0.0257675833177302
+        Mag_v  =     5671.71103747572
+        NA_v  =     0.0817632660571617
+        Aperture_v  =     0.0168562943249794
+        F0_F2_v  =     146.172054295563
 
+        ### 3型 Setting3
+        a_hyp_v  =     72.98
+        b_hyp_v  =     0.238853696163023
+        a_ell_v  =     0.124
+        b_ell_v  =     0.0277912976743237
+        length_hyp_v  =   0.0485
+        length_ell_v  =   0.0842274770752208
+        theta1_v  =     5.39073028703234E-05
+        theta2_v  =     0.099
+        theta3_v  =     0.19805390730287
+        theta4_v  =     0.227982557779111
+        theta5_v  =     -0.257911208255352
+        phai_hyp_v  =     -0.0990539073028703
+        phai_ell_v  =     -0.00341217625956458
+        F_eff_v  =     0.0298718112105973
+        Mag_v  =     4893.3290306965
+        NA_v  =     0.082028477826814
+        Aperture_v  =     0.0190364833176426
+        F0_F2_v  =     146.202472807512
+
+        ### 3型 Setting4
+        a_hyp_v  =     72.975
+        b_hyp_v  =     0.258979496230151
+        a_ell_v  =     0.146
+        b_ell_v  =     0.0324589749420265
+        length_hyp_v  =     0.06
+        length_ell_v  =     0.0977147009051387
+        theta1_v  =     6.53721558428766E-05
+        theta2_v  =     0.096
+        theta3_v  =     0.192065372155843
+        theta4_v  =     0.226829703253149
+        theta5_v  =     -0.261594034350456
+        phai_hyp_v  =     -0.0960653721558429
+        phai_ell_v  =     -0.00847283029554443
+        F_eff_v  =     0.0356980368015059
+        Mag_v  =     4095.46088149609
+        NA_v  =     0.0821759344796697
+        Aperture_v  =     0.0219750172281408
+        F0_F2_v  =     146.235611303576
 
         ### 1型
         a_ell_h  =     np.float64(73.07505)
@@ -903,107 +962,36 @@ if option_wolter_3_1:
         Aperture_h  =     0.00388539144431358
         F0_F2_h  =     146.131501113269
 
-        # ### ミラー長くした
-        # ### 3型
-        # a_hyp_v =     72.9445
-        # b_hyp_v =     0.349791433380448
-        # a_ell_v =     0.1993
-        # b_ell_v =     0.0457667709628384
-        # length_hyp_v =     0.115
-        # length_ell_v =    0.107443175045138
-        # theta1_v =     0.000131719787632208
-        # theta2_v =     0.087
-        # theta3_v =     0.174131719787632
-        # theta4_v =     0.240992539115602
-        # theta5_v =     -0.307853358443571
-        # phai_hyp_v =     -0.0871317197876322
-        # phai_ell_v =     -0.0444805243183651
-        # F_eff_v =     0.0605726395581883
-        # Mag_v =     2413.92902261282
-        # NA_v =     0.0817586100259336
-        # Aperture_v =     0.0256430972940032
-        # F0_F2_v =     146.278625245334
-        #
-        # a_hyp_v =     72.9495
-        # b_hyp_v =     0.356610270833153
-        # a_ell_v =     0.1905
-        # b_ell_v =     0.045312267576958
-        # length_hyp_v =     0.105
-        # length_ell_v =     0.104317045348504
-        # theta1_v =     0.000128017628801362
-        # theta2_v =     0.093
-        # theta3_v =     0.186128017628801
-        # theta4_v =     0.247807479365351
-        # theta5_v =     -0.3094869411019
-        # phai_hyp_v =     -0.0931280176288014
-        # phai_ell_v =     -0.0390065068226956
-        # F_eff_v =     0.0585365197785563
-        # Mag_v =     2497.7957763223
-        # NA_v =     0.0825396891889615
-        # Aperture_v =     0.0255867811737287
-        # F0_F2_v =     146.270808383263
-        #
-        # a_hyp_v =     72.9495
-        # b_hyp_v =     0.38336551954637
-        # a_ell_v =     0.198
-        # b_ell_v =     0.0486368300272184
-        # length_hyp_v =     0.105
-        # length_ell_v =     0.109735860116989
-        # theta1_v =     0.00013752887545671
-        # theta2_v =     0.1
-        # theta3_v =     0.200137528875457
-        # theta4_v =     0.253798442194187
-        # theta5_v =     -0.307459355512918
-        # phai_hyp_v =     -0.100137528875457
-        # phai_ell_v =     -0.0311323291314553
-        # F_eff_v =     0.0633319193845807
-        # Mag_v =     2308.81285624414
-        # NA_v =     0.0820773641558992
-        # Aperture_v =     0.0275527566699558
-        # F0_F2_v =     146.284881605122
-        #
-        #
-        # ### 1型
-        # a_ell_h  =     73.15205
-        # b_ell_h  =     0.567554936631599
-        # a_hyp_h  =     0.0132
-        # b_hyp_h  =     0.00646078271831603
-        # length_hyp_h  =   np.float64(0.02071617837)
-        # length_ell_h  =   np.float64(0.052)
-        # theta1_h  =     0.000204833463513953
-        # theta2_h  =     0.146
-        # theta3_h  =     0.291795166536486
-        # theta4_h  =     0.177970855205531
-        # theta5_h  =     0.700007136857608
-        # phai_ell_h  =     -0.145795166536486
-        # phai_hyp_h  =     -0.486451342696638
-        # F_eff_h  =     0.0355618526271826
-        # Mag_h  =     4112.12384151236
-        # NA_h  =     0.081656129902967
-        # Aperture_h  =     0.00756505688667416
-        # F0_F2_h  =     146.270303889214
-        #
-        # # a_ell_h  =     73.2065
-        # # b_ell_h  =     0.833921017463864
-        # # a_hyp_h  =     0.0275
-        # # b_hyp_h  =     0.0132864670578314
-        # # length_hyp_h  =   np.float64(0.05591377645)
-        # # length_ell_h  =   np.float64(0.110)
-        # # theta1_h  =     0.000429947411574959
-        # # theta2_h  =     0.15
-        # # theta3_h  =     0.299570052588425
-        # # theta4_h  =     0.155160673115584
-        # # theta5_h  =     0.668398388492131
-        # # phai_ell_h  =     -0.149570052588425
-        # # phai_hyp_h  =     -0.474330534596479
-        # # F_eff_h  =     0.0796368783933872
-        # # Mag_h  =     1836.62121588582
-        # # NA_h  =     0.0816052530848184
-        # # Aperture_h  =     0.0164381945720959
-        # # F0_F2_h  =     146.342417302607
+        ### 1型 setting3
+
+        a_ell_h  =     73.11055
+        b_ell_h  =     0.420227752780288
+        a_hyp_h  =     0.0072
+        b_hyp_h  =     0.00369271489837695
+        length_hyp_h  =   np.float64(0.01008238804)
+        length_ell_h  =   np.float64(0.026)
+        theta1_h  =     0.000109340630839105
+        theta2_h  =     0.15
+        theta3_h  =     0.299890659369161
+        theta4_h  =     0.193862292274329
+        theta5_h  =     0.736737068149589
+        phai_ell_h  =     -0.149890659369161
+        phai_hyp_h  =     -0.50921205866987
+        F_eff_h  =     0.0176204666209969
+        Mag_h  =     8296.31154439727
+        NA_h  =     0.0815169632942278
+        Aperture_h  =     0.00388539144431358
+        F0_F2_h  =     146.202501112065
+
+
 
 
         omega_v = theta1_v - theta5_v
+        if option == 'ray':
+            omega_v = theta1_v - theta5_v
+            print('omega_v',omega_v)
+            omega_h = theta1_h + theta5_h
+            print('omega_h',omega_h)
         # print('omega_v',omega_v)
         # omega_v = omega_v/4
         # #
@@ -1557,28 +1545,43 @@ if option_wolter_3_1:
                 coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
             if roll_ell_v != 0:
                 coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
-
-
-            if pitch_ell_h != 0:
-                coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_y, pitch_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
-            if yaw_ell_h != 0:
-                coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_z, yaw_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
-            if roll_ell_h != 0:
-                coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_x, roll_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
-
+            
             if yaw_hyp_v != 0:
-                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
             if pitch_hyp_v != 0:
-                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_y, pitch_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
             if roll_hyp_v != 0:
-                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
 
-            if pitch_hyp_h != 0:
-                coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis2_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
-            if yaw_hyp_h != 0:
-                coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis2_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
-            if roll_hyp_h != 0:
-                coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis2_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+            if True:
+                center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
+                if pitch_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_y, pitch_ell_h, center_wolter_h)
+                if yaw_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_z, yaw_ell_h, center_wolter_h)
+                if roll_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_x, roll_ell_h, center_wolter_h)
+                if pitch_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, center_wolter_h)
+                if yaw_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, center_wolter_h)
+                if roll_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, center_wolter_h)
+            else:
+                if pitch_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                if yaw_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_z, yaw_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                if roll_ell_h != 0:
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_x, roll_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                if pitch_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                if yaw_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                if roll_hyp_h != 0:
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+
+
 
             if decenterX_hyp_v != 0:
                 coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v)
@@ -1667,9 +1670,12 @@ if option_wolter_3_1:
 
         if bool_point_source:
             source = np.zeros((3, ray_num * ray_num))
+            source[0, :] =+ source_shift[0]
+            source[1, :] =+ source_shift[1]
+            source[2, :] =+ source_shift[2]
             if option_axial:
-                rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
-                rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
+                rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
+                rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
                 rand_p0h = rand_p0h - np.mean(rand_p0h)
                 rand_p0v = rand_p0v - np.mean(rand_p0v)
             if not option_axial:
@@ -1822,6 +1828,8 @@ if option_wolter_3_1:
                     axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
                     axs[1].plot(detcenter[0,:],detcenter[2,:])
                     axs[1].set_ylabel('Vertical')
+                    axs[0].axis('equal')
+                    axs[1].axis('equal')
                     plt.show()
 
                 angle = reflect4
@@ -1879,7 +1887,7 @@ if option_wolter_3_1:
                 else:
                     return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
 
-            option_tilt = True
+            
             hmirr_hyp0 = hmirr_hyp.copy()
             if option_tilt:
 
@@ -8310,7 +8318,7 @@ def objective_function(var_params, fixed_params, var_indices, num_params,option_
     area_min = auto_focus_NA(50, params,1,1, False,'D')
     return area_min
 #####################################
-def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray'):
+def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray',option_mode=False,source_shift0=[0.,0.,0.]):
     initial_a_min = -0.3 + initial_params[0].copy()  # Initial minimum value for 'a'
     initial_a_max = 0.3 + initial_params[0].copy() # Initial maximum value for 'a'
     shrink_factor = 0.1    # Range reduction factor per loop
@@ -8336,17 +8344,19 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         for i in range(len(a)):
             initial_params[0] = np.float64(a[i])
             if option_AKB:
-                vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
+                if option_mode == 'FoC':
+                    vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
+                else:
+                    vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
             else:
                 vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
             size_v_[i] = np.std(detcenter[2, :])
             size_h_[i] = np.std(detcenter[1, :])
 
         # Calculate astig_shift
-        astig_shift = a[np.argmin(size_h_)] - a[np.argmin(size_v_)]
-        # if option_wolter_3_1:
-        #     astig_shift = -astig_shift
-        initial_params[1] = initial_params[1] - astig_shift
+        if not option_mode == 'FoC':
+            astig_shift = a[np.argmin(size_h_)] - a[np.argmin(size_v_)]
+            initial_params[1] = initial_params[1] - astig_shift
 
         # Get the minimum values
         size_v_param = np.min(size_v_)
@@ -8363,11 +8373,14 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         # plt.show()
 
         # Second check if not converged
-        if not np.argmin(size_h_) == np.argmin(size_v_):
+        if not np.argmin(size_h_) == np.argmin(size_v_) and not option_mode == 'FoC':
             for i in range(len(a)):
                 initial_params[0] = np.float64(a[i])
                 if option_AKB:
-                    vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
+                    if option_mode == 'FoC':
+                        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
+                    else:
+                        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
                 else:
                     vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
                 size_v_[i] = np.std(detcenter[2, :])
@@ -8411,13 +8424,21 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
 
     if attempt == max_attempts:
         print("Warning: Maximum attempts reached. Returning current best result.")
+    if option_param == 'FoC':
+        print('params = ',initial_params[0:1])
+        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
+        return detcenter
     if option:
         print('params = ',initial_params[0:26])
         if option_AKB:
             if option_disp == 'ray_wave':
                 b = plot_result_debug(initial_params,option_disp)
                 return b
-            vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,option_disp)
+            # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,option_disp)
+            if option_mode == 'FoC':
+                vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, option_disp,source_shift=source_shift0,option_tilt = False)
+            else:
+                vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, option_disp)
 
         else:
             vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params,na_ratio_h,na_ratio_v, option_disp)
@@ -9296,6 +9317,93 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     # plt.show()
     sys.exit()
     return
+
+def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
+    
+    range_h = np.linspace(range_h[0], range_h[1], range_h[2])
+    range_v = np.linspace(range_v[0], range_v[1], range_v[2])
+
+    
+
+    # objectpointX = np.zeros((len(range_h),len(range_v)))
+    focuspointX = np.zeros((len(range_h),len(range_v)))
+    focuspointY = np.zeros((len(range_h),len(range_v)))
+    focuspointZ = np.zeros((len(range_h),len(range_v)))
+    focussizeV = np.zeros((len(range_h),len(range_v)))
+    focussizeH = np.zeros((len(range_h),len(range_v)))
+
+    for i in range(len(range_v)):
+        for j in range(len(range_h)):
+            S0 = [0., range_h[j], range_v[i]]
+            print('source_shift0',S0)
+            detcenter = auto_focus_NA(50, initial_params,1,1, True,'FoC', option_mode='FoC',source_shift0=S0)
+
+            # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=S0,option_tilt = False)
+
+            focuspoint = np.mean(detcenter, axis=1)
+            focuspointX[i,j] = focuspoint[0]
+            focuspointY[i,j] = focuspoint[1]
+            focuspointZ[i,j] = focuspoint[2]
+            focussizeH[i,j] = np.max(detcenter[1,:]) - np.min(detcenter[1,:])
+            focussizeV[i,j] = np.max(detcenter[2,:]) - np.min(detcenter[2,:])
+    
+    fig,axs = plt.subplots(2, 2)
+    im00 = axs[0, 0].scatter(focuspointY,focuspointX,c=focussizeH, cmap='jet')
+    axs[0, 0].set_title('focussizeH')
+    axs[0, 0].set_ylabel('focuspointX')
+    axs[0, 0].set_xlabel('focuspointY')
+    fig.colorbar(im00, ax=axs[0, 0])
+    im01 = axs[0, 1].scatter(focuspointZ,focuspointX,c=focussizeH, cmap='jet')
+    axs[0, 1].set_title('focussizeH')
+    axs[0, 1].set_ylabel('focuspointX')
+    axs[0, 1].set_xlabel('focuspointZ')
+    fig.colorbar(im01, ax=axs[0, 1])
+    im10 = axs[1, 0].scatter(focuspointY,focuspointX,c=focussizeV, cmap='jet')
+    axs[1, 0].set_title('focussizeV')
+    axs[1, 0].set_ylabel('focuspointX')
+    axs[1, 0].set_xlabel('focuspointY')
+    fig.colorbar(im10, ax=axs[1, 0])
+    im11 = axs[1, 1].scatter(focuspointZ,focuspointX,c=focussizeV, cmap='jet')
+    axs[1, 1].set_title('focussizeV')
+    axs[1, 1].set_ylabel('focuspointX')
+    axs[1, 1].set_xlabel('focuspointZ')
+    fig.colorbar(im11, ax=axs[1, 1])
+    # plt.axis('equal')
+
+    fig1, axs1 = plt.subplots(2,2)
+    axs1[0,0].plot(range_h, focussizeH[int(len(range_v)/2),:], label='focussizeH')
+    axs1[0,0].set_xlabel('range_h')
+    axs1[0,0].set_ylabel('focussizeH')
+    axs1[0,1].plot(range_v, focussizeV[:,int(len(range_h)/2)], label='focussizeV')
+    axs1[0,1].set_xlabel('range_v')
+    axs1[0,1].set_ylabel('focussizeV')
+    axs1[1,0].plot(range_h, focussizeV[int(len(range_v)/2),:], label='focussizeV')
+    axs1[1,0].set_xlabel('range_h')
+    axs1[1,0].set_ylabel('focussizeV')
+    axs1[1,1].plot(range_v, focussizeH[:,int(len(range_h)/2)], label='focussizeH')
+    axs1[1,1].set_xlabel('range_v')
+    axs1[1,1].set_ylabel('focussizeH')
+
+    fig2, axs2 = plt.subplots(2,2)
+    axs2[0,0].plot(focuspointY[int(len(range_v)/2),:],focuspointX[int(len(range_v)/2),:])
+    axs2[0, 0].set_ylabel('focuspointY')
+    axs2[0, 0].set_xlabel('focuspointX')
+    
+    axs2[0,1].plot(focuspointZ[int(len(range_v)/2),:],focuspointX[int(len(range_v)/2),:])
+    axs2[0, 1].set_ylabel('focuspointZ')
+    axs2[0, 1].set_xlabel('focuspointX')
+    
+    axs2[1,0].plot(focuspointY[:,int(len(range_h)/2)],focuspointX[:,int(len(range_h)/2)])
+    axs2[1, 0].set_ylabel('focuspointY')
+    axs2[1, 0].set_xlabel('focuspointX')
+    
+    axs2[1,1].plot(focuspointZ[:,int(len(range_h)/2)],focuspointX[:,int(len(range_h)/2)])
+    axs2[1, 1].set_ylabel('focuspointZ')
+    axs2[1, 1].set_xlabel('focuspointX')
+    plt.show()        
+    
+    
+    return
 #####################################
 # defocus, astigH, \
 #    0        1
@@ -9467,22 +9575,25 @@ if option_AKB == True:
         print('')
         if option_wolter_3_1:
             print('set astigmatism')
-            # initial_params[0] = -0.00379837
-            # initial_params[1] = -0.00117666
+            initial_params[0] = 5.87252273e-03
+            initial_params[1] = 0.03
             # # initial_params[0] = 5.
             # # initial_params[1] = 10.09
             # # ## Plane rotation
             # # initial_params[8] = 5e-3
             # # initial_params[20] = 5e-3
-            initial_params[9] = -2.7884310768453647e-05
-            initial_params[21] = -2.7884310768453647e-05
-            # initial_params[9] = -5.45e-05
-            # initial_params[21] = -5.45e-05
-            # # initial_params[14] = -5e-2
-            # # initial_params[2] = -5e-2
-            #
-            # initial_params[22] =  -6e-5
-            # initial_params[10] =  -6e-5
+            initial_params[9] = -27e-6
+            initial_params[21] = -27e-6
+            # initial_params[9] = 2.45e-05
+            # initial_params[21] = 2.45e-05
+            # # # initial_params[14] = -5e-2
+            # # # initial_params[2] = -5e-2
+            
+            initial_params[10] = -40e-6
+            initial_params[22] = -40e-6
+
+            # initial_params[16] =  -5e-5
+            # # initial_params[10] =  -6e-5
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -9511,7 +9622,7 @@ else:
         # initial_params[1] = -0.09
 
 # plot_result_debug(initial_params,'ray')
-
+# calc_FoC(initial_params)
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 initial_params1 = initial_params.copy()
@@ -9523,6 +9634,12 @@ M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', 
 print('M8',M8)
 print('M9',M9)
 print('M10',M10)
+M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
+M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+print('M14',M14)
+print('M15',M15)
+print('M16',M16)
 
 num_a = 4
 a = np.linspace(0.8, 1.2, num_a)
@@ -9545,6 +9662,7 @@ l_o1 = np.float64(0.8) # 変数
 target_l_o2 = np.float64(0.025) # 変数
 target_gap = np.float64(0.2) # 変数
 kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+calc_FoC(initial_params,'ray')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
