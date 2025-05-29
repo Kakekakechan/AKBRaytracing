@@ -94,59 +94,60 @@ class Ell:
 
         pass  # Placeholder for actual calculations
 class Wolter3:
-    def __init__(self, l_1a, na_o, x_3, l_2a,theta_2a, na_i,estimate_theta_4a):
-        self.l_1a = l_1a ### constant
-        self.l_2a = l_2a ### variable
-        self.theta_2a = theta_2a ### variable
-        self.na_i = na_i ### variable
-        self.hyp_design()
+    # def __init__(self, l_1a, na_o, x_3, l_2a,theta_2a, na_i,estimate_theta_4a):
+    #     self.l_1a = l_1a ### constant
+    #     self.l_2a = l_2a ### variable
+    #     self.theta_2a = theta_2a ### variable
+    #     self.na_i = na_i ### variable
+    #     self.hyp_design()
 
-        # self.na_o = na_o ### constant
+    #     # self.na_o = na_o ### constant
 
-        self.x_3 = x_3 ### constant
-        ### constant values based on hyp_design
-        self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)
+    #     self.x_3 = x_3 ### constant
+    #     ### constant values based on hyp_design
+    #     self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)
 
-        ### variable values for estimation
-        self.l_4a = 0.11196128532403424
+    #     ### variable values for estimation
+    #     self.l_4a = 0.11196128532403424
 
-        self.theta_4a = estimate_theta_4a
+    #     self.theta_4a = estimate_theta_4a
 
-        self.theta_5a = self.theta_4a*2 - self.theta_3a
-        self.ell_design()
+    #     self.theta_5a = self.theta_4a*2 - self.theta_3a
+    #     self.ell_design()
 
-        target_na_o = na_o ### target constant
+    #     target_na_o = na_o ### target constant
+    def __init__(self):
+        pass
 
     def optimize(self, l_1a, x_3, tar_na_o, tar_l_4b, var_theta_2a, var_na_i, est_l_2a, est_theta_4a):
         init_params =[est_l_2a, est_theta_4a]
         self.target_params = [tar_na_o, tar_l_4b]
         self.l_1a = l_1a ### constant
-        self.l_2a = init_params[0] ### estimate variable
         self.theta_2a = var_theta_2a ### variable
         self.na_i = var_na_i ### variable
-
         self.x_3 = x_3 ### constant
 
         # self.l_3a(constant) self.l_4a(constant) self.theta_4a(variable) ### variable
         # 最小化対象関数（目的関数）
         def objective(params):
-            self.theta_4a = params[0]
+            self.l_2a = init_params[0] ### estimate variable
+            self.theta_4a = params[1]
             ### set hyp_design
             self.hyp_design()
             ### constant values based on hyp_design
-            self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)
-            self.l_4a = params[1]
+            self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)/cos(self.theta_3a)
+            # self.l_4a = params[1]
             self.theta_5a = self.theta_4a*2 - self.theta_3a
             self.ell_design()
             ### error calculation
             err_na_o = self.na_o - self.target_params[0]
-            err_l_4b = self.l_4a - self.target_params[1]
+            err_l_4b = self.l_4b - self.target_params[1]
             return np.sqrt((err_na_o)**2 + (err_l_4b)**2)
 
         # 初期値
 
         # 範囲制限
-        bounds = [(1e-5, init_params[0]+0.1),(init_params[1]/2, 0.3)]
+        bounds = [(1e-5, init_params[0]+1),(init_params[1]/20, 0.3)]
         result = differential_evolution(
             objective,
             bounds,
@@ -162,19 +163,20 @@ class Wolter3:
         )
 
         # 結果出力
-        opt_i1, opt_l_o1, opt_theta_g1 = result.x
+        self.l_2a, self.theta_4a = result.x
         print(f"\n✅ 最適解:")
-        print(f"  l_i1        = {opt_i1:.6f}")
-        print(f"  l_o1        = {opt_l_o1:.6f}")
-        print(f"  theta_g1    = {np.rad2deg(opt_theta_g1):.4f} deg")
-        print(f"  l_i1        = {opt_i1:.6f}")
+        print(f"  l_2a        = {self.l_2a:.6f}")
+        print(f"  theta_4a        = {self.theta_4a:.6f}")
         print(f"  最終誤差    = {result.fun:.6e}")
 
-        Ell2 = Ell(l_i1, opt_l_o1, opt_theta_g1, Ell1.na_o)
+        self.hyp_design()
+        ### constant values based on hyp_design
+        self.l_3a = (self.x_1 + self.x_2 + self.x_3 - self.f_hyp*2)
+        self.theta_5a = self.theta_4a*2 - self.theta_3a
+        self.ell_design()
         print(f"　誤差の詳細")
-        print(f"  l_o2        = {Ell2.l_o2-target_l_o2:.6f}")
-        print(f"  x_1         = {Ell2.x_1-target_x_1:.6f}")
-        print(f"  f           = {Ell2.f-target_f:.6f}")
+        print(f"  na_o        = {self.na_o - self.target_params[0]:.6f}")
+        print(f"  l_4b         = {self.l_4b - self.target_params[1]:.6f}")
 
     def hyp_design(self):
         self.a_hyp = (self.l_1a - self.l_2a)/2
@@ -215,8 +217,8 @@ class Wolter3:
         self.na_o = self.theta_5b - self.theta_5a
         self.x_4 = self.l_3b*cos(self.theta_3b) - self.l_3a*cos(self.theta_3a)
         self.x_5 = self.l_4a*cos(self.theta_5a) - self.x_4
-        print('self.l_3b*cos(self.theta_3b)',self.l_3b*cos(self.theta_3b))
-        print('self.l_3a*cos(self.theta_3a)',self.l_3a*cos(self.theta_3a))
+        # print('self.l_3b*cos(self.theta_3b)',self.l_3b*cos(self.theta_3b))
+        # print('self.l_3a*cos(self.theta_3a)',self.l_3a*cos(self.theta_3a))
     def print(self):
         print('self.a_hyp',self.a_hyp)
         print('self.b_hyp',self.b_hyp)
@@ -350,12 +352,14 @@ if __name__ == '__main__':
     # Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast)
     # plot_ellipses(Ell1, Ell2)
     l_1a = np.float64(145.98274882106028)
-    na_o = np.float64(arcsin(0.0820569070569736)*2)
-    x_3 = np.float64(0.006)
-    l_2a = np.float64(0.01274882106028354)
-    theta_2a = np.float64(0.18470626604945578)
-    na_i = np.float64(2.993372063373417e-05)
-    estimate_theta_4a = 0.2732948272725705
-    Wolter3_V = Wolter3(l_1a, na_o, x_3, l_2a, theta_2a, na_i,estimate_theta_4a)
-
+    tar_na_o = np.float64(arcsin(0.0820569070569736)*2)
+    x_3 = np.float64(0.01)
+    est_l_2a = np.float64(0.01274882106028354)
+    tar_l_4b = np.float64(0.09)
+    var_theta_2a = np.float64(0.18470626604945578)
+    var_na_i = np.float64(2.993372063373417e-05)
+    est_theta_4a = 0.2732948272725705
+    # Wolter3_V = Wolter3(l_1a, tar_na_o, x_3, est_l_2a, var_theta_2a, var_na_i,est_theta_4a)
+    Wolter3_V = Wolter3()
+    Wolter3_V.optimize(l_1a, x_3, tar_na_o, tar_l_4b, var_theta_2a, var_na_i, est_l_2a, est_theta_4a)
     Wolter3_V.print()

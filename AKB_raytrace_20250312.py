@@ -840,148 +840,282 @@ if option_wolter_3_1:
         # length_ell_h = np.float64(0.0653872838592807)
         # theta1_h = np.float64(5.6880350884129E-05)
 
+        if False:  # 初期設定
+            ### 初期設定
+            # ### 3型
+            # a_hyp_v  =   np.float64(72.985)
+            # b_hyp_v  =   np.float64(0.250539088918923)
+            # a_ell_v  =   np.float64(0.0833)
+            # b_ell_v  =   np.float64(0.0211103685691917)
+            # length_hyp_v  =   np.float64(0.0345)
+            # length_ell_v  =   np.float64(0.0530861729741616)
+            # theta1_v  =   np.float64(4.88527559126772E-05)
+            # theta2_v  =   np.float64(0.12)
+            # theta3_v  =   np.float64(0.240048852755913)
+            # theta4_v  =   np.float64(0.256751946233106)
+            # theta5_v  =   np.float64(-0.2734550397103)
+            # phai_hyp_v  =   -0.120048852755913
+            # phai_ell_v  =   0.00826201408949603
+            # F_eff_v  =   0.0254480654760698
+            # Mag_v  =   5741.36267534975
+            # NA_v  =   0.0820569070569736
+            # Aperture_v  =   0.01348071947248
+            # F0_F2_v  =   146.13202134964
 
-        ### 初期設定
-        ### 3型
-        a_hyp_v  =   np.float64(72.985)
-        b_hyp_v  =   np.float64(0.250539088918923)
-        a_ell_v  =   np.float64(0.0833)
-        b_ell_v  =   np.float64(0.0211103685691917)
-        length_hyp_v  =   np.float64(0.0345)
-        length_ell_v  =   np.float64(0.0530861729741616)
-        theta1_v  =   np.float64(4.88527559126772E-05)
-        theta2_v  =   np.float64(0.12)
-        theta3_v  =   np.float64(0.240048852755913)
-        theta4_v  =   np.float64(0.256751946233106)
-        theta5_v  =   np.float64(-0.2734550397103)
-        phai_hyp_v  =   -0.120048852755913
-        phai_ell_v  =   0.00826201408949603
-        F_eff_v  =   0.0254480654760698
-        Mag_v  =   5741.36267534975
-        NA_v  =   0.0820569070569736
-        Aperture_v  =   0.01348071947248
-        F0_F2_v  =   146.13202134964
+            ### 3型 Setting1
+            a_hyp_v  =     72.985
+            b_hyp_v  =     0.25261675784047
+            a_ell_v  =     0.0933
+            b_ell_v  =     0.0236745564714402
+            length_hyp_v  =     0.0345
+            length_ell_v  =     0.0594385752478948
+            theta1_v  =     4.92519127861222E-05
+            theta2_v  =     0.121
+            theta3_v  =     0.242049251912786
+            theta4_v  =     0.256975971148682
+            theta5_v  =     -0.271902690384578
+            phai_hyp_v  =     -0.121049251912786
+            phai_ell_v  =     0.00989215579059824
+            F_eff_v  =     0.0258133633376474
+            Mag_v  =     5660.84906496756
+            NA_v  =     0.0816159686218418
+            Aperture_v  =     0.0151067293572333
+            F0_F2_v  =     146.151367076927
 
-        # ### 3型 Setting1
-        # a_hyp_v  =     72.985
-        # b_hyp_v  =     0.25261675784047
-        # a_ell_v  =     0.0933
-        # b_ell_v  =     0.0236745564714402
-        # length_hyp_v  =     0.0345
-        # length_ell_v  =     0.0594385752478948
-        # theta1_v  =     4.92519127861222E-05
-        # theta2_v  =     0.121
-        # theta3_v  =     0.242049251912786
-        # theta4_v  =     0.256975971148682
-        # theta5_v  =     -0.271902690384578
-        # phai_hyp_v  =     -0.121049251912786
-        # phai_ell_v  =     0.00989215579059824
-        # F_eff_v  =     0.0258133633376474
-        # Mag_v  =     5660.84906496756
-        # NA_v  =     0.0816159686218418
-        # Aperture_v  =     0.0151067293572333
-        # F0_F2_v  =     146.151367076927
+            # ### 3型 Setting2
+            # a_hyp_v  =     72.985
+            # b_hyp_v  =     0.25261675784047
+            # a_ell_v  =     0.104
+            # b_ell_v  =     0.0264132202381823
+            # length_hyp_v  =     0.0345
+            # length_ell_v  =     0.0662598019783809
+            # theta1_v  =     4.92519127861222E-05
+            # theta2_v  =     0.121
+            # theta3_v  =     0.242049251912786
+            # theta4_v  =     0.25722413024862
+            # theta5_v  =     -0.272399008584454
+            # phai_hyp_v  =     -0.121049251912786
+            # phai_ell_v  =     0.00969021318203535
+            # F_eff_v  =     0.0257675833177302
+            # Mag_v  =     5671.71103747572
+            # NA_v  =     0.0817632660571617
+            # Aperture_v  =     0.0168562943249794
+            # F0_F2_v  =     146.172054295563
 
-        ### 3型 Setting2
-        a_hyp_v  =     72.985
-        b_hyp_v  =     0.25261675784047
-        a_ell_v  =     0.104
-        b_ell_v  =     0.0264132202381823
-        length_hyp_v  =     0.0345
-        length_ell_v  =     0.0662598019783809
-        theta1_v  =     4.92519127861222E-05
-        theta2_v  =     0.121
-        theta3_v  =     0.242049251912786
-        theta4_v  =     0.25722413024862
-        theta5_v  =     -0.272399008584454
-        phai_hyp_v  =     -0.121049251912786
-        phai_ell_v  =     0.00969021318203535
-        F_eff_v  =     0.0257675833177302
-        Mag_v  =     5671.71103747572
-        NA_v  =     0.0817632660571617
-        Aperture_v  =     0.0168562943249794
-        F0_F2_v  =     146.172054295563
+            # ### 3型 Setting3
+            # a_hyp_v  =     72.98
+            # b_hyp_v  =     0.238853696163023
+            # a_ell_v  =     0.124
+            # b_ell_v  =     0.0277912976743237
+            # length_hyp_v  =   0.0485
+            # length_ell_v  =   0.0842274770752208
+            # theta1_v  =     5.39073028703234E-05
+            # theta2_v  =     0.099
+            # theta3_v  =     0.19805390730287
+            # theta4_v  =     0.227982557779111
+            # theta5_v  =     -0.257911208255352
+            # phai_hyp_v  =     -0.0990539073028703
+            # phai_ell_v  =     -0.00341217625956458
+            # F_eff_v  =     0.0298718112105973
+            # Mag_v  =     4893.3290306965
+            # NA_v  =     0.082028477826814
+            # Aperture_v  =     0.0190364833176426
+            # F0_F2_v  =     146.202472807512
 
-        ### 3型 Setting3
-        a_hyp_v  =     72.98
-        b_hyp_v  =     0.238853696163023
-        a_ell_v  =     0.124
-        b_ell_v  =     0.0277912976743237
-        length_hyp_v  =   0.0485
-        length_ell_v  =   0.0842274770752208
-        theta1_v  =     5.39073028703234E-05
-        theta2_v  =     0.099
-        theta3_v  =     0.19805390730287
-        theta4_v  =     0.227982557779111
-        theta5_v  =     -0.257911208255352
-        phai_hyp_v  =     -0.0990539073028703
-        phai_ell_v  =     -0.00341217625956458
-        F_eff_v  =     0.0298718112105973
-        Mag_v  =     4893.3290306965
-        NA_v  =     0.082028477826814
-        Aperture_v  =     0.0190364833176426
-        F0_F2_v  =     146.202472807512
+            # ### 3型 Setting4
+            # a_hyp_v  =     72.975
+            # b_hyp_v  =     0.258979496230151
+            # a_ell_v  =     0.146
+            # b_ell_v  =     0.0324589749420265
+            # length_hyp_v  =     0.06
+            # length_ell_v  =     0.0977147009051387
+            # theta1_v  =     6.53721558428766E-05
+            # theta2_v  =     0.096
+            # theta3_v  =     0.192065372155843
+            # theta4_v  =     0.226829703253149
+            # theta5_v  =     -0.261594034350456
+            # phai_hyp_v  =     -0.0960653721558429
+            # phai_ell_v  =     -0.00847283029554443
+            # F_eff_v  =     0.0356980368015059
+            # Mag_v  =     4095.46088149609
+            # NA_v  =     0.0821759344796697
+            # Aperture_v  =     0.0219750172281408
+            # F0_F2_v  =     146.235611303576
 
-        ### 3型 Setting4
-        a_hyp_v  =     72.975
-        b_hyp_v  =     0.258979496230151
-        a_ell_v  =     0.146
-        b_ell_v  =     0.0324589749420265
-        length_hyp_v  =     0.06
-        length_ell_v  =     0.0977147009051387
-        theta1_v  =     6.53721558428766E-05
-        theta2_v  =     0.096
-        theta3_v  =     0.192065372155843
-        theta4_v  =     0.226829703253149
-        theta5_v  =     -0.261594034350456
-        phai_hyp_v  =     -0.0960653721558429
-        phai_ell_v  =     -0.00847283029554443
-        F_eff_v  =     0.0356980368015059
-        Mag_v  =     4095.46088149609
-        NA_v  =     0.0821759344796697
-        Aperture_v  =     0.0219750172281408
-        F0_F2_v  =     146.235611303576
+            ### 3型 Setting5
+            a_hyp_v  =     72.965
+            b_hyp_v  =     0.279401469315277
+            a_ell_v  =     0.192
+            b_ell_v  =     0.0398166258808826
+            length_hyp_v =     0.088
+            length_ell_v =     0.136096444142887
+            theta1_v  =     8.35253813269807E-05
+            theta2_v  =     0.08751
+            theta3_v  =     0.175103525381327
+            theta4_v  =     0.212097563755144
+            theta5_v  =     -0.249091602128961
+            phai_hyp_v  =     -0.087593525381327
+            phai_ell_v  =     -0.00917354104873317
+            F_eff_v  =     0.0480249101249228
+            Mag_v  =     3045.47570759381
+            NA_v  =     0.0825004980438573
+            Aperture_v  =     0.0286497879308899
+            F0_F2_v  =     146.306722054954
 
-        ### 1型
-        a_ell_h  =     np.float64(73.07505)
-        b_ell_h  =     np.float64(0.420125678460643)
-        a_hyp_h  =     np.float64(0.0072)
-        b_hyp_h  =     np.float64(0.00369271404399535)
-        length_hyp_h  =   np.float64(0.01008239076)
-        length_ell_h  =   np.float64(0.026)
-        theta1_h  =     np.float64(0.000109393749605896)
-        theta2_h  =    np.float64(0.15)
-        theta3_h  =     np.float64(0.299890606250394)
-        theta4_h  =     np.float64(0.193862238668175)
-        theta5_h  =     np.float64(0.736736912319257)
-        phai_ell_h  =     -0.149890606250394
-        phai_hyp_h  =     -0.509211953516557
-        F_eff_h  =     0.0176204701590166
-        Mag_h  =     8292.28047404524
-        NA_h  =     0.0815169628107427
-        Aperture_h  =     0.00388539144431358
-        F0_F2_h  =     146.131501113269
+            # ### 3型 setting6
+            # a_hyp_v  =     72.968
+            # b_hyp_v  =     0.233129192075476
+            # a_ell_v  =     0.319
+            # b_ell_v  =     0.0541992812373669
+            # length_hyp_v =     0.1
+            # length_ell_v =     0.304544748239094
+            # theta1_v  =     6.66973897662189E-05
+            # theta2_v  =     0.07634
+            # theta3_v  =     0.152746697389766
+            # theta4_v  =     0.171779248790688
+            # theta5_v  =     -0.19081180019161
+            # phai_hyp_v  =     -0.0764066973897662
+            # phai_ell_v  =     0.0164772127640783
+            # F_eff_v  =     0.0505905421593695
+            # Mag_v  =     2896.09227230842
+            # NA_v  =     0.0824908283406065
+            # Aperture_v  =     0.0520575638907512
+            # F0_F2_v  =     146.565468741803
 
-        ### 1型 setting3
 
-        a_ell_h  =     73.11055
-        b_ell_h  =     0.420227752780288
-        a_hyp_h  =     0.0072
-        b_hyp_h  =     0.00369271489837695
-        length_hyp_h  =   np.float64(0.01008238804)
-        length_ell_h  =   np.float64(0.026)
-        theta1_h  =     0.000109340630839105
-        theta2_h  =     0.15
-        theta3_h  =     0.299890659369161
-        theta4_h  =     0.193862292274329
-        theta5_h  =     0.736737068149589
-        phai_ell_h  =     -0.149890659369161
-        phai_hyp_h  =     -0.50921205866987
-        F_eff_h  =     0.0176204666209969
-        Mag_h  =     8296.31154439727
-        NA_h  =     0.0815169632942278
-        Aperture_h  =     0.00388539144431358
-        F0_F2_h  =     146.202501112065
+
+
+
+
+            ### 1型 setting1
+            a_ell_h  =     np.float64(73.07505)
+            b_ell_h  =     np.float64(0.420125678460643)
+            a_hyp_h  =     np.float64(0.0072)
+            b_hyp_h  =     np.float64(0.00369271404399535)
+            length_hyp_h  =   np.float64(0.01008239076)
+            length_ell_h  =   np.float64(0.026)
+            theta1_h  =     np.float64(0.000109393749605896)
+            theta2_h  =    np.float64(0.15)
+            theta3_h  =     np.float64(0.299890606250394)
+            theta4_h  =     np.float64(0.193862238668175)
+            theta5_h  =     np.float64(0.736736912319257)
+            phai_ell_h  =     -0.149890606250394
+            phai_hyp_h  =     -0.509211953516557
+            F_eff_h  =     0.0176204701590166
+            Mag_h  =     8292.28047404524
+            NA_h  =     0.0815169628107427
+            Aperture_h  =     0.00388539144431358
+            F0_F2_h  =     146.131501113269
+
+            # ### 1型 setting3
+
+            # a_ell_h  =     73.11055
+            # b_ell_h  =     0.420227752780288
+            # a_hyp_h  =     0.0072
+            # b_hyp_h  =     0.00369271489837695
+            # length_hyp_h  =   np.float64(0.01008238804)
+            # length_ell_h  =   np.float64(0.026)
+            # theta1_h  =     0.000109340630839105
+            # theta2_h  =     0.15
+            # theta3_h  =     0.299890659369161
+            # theta4_h  =     0.193862292274329
+            # theta5_h  =     0.736737068149589
+            # phai_ell_h  =     -0.149890659369161
+            # phai_hyp_h  =     -0.50921205866987
+            # F_eff_h  =     0.0176204666209969
+            # Mag_h  =     8296.31154439727
+            # NA_h  =     0.0815169632942278
+            # Aperture_h  =     0.00388539144431358
+            # F0_F2_h  =     146.202501112065
+
+            ### 1型 setting5
+            a_ell_h  =     73.168374088788
+            b_ell_h  =     0.459086041847713
+            a_hyp_h  =     0.01245
+            b_hyp_h  =     0.00540542675557545
+            length_hyp_h  =   np.float64(0.01838060690)
+            length_ell_h  =   np.float64(0.048)
+            theta1_h  =     0.000153614692187686
+            theta2_h  =     0.127523
+            theta3_h  =     0.254892385307812
+            theta4_h  =     0.170397163734124
+            theta5_h  =     0.649584711266688
+            phai_ell_h  =     -0.127369385307812
+            phai_hyp_h  =     -0.441783192142318
+            F_eff_h  =     0.0295837508341208
+            Mag_h  =     4944.5095424719
+            NA_h  =     0.0825004524526383
+            Aperture_h  =     0.00610452713441869
+            F0_F2_h  =     146.306722052255
+
+            # ### 1型 setting6
+            # a_ell_h  =     73.232511916154
+            # b_ell_h  =     0.350911894865679
+            # a_hyp_h  =     0.0193
+            # b_hyp_h  =     0.00537029744119799
+            # length_hyp_h  =   np.float64(0.02885466994)
+            # length_ell_h  =   np.float64(0.100)
+            # theta1_h  =     0.000147560113856669
+            # theta2_h  =     0.07772
+            # theta3_h  =     0.155292439886143
+            # theta4_h  =     0.125914072797402
+            # theta5_h  =     0.470329741849645
+            # phai_ell_h  =     -0.0775724398861433
+            # phai_hyp_h  =     -0.298520690144625
+            # F_eff_h  =     0.0424877695542136
+            # Mag_h  =     3445.24529428841
+            # NA_h  =     0.0825007922962757
+            # Aperture_h  =     0.00776417803336937
+            # F0_F2_h  =     146.423275891019
+        if True:  # 初期設定
+            ### 3型 Setting7
+            a_hyp_v  =   np.float64(72.984)
+            b_hyp_v  =   np.float64(0.194270774041555)
+            a_ell_v  =   np.float64(0.1485)
+            b_ell_v  =   np.float64(0.0291345266237788)
+            hyp_length_v  =   np.float64(0.045)
+            ell_length_v  =   np.float64(0.122095241889387)
+            theta1_v  =   np.float64(3.92478218204609E-05)
+            theta2_v  =   np.float64(0.09)
+            theta3_v  =   np.float64(0.18003924782182)
+            theta4_v  =   np.float64(0.198305036930121)
+            theta5_v  =   np.float64(-0.216570826038422)
+            phai_hyp_v  =   np.float64(-0.0900392478218205)
+            phai_ell_v  =   np.float64(0.0129508135388115)
+            F_eff_v  =   np.float64(0.0260854154971923)
+            Mag_v  =   np.float64(5605.95477814208)
+            NA_v  =   np.float64(0.0820087922773097)
+            Aperture_v  =   np.float64(0.0240537234876166)
+            F0_F2_v  =   np.float64(146.259745061804)
+
+            ### 1型 setting7
+            a_ell_h  =   np.float64(73.13915)
+            b_ell_h  =   np.float64(0.420309969273809)
+            a_hyp_h  =   np.float64(0.0072)
+            b_hyp_h  =   np.float64(0.0036927155860925)
+            length_hyp_h  =   np.float64(0.01008238585)
+            length_ell_h  =   np.float64(0.026)
+            theta1_h  =   np.float64(0.000109297874071033)
+            theta2_h  =   np.float64(0.15)
+            theta3_h  =   np.float64(0.299890702125929)
+            theta4_h  =   np.float64(0.193862335421518)
+            theta5_h  =   np.float64(0.736737193581758)
+            phai_ell_h  =   np.float64(-0.149890702125929)
+            phai_hyp_h  =   np.float64(-0.509212143310027)
+            F_eff_h  =   np.float64(0.0176204637731416)
+            Mag_h  =   np.float64(8299.55911093751)
+            NA_h  =   np.float64(0.0815169636832092)
+            Aperture_h  =   np.float64(0.00388539144431358)
+            F0_F2_h  =   np.float64(146.259701111095)
+
+            length_hyp_v = hyp_length_v.copy()
+            length_ell_v = ell_length_v.copy()
+            length_hyp_h = length_hyp_h.copy()
+            length_ell_h = length_ell_h.copy()
+
+
+
+
 
 
 
@@ -1670,9 +1804,11 @@ if option_wolter_3_1:
 
         if bool_point_source:
             source = np.zeros((3, ray_num * ray_num))
-            source[0, :] =+ source_shift[0]
+            source[0, :] =+ source_shift[0] 
             source[1, :] =+ source_shift[1]
             source[2, :] =+ source_shift[2]
+            # source[1, :] =+ source_shift[1] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
+            # source[2, :] =+ source_shift[2] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
             if option_axial:
                 rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
                 rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
@@ -2050,6 +2186,7 @@ if option_wolter_3_1:
                 plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
                 plt.colorbar(label='\u03BB')
                 plt.title(f'PV 6σ ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.axis('equal')
                 # plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
                 plt.show()
 
@@ -2275,10 +2412,10 @@ if option_wolter_3_1:
                 # plt.show()
                 plt.close()
 
-                # # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
-                plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
-                # # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
-                # # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
+                # # # plot_ray_sideview(8,10,mabiki,reflect1,vmirr_hyp,ray_num)
+                # plot_ray_sideview(-5,35,mabiki,reflect2,vmirr_ell,ray_num)
+                # # # plot_ray_sideview(8,10,mabiki,reflect3,vmirr_ell,ray_num)
+                # # # plot_ray_sideview(0.2,0.2,mabiki,reflect3,vmirr_ell,ray_num)
 
                 phai0 = normalize_vector(phai0)
 
@@ -3657,6 +3794,7 @@ else:
 
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
+                
                 plt.figure()
                 plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
                 # plt.colorbar(label='\u03BB')
@@ -9577,23 +9715,43 @@ if option_AKB == True:
             print('set astigmatism')
             initial_params[0] = 5.87252273e-03
             initial_params[1] = 0.03
-            # # initial_params[0] = 5.
-            # # initial_params[1] = 10.09
-            # # ## Plane rotation
-            # # initial_params[8] = 5e-3
-            # # initial_params[20] = 5e-3
-            initial_params[9] = -27e-6
-            initial_params[21] = -27e-6
-            # initial_params[9] = 2.45e-05
-            # initial_params[21] = 2.45e-05
-            # # # initial_params[14] = -5e-2
-            # # # initial_params[2] = -5e-2
+            # # # initial_params[0] = 5.
+            # # # initial_params[1] = 10.09
+            # # # ## Plane rotation
+            # # # initial_params[8] = 5e-3
+            # # # initial_params[20] = 5e-3
             
-            initial_params[10] = -40e-6
-            initial_params[22] = -40e-6
+            # ### setting1
+            # initial_params[9] = -27.8843108e-6
+            # initial_params[21] = -27.8843108e-6
+            # initial_params[10] = 8e-05
+            # initial_params[22] = 8e-05
 
-            # initial_params[16] =  -5e-5
-            # # initial_params[10] =  -6e-5
+            # ### setting6
+            # initial_params[9] = -2.51723411957558e-05
+            # initial_params[21] = -2.51723411957558e-05
+            # initial_params[10] = 7e-05
+            # initial_params[22] = 7e-05
+
+            ### setting5
+            initial_params[9] = -2.1687337348902547e-05
+            initial_params[21] = -2.1687337348902547e-05
+            initial_params[10] = 7.5e-05
+            initial_params[22] = 7.5e-05
+
+            # initial_params[10] +=  1e-4
+            # initial_params[22] +=  1e-4
+            # initial_params[20] +=  1e-4
+            # initial_params[21] +=  4e-5
+            # initial_params[9] +=  1e-5
+            # initial_params[10] +=  599.5049554e-6
+            # initial_params[22] +=  599.5049554e-6
+            # # # initial_params[10] =  -6e-5
+
+            # initial_params[2] +=  5e-6
+            # initial_params[14] +=  5e-6
+            # initial_params[15] +=  2e-5
+            initial_params[16] +=  1e-5
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -9628,18 +9786,19 @@ auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 initial_params1 = initial_params.copy()
 # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
 M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
-M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-5,1e-5,option = 'matrix', option_eval = '3')
-M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = '3')
-
+M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-4,1e-4,option = 'matrix', option_eval = '3')
+M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-4,1e-4,option = 'matrix', option_eval = '3')
 print('M8',M8)
 print('M9',M9)
 print('M10',M10)
+
 M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
 M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
 M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
 print('M14',M14)
 print('M15',M15)
 print('M16',M16)
+sys.exit()
 
 num_a = 4
 a = np.linspace(0.8, 1.2, num_a)
