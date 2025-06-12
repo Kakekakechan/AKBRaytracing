@@ -55,7 +55,7 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 1025
+unit = 257
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
@@ -814,7 +814,66 @@ def rotatematrix(rotation_matrix, axis_x, axis_y, axis_z):
     axis_y_new = np.dot(rotation_matrix, axis_y)
     axis_z_new = np.dot(rotation_matrix, axis_z)
     return axis_x_new, axis_y_new, axis_z_new
+from numpy.fft import fft2, fftshift, fftfreq
+def fresnel_integral(phi, grid_x, grid_y, lambda_, z, x_out_range, y_out_range, dx_out, dy_out):
+    """
+    フレネル積分により、指定の焦点面での波面分布を計算する。
 
+    Parameters
+    ----------
+    phi : 2D ndarray
+        光路長分布 [m]。NaN は無効領域（開口外）を示す。
+    grid_x, grid_y : 2D ndarray
+        入力波面の物理座標グリッド [m]。
+    lambda_ : float
+        波長 [m]
+    z : float
+        伝搬距離 [m]
+    x_out_range : tuple (xmin, xmax)
+        出力面 x の範囲 [m]
+    y_out_range : tuple (ymin, ymax)
+        出力面 y の範囲 [m]
+    dx_out, dy_out : float
+        出力面ピッチ [m]
+
+    Returns
+    -------
+    psf : 2D ndarray
+        出力面の強度（|U|²）
+    x_out, y_out : 1D ndarray
+        出力面の座標軸
+    """
+    k = 2 * np.pi / lambda_
+
+    # 有効な点のみ使用（NaNマスク）
+    mask = ~np.isnan(phi)
+    phi_valid = phi[mask]
+    x_in = grid_x[mask]
+    y_in = grid_y[mask]
+
+    # 入力波面
+    U_in = np.exp(1j * k * phi_valid) * np.exp(-1j * k / (2 * z) * (x_in**2 + y_in**2))
+
+    # 出力面座標系
+    x_out = np.arange(x_out_range[0], x_out_range[1], dx_out)
+    y_out = np.arange(y_out_range[0], y_out_range[1], dy_out)
+    X_out, Y_out = np.meshgrid(x_out, y_out)
+    print('X_out.shape', X_out.shape)
+
+    # Fresnel積分（直接積分）
+    psf = np.zeros_like(X_out, dtype=np.complex128)
+
+    for idx in range(len(x_in)):
+        r = np.sqrt( (X_out - x_in[idx])**2 + (Y_out - y_in[idx])**2 + z**2 )
+        phase = np.exp(-1j * k * r)
+        psf += U_in[idx] * phase/ r
+
+    # # 定数前係数
+    # psf *= (1j / (lambda_ * z)) * dx_out * dy_out
+    # PSFの強度
+    psf = np.abs(psf)**2
+    psf /= np.nanmax(psf)  # 正規化
+    return psf, x_out, y_out
 if option_wolter_3_1:
     def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True):
         defocus, astigH, \
@@ -840,7 +899,7 @@ if option_wolter_3_1:
         # length_ell_h = np.float64(0.0653872838592807)
         # theta1_h = np.float64(5.6880350884129E-05)
 
-        if False:  # 初期設定
+        if False:  # 初期設定 2025/05
             ### 初期設定
             # ### 3型
             # a_hyp_v  =   np.float64(72.985)
@@ -1067,7 +1126,7 @@ if option_wolter_3_1:
             # NA_h  =     0.0825007922962757
             # Aperture_h  =     0.00776417803336937
             # F0_F2_h  =     146.423275891019
-        if True:  # 初期設定
+        if False:  # 初期設定 2025/06/01
             ### 3型 Setting7
             a_hyp_v  =   np.float64(72.984)
             b_hyp_v  =   np.float64(0.194270774041555)
@@ -1087,14 +1146,56 @@ if option_wolter_3_1:
             NA_v  =   np.float64(0.0820087922773097)
             Aperture_v  =   np.float64(0.0240537234876166)
             F0_F2_v  =   np.float64(146.259745061804)
+            ### 3型 Setting10
+            a_hyp_v  =   72.9815
+            b_hyp_v  =   0.160243976396275
+            a_ell_v  =   0.223
+            b_ell_v  =   0.0349789930209892
+            hyp_length_v  =   0.06
+            ell_length_v  =   0.225864538803214
+            theta1_v  =   3.4870458354867E-05
+            theta2_v  =   0.069
+            theta3_v  =   0.138034870458355
+            theta4_v  =   0.158867314327645
+            theta5_v  =   -0.179699758196935
+            phai_hyp_v  =   -0.0690348704583549
+            phai_ell_v  =   0.0159600556958157
+            F_eff_v  =   0.0280975824952918
+            Mag_v  =   5209.54902203498
+            NA_v  =   0.0816297367263195
+            Aperture_v  =   0.0357317443925052
+            F0_F2_v  =   146.40383099239
+
+            ### 3型 setting9
+            a_hyp_v  =   72.9755
+            b_hyp_v  =   0.184407632092118
+            a_ell_v  =   0.2195
+            b_ell_v  =   0.0409556196334448
+            hyp_length_v  =   0.06
+            ell_length_v  =   0.145864752520461
+            theta1_v  =   4.61835569510556E-05
+            theta2_v  =   0.069
+            theta3_v  =   0.138046183556951
+            theta4_v  =   0.196465341435049
+            theta5_v  =   -0.254884499313148
+            phai_hyp_v  =   -0.0690461835569511
+            phai_ell_v  =   -0.0315332449715707
+            F_eff_v  =   0.0259422040898016
+            Mag_v  =   5641.64917695336
+            NA_v  =   0.0817613057404778
+            Aperture_v  =   0.0284733680128275
+            F0_F2_v  =   146.382756555675
+
+
+
 
             ### 1型 setting7
             a_ell_h  =   np.float64(73.13915)
             b_ell_h  =   np.float64(0.420309969273809)
             a_hyp_h  =   np.float64(0.0072)
             b_hyp_h  =   np.float64(0.0036927155860925)
-            length_hyp_h  =   np.float64(0.01008238585)
-            length_ell_h  =   np.float64(0.026)
+            hyp_length_h  =   np.float64(0.01008238585)
+            ell_length_h  =   np.float64(0.026)
             theta1_h  =   np.float64(0.000109297874071033)
             theta2_h  =   np.float64(0.15)
             theta3_h  =   np.float64(0.299890702125929)
@@ -1108,10 +1209,102 @@ if option_wolter_3_1:
             Aperture_h  =   np.float64(0.00388539144431358)
             F0_F2_h  =   np.float64(146.259701111095)
 
-            length_hyp_v = hyp_length_v.copy()
-            length_ell_v = ell_length_v.copy()
-            length_hyp_h = length_hyp_h.copy()
-            length_ell_h = length_ell_h.copy()
+            ### 1型 setting5
+            a_ell_h  =     73.168374088788
+            b_ell_h  =     0.459086041847713
+            a_hyp_h  =     0.01245
+            b_hyp_h  =     0.00540542675557545
+            hyp_length_h  =   np.float64(0.01838060690)
+            ell_length_h  =   np.float64(0.048)
+            theta1_h  =     0.000153614692187686
+            theta2_h  =     0.127523
+            theta3_h  =     0.254892385307812
+            theta4_h  =     0.170397163734124
+            theta5_h  =     0.649584711266688
+            phai_ell_h  =     -0.127369385307812
+            phai_hyp_h  =     -0.441783192142318
+            F_eff_h  =     0.0295837508341208
+            Mag_h  =     4944.5095424719
+            NA_h  =     0.0825004524526383
+            Aperture_h  =     0.00610452713441869
+            F0_F2_h  =     146.306722052255
+
+            length_hyp_v = hyp_length_v
+            length_ell_v = ell_length_v
+            length_hyp_h = hyp_length_h
+            length_ell_h = ell_length_h
+
+        if True:  # 初期設定 2025/06/12
+            ### 3型 Setting11
+            a_hyp_v  =   np.float64(72.981)
+            b_hyp_v  =   np.float64(0.274955741326603)
+            a_ell_v  =   np.float64(0.107)
+            b_ell_v  =   np.float64(0.0270059974473355)
+            hyp_length_v  =   np.float64(0.043)
+            ell_length_v  =   np.float64(0.0668954744537463)
+            theta1_v  =   np.float64(6.03651016038744E-05)
+            theta2_v  =   np.float64(0.117)
+            theta3_v  =   np.float64(0.234060365101604)
+            theta4_v  =   np.float64(0.256079738847749)
+            theta5_v  =   np.float64(-0.278099112593894)
+            phai_hyp_v  =   np.float64(-0.117060365101604)
+            phai_ell_v  =   np.float64(0.0024924654464218)
+            F_eff_v  =   np.float64(0.0308994364264663)
+            Mag_v  =   np.float64(4729.51047311538)
+            NA_v  =   np.float64(0.0818997791446706)
+            Aperture_v  =   np.float64(0.0169439604135074)
+            F0_F2_v  =   np.float64(146.170107628762)
+
+            ### 3型 Setting12
+            a_hyp_v  =   np.float64(72.9825)
+            b_hyp_v  =   np.float64(0.263879113520857)
+            a_ell_v  =   np.float64(0.1175)
+            b_ell_v  =   np.float64(0.0283168369674688)
+            hyp_length_v  =   np.float64(0.043)
+            ell_length_v  =   np.float64(0.0809220387326922)
+            theta1_v  =   np.float64(5.55983241203018E-05)
+            theta2_v  =   np.float64(0.117)
+            theta3_v  =   np.float64(0.23405559832412)
+            theta4_v  =   np.float64(0.243572583671924)
+            theta5_v  =   np.float64(-0.253089569019727)
+            phai_hyp_v  =   np.float64(-0.11705559832412)
+            phai_ell_v  =   np.float64(0.0172109421954116)
+            F_eff_v  =   np.float64(0.0314202608037988)
+            Mag_v  =   np.float64(4651.85850857562)
+            NA_v  =   np.float64(0.0819227398493535)
+            Aperture_v  =   np.float64(0.0195160723325698)
+            F0_F2_v  =   np.float64(146.19402782262)
+
+
+
+
+            ### 1型 setting11
+            a_ell_h  =   np.float64(73.1076714403445)
+            b_ell_h  =   np.float64(0.517019631143022)
+            a_hyp_h  =   np.float64(0.0077)
+            b_hyp_h  =   np.float64(0.00432051448679384)
+            hyp_length_h  =   np.float64(0.01380360633)
+            ell_length_h  =   np.float64(0.030)
+            theta1_h  =   np.float64(0.000145746388538841)
+            theta2_h  =   np.float64(0.17)
+            theta3_h  =   np.float64(0.339854253611461)
+            theta4_h  =   np.float64(0.182330449161024)
+            theta5_h  =   np.float64(0.757889356272919)
+            phai_ell_h  =   np.float64(-0.169854253611461)
+            phai_hyp_h  =   np.float64(-0.540136320213965)
+            F_eff_h  =   np.float64(0.0225095323759206)
+            Mag_h  =   np.float64(6493.76076981313)
+            NA_h  =   np.float64(0.0819088461351015)
+            Aperture_h  =   np.float64(0.00507547047200988)
+            F0_F2_h  =   np.float64(146.194027821967)
+
+
+
+
+            length_hyp_v = hyp_length_v
+            length_ell_v = ell_length_v
+            length_hyp_h = hyp_length_h
+            length_ell_h = ell_length_h
 
 
 
@@ -2113,22 +2306,6 @@ if option_wolter_3_1:
                 print('np.mean(totalDist2)',np.mean(totalDist2))
                 print('np.mean(totalDist2-totalDist)',np.mean(totalDist2-totalDist))
                 print('np.std(totalDist2-totalDist)',np.std(totalDist2-totalDist))
-                # if True:
-                #     return totalDist[0] - totalDist[-1]
-                # plt.figure()
-                # sample_detcenter = detcenter.copy()
-                # sample_DistError = DistError.copy()
-                # sample = np.vstack([sample_detcenter, sample_DistError])
-                # sizeh_here = ray_num_H
-                # sizev_here = ray_num_V
-                # while sizeh_here > 33:
-                #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                # # カラーバーを追加
-                # plt.colorbar(scatter, label='OPL error (nm)')
-                # plt.axis('equal')
-                # plt.show()
-
                 # 補間するグリッドを作成
                 grid_H, grid_V = np.meshgrid(
                     np.linspace(detcenter2[1, :].min(), detcenter2[1, :].max(), ray_num_H),
@@ -2171,49 +2348,91 @@ if option_wolter_3_1:
                 np.savetxt('matrixWave2(nm).txt',matrixWave2)
                 tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
 
-
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
-                # plt.colorbar(label='\u03BB')
-                plt.colorbar(label='wavefront error (nm)')
-                plt.savefig('waveRaytrace.png')
-                plt.show()
-
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
+                matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
-
+                
                 plt.figure()
                 plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
                 plt.colorbar(label='\u03BB')
-                plt.title(f'PV 6σ ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-                plt.axis('equal')
-                # plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
-                plt.show()
-
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto')
-                # plt.colorbar(label='\u03BB')
-                plt.colorbar(label='wavefront error (nm)')
-                # plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
-                plt.title(f'PV 6σ ={np.nanstd(matrixWave2_Corrected)*6}')
+                # plt.colorbar(label='wavefront error (nm)')
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
                 plt.savefig('waveRaytrace_Corrected.png')
                 plt.show()
 
+                if False:
+                    # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
+                    calcrange=1.e-6
+                    psf, x_out, y_out = fresnel_integral(
+                        phi=matrixWave2_Corrected*1e-9,
+                        grid_x=grid_H-np.mean(grid_H),
+                        grid_y=grid_V-np.mean(grid_V),
+                        lambda_=lambda_*1e-9,
+                        z=-defocusWave,
+                        x_out_range=(-calcrange, calcrange),
+                        y_out_range=(-calcrange, calcrange),
+                        dx_out=calcrange/65,
+                        dy_out=calcrange/65,
+                    )
 
+                    def compute_fwhm(x, intensity_1d):
+                        """1次元の強度分布から FWHM を計算"""
+                        dx = np.abs(x[1] - x[0])
+                        num_over_half_max = np.sum(intensity_1d >= 0.5 * np.max(intensity_1d))
+                        fwhm = (num_over_half_max-1) * dx
+                        return fwhm
+                    psf_x = psf[psf.shape[0] // 2, :]
+                    psf_y = psf[:, psf.shape[1] // 2]
+                    half_max = 0.5 * np.max(psf)
+                    mask = psf >= half_max
+                    dx = np.abs(x_out[1] - x_out[0])
+                    dy = np.abs(y_out[1] - y_out[0])
+                    area = np.sum(mask) * dx * dy
+                    effective_diameter = np.sqrt(area)
+                    # fwhm_x = effective_diameter
+                    # fwhm_y = effective_diameter
+                    fwhm_x = compute_fwhm(x_out, psf_x)
+                    fwhm_y = compute_fwhm(y_out, psf_y)
 
-                plt.figure()
-                sample_detcenter = detcenter2.copy()
-                sample_DistError = DistError2.copy()
-                sample = np.vstack([sample_detcenter, sample_DistError])
-                sizeh_here = ray_num_H
-                sizev_here = ray_num_V
-                while sizeh_here > 33:
-                    sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                # カラーバーを追加
-                plt.colorbar(scatter, label='OPL error (nm)')
-                plt.axis('equal')
-                plt.show()
+                    print(f"FWHM_x = {fwhm_x:.3e} m")
+                    print(f"FWHM_y = {fwhm_y:.3e} m")
+                    print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
+                    
+                    plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
+                    plt.xlabel("x [m]")
+                    plt.ylabel("y [m]")
+                    plt.title("PSF (Fresnel Approx.)")
+                    plt.colorbar()
+                    # plt.show()
+                    fig, ax = plt.subplots(2, 1, figsize=(6, 5))
+                    ax[0].plot(x_out, psf_x)
+                    ax[0].axhline(np.max(psf_x)/2, color='gray', linestyle='--')
+                    ax[0].set_title(f"PSF (Fresnel Approx.) X Profile — FWHM = {fwhm_x*1e6:.2f} μm")
+                    ax[0].set_xlabel("x [m]")
+                    ax[0].set_ylabel("Intensity")
+
+                    ax[1].plot(y_out, psf_y)
+                    ax[1].axhline(np.max(psf_y)/2, color='gray', linestyle='--')
+                    ax[1].set_title(f"Y Profile — FWHM = {fwhm_y*1e6:.2f} μm")
+                    ax[1].set_xlabel("y [m]")
+                    ax[1].set_ylabel("Intensity")
+
+                    plt.tight_layout()
+                    plt.show()
+
+                    # plt.figure()
+                    # sample_detcenter = detcenter2.copy()
+                    # sample_DistError = DistError2.copy()
+                    # sample = np.vstack([sample_detcenter, sample_DistError])
+                    # sizeh_here = ray_num_H
+                    # sizev_here = ray_num_V
+                    # while sizeh_here > 33:
+                    #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
+                    # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
+                    # # カラーバーを追加
+                    # plt.colorbar(scatter, label='OPL error (nm)')
+                    # plt.axis('equal')
+                    # plt.show()
 
                 return
 
@@ -3726,21 +3945,54 @@ else:
                 print('np.mean(totalDist2)',np.mean(totalDist2))
                 print('np.mean(totalDist2-totalDist)',np.mean(totalDist2-totalDist))
                 print('np.std(totalDist2-totalDist)',np.std(totalDist2-totalDist))
-                # if True:
-                #     return totalDist[0] - totalDist[-1]
-                # plt.figure()
-                # sample_detcenter = detcenter.copy()
-                # sample_DistError = DistError.copy()
-                # sample = np.vstack([sample_detcenter, sample_DistError])
-                # sizeh_here = ray_num_H
-                # sizev_here = ray_num_V
-                # while sizeh_here > 33:
-                #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                # # カラーバーを追加
-                # plt.colorbar(scatter, label='OPL error (nm)')
-                # plt.axis('equal')
-                # plt.show()
+                from numpy.fft import fft2, fftshift, fftfreq
+                def fresnel_psf(phi, lambda_, z, grid_x, grid_y):
+                    """
+                    フレネル近似により、光路長分布から焦点面のPSFを計算する。
+
+                    Parameters:
+                    - phi : 2D array (光路長分布, NaNで開口外をマスク)
+                    - lambda_ : float (波長 [m])
+                    - z : float (焦点面までの距離 [m])
+                    - grid_x, grid_y : 2D array (各ピクセルの物理座標 [m])
+
+                    Returns:
+                    - psf : 2D array (正規化されたPSF)
+                    - x_out, y_out : 1D array (出力PSFのx, y座標軸 [m])
+                    """
+                    # 振幅マスクとNaN補完
+                    A = ~np.isnan(phi)
+                    phi = np.nan_to_num(phi, nan=0.0)
+                    
+                    # 入力複素波面
+                    U = A * np.exp(1j * 2 * np.pi / lambda_ * phi)
+                    
+                    # ピクセルサイズ
+                    dx = np.mean(np.diff(grid_x[0, :]))
+                    dy = np.mean(np.diff(grid_y[:, 0]))
+
+                    # 前項の二次位相因子
+                    Q1 = np.exp(1j * np.pi / (lambda_ * z) * (grid_x**2 + grid_y**2))
+                    U1 = U * Q1
+
+                    # FFT: Fresnel伝搬の中心部分
+                    U2 = fftshift(fft2(U1))
+
+                    # 出力座標系（周波数 -> 空間座標）
+                    ny, nx = phi.shape
+                    fx = fftshift(fftfreq(nx, d=dx))
+                    fy = fftshift(fftfreq(ny, d=dy))
+                    x_out = fx * lambda_ * z
+                    y_out = fy * lambda_ * z
+
+                    # 出力側の二次位相因子（optional, 位相計算には必要だがPSFには不要）
+                    # Q2 = np.exp(1j * np.pi / (lambda_ * z) * (grid_x**2 + grid_y**2))
+
+                    # PSFの計算
+                    psf = np.abs(U2)**2
+                    psf /= np.nanmax(psf)
+
+                    return psf, x_out, y_out
 
                 # 補間するグリッドを作成
                 grid_H, grid_V = np.meshgrid(
@@ -3801,6 +4053,14 @@ else:
                 plt.colorbar(label='wavefront error (nm)')
                 plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
                 plt.savefig('waveRaytrace_Corrected.png')
+                plt.show()
+
+                psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=defocusWave, grid_x=grid_H, grid_y=grid_V)
+                plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
+                plt.xlabel("x [m]")
+                plt.ylabel("y [m]")
+                plt.title("PSF (Fresnel Approx.)")
+                plt.colorbar()
                 plt.show()
 
 
@@ -9000,12 +9260,18 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
         if option_eval == 'KB':
             M = np.array([m0,m2,m4])
             return M
+        if option_eval == '3_intercept':
+            M = np.array([[m0,m2,m4],[intercept0,intercept2,intercept4]])
+            return M
         if option_eval == '5coma':
             M = np.array([m0,m1,m2,m3,m4])
             return M
         if option_eval == '7coma':
             M = np.array([m0,m1,m2,m3,m4,m8,m9])
             return M
+        if option_eval == 'MinimizeH':
+            minarg = np.argmin(size_h_param)
+            return a_param[minarg]
         return M
     # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = auto_focus_NA(50, initial_params0,1,1, True,'')
     return
@@ -9714,7 +9980,7 @@ if option_AKB == True:
         if option_wolter_3_1:
             print('set astigmatism')
             initial_params[0] = 5.87252273e-03
-            initial_params[1] = 0.03
+            initial_params[1] = 0.0
             # # # initial_params[0] = 5.
             # # # initial_params[1] = 10.09
             # # # ## Plane rotation
@@ -9733,12 +9999,11 @@ if option_AKB == True:
             # initial_params[10] = 7e-05
             # initial_params[22] = 7e-05
 
-            ### setting5
-            initial_params[9] = -2.1687337348902547e-05
-            initial_params[21] = -2.1687337348902547e-05
-            initial_params[10] = 7.5e-05
-            initial_params[22] = 7.5e-05
-
+            ### setting12
+            initial_params[9] = -3.44496117e-05
+            initial_params[21] = -3.44496117e-05
+            initial_params[10] = 1.3e-04
+            initial_params[22] = 1.3e-04
             # initial_params[10] +=  1e-4
             # initial_params[22] +=  1e-4
             # initial_params[20] +=  1e-4
@@ -9751,7 +10016,7 @@ if option_AKB == True:
             # initial_params[2] +=  5e-6
             # initial_params[14] +=  5e-6
             # initial_params[15] +=  2e-5
-            initial_params[16] +=  1e-5
+            # initial_params[16] +=  1e-5
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -9782,15 +10047,77 @@ else:
 # plot_result_debug(initial_params,'ray')
 # calc_FoC(initial_params)
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 initial_params1 = initial_params.copy()
 # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
-M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-4,1e-4,option = 'matrix', option_eval = '3')
-M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-4,1e-4,option = 'matrix', option_eval = '3')
-print('M8',M8)
-print('M9',M9)
-print('M10',M10)
+# M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
+
+if False:
+    M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+    initial_params[9] = -M9[1,0]/M9[0,0]
+    initial_params[21] = -M9[1,0]/M9[0,0]
+    initial_params1 = initial_params.copy()
+    print('M9',M9)
+    M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+    initial_params[10] = -M10[1,1]/M10[0,1]
+    initial_params[22] = -M10[1,1]/M10[0,1]
+    print('M10',M10)
+    initial_params1 = initial_params.copy()
+    param_MinH = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'MinimizeH')
+    print('param_MinH',param_MinH)
+    initial_params[10] = param_MinH
+    initial_params[22] = param_MinH
+
+    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
+if True:
+    ###### Torerance WolterH
+    ### incidence
+    initial_params1 = initial_params.copy()
+    initial_params1[10] += 5e-4
+    initial_params1[22] += 5e-4
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ### Perpendicularity
+    initial_params1 = initial_params.copy()
+    initial_params1[9] += 1e-5
+    initial_params1[21] += 1e-5
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ###### Torerance HypH relative angle
+    ### incidence
+    initial_params1 = initial_params.copy()
+    initial_params1[10] += 1e-4
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ### Perpendicularity
+    initial_params1 = initial_params.copy()
+    initial_params1[9] += 4e-5
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ### rotation
+    initial_params1 = initial_params.copy()
+    initial_params1[8] += 1e-4
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ###### Torerance EllV relative angle
+    ### incidence
+    initial_params1 = initial_params.copy()
+    initial_params1[14] += 5e-6
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ### Perpendicularity
+    initial_params1 = initial_params.copy()
+    initial_params1[15] += 2e-5
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    ### rotation
+    initial_params1 = initial_params.copy()
+    initial_params1[16] += 1e-5
+    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+sys.exit()
 
 M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
 M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
@@ -9798,7 +10125,6 @@ M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', 
 print('M14',M14)
 print('M15',M15)
 print('M16',M16)
-sys.exit()
 
 num_a = 4
 a = np.linspace(0.8, 1.2, num_a)
