@@ -26,9 +26,10 @@ from matplotlib.widgets import Slider
 from datetime import datetime
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
+import legendre_fit as lf
 # # コア数を設定
 import tifffile
-
+import cv2
 global option_AKB
 global wave_num_H
 global wave_num_V
@@ -874,8 +875,84 @@ def fresnel_integral(phi, grid_x, grid_y, lambda_, z, x_out_range, y_out_range, 
     psf = np.abs(psf)**2
     psf /= np.nanmax(psf)  # 正規化
     return psf, x_out, y_out
+
+
+def extract_affine_square_region(img: np.ndarray, target_size: int = None) -> np.ndarray:
+    """
+    NaNで囲まれた実数値2Dデータから、斜め矩形領域を検出して正方形にアフィン変換で切り出す。
+
+    Parameters:
+        img: np.ndarray
+            2次元の実数値データ（NaN含む）
+        target_size: int or None
+            出力する正方形の一辺のサイズ（Noneなら最長辺を使用）
+
+    Returns:
+        rectified_img: np.ndarray
+            アフィン変換された正方形画像（NaN維持）
+    """
+    assert img.ndim == 2, "2次元配列を入力してください"
+
+    # --- 1. NaN以外のマスクを作成 ---
+    valid_mask = ~np.isnan(img)
+    valid_mask_uint8 = valid_mask.astype(np.uint8) * 255
+
+    # --- 2. 輪郭検出 ---
+    contours, _ = cv2.findContours(valid_mask_uint8, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        raise ValueError("有効領域が見つかりませんでした")
+
+    contour = max(contours, key=cv2.contourArea)
+
+    # --- 3. 輪郭を4点近似 ---
+    epsilon = 0.01 * cv2.arcLength(contour, True)
+    approx = cv2.approxPolyDP(contour, epsilon, True)
+    if len(approx) != 4:
+        raise ValueError(f"矩形が4点で検出できませんでした（点数: {len(approx)}）")
+
+    pts_src = approx[:, 0, :].astype(np.float32)
+
+    # --- 4. 並び替え（左上 → 右上 → 左下）で3点を使う ---
+    def order_points_affine(pts):
+        s = pts.sum(axis=1)
+        diff = np.diff(pts, axis=1)
+        top_left = pts[np.argmin(s)]
+        top_right = pts[np.argmin(diff)]
+        bottom_left = pts[np.argmax(diff)]
+        return np.array([top_left, top_right, bottom_left], dtype=np.float32)
+
+    pts_src_ordered = order_points_affine(pts_src)
+
+    # --- 5. 出力サイズ決定 ---
+    if target_size is None:
+        width = np.linalg.norm(pts_src_ordered[0] - pts_src_ordered[1])
+        height = np.linalg.norm(pts_src_ordered[0] - pts_src_ordered[2])
+        side = int(max(width, height))
+    else:
+        side = int(target_size)
+
+    # 出力先3点（正方形）：左上→右上→左下
+    pts_dst = np.array([
+        [0, 0],
+        [side - 1, 0],
+        [0, side - 1]
+    ], dtype=np.float32)
+
+    # --- 6. アフィン変換行列作成 ---
+    M = cv2.getAffineTransform(pts_src_ordered, pts_dst)
+
+    # --- 7. NaN→0で warp ---
+    img_filled = np.nan_to_num(img, nan=0.0)
+    warped = cv2.warpAffine(img_filled, M, (side, side), flags=cv2.INTER_LINEAR)
+
+    # --- 8. NaNマスクも変換して復元 ---
+    mask_warped = cv2.warpAffine(valid_mask_uint8, M, (side, side), flags=cv2.INTER_NEAREST)
+    warped[mask_warped == 0] = np.nan
+
+    return warped
+
 if option_wolter_3_1:
-    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -2143,6 +2220,16 @@ if option_wolter_3_1:
                     print('workAbs 2nd 3rd',mindist(vmirr_ell,hmirr_ell))
                     print('workAbs 3rd 4th',mindist(hmirr_ell,hmirr_hyp))
                     print('workAbs 4th fcs',mindist(hmirr_hyp,detcenter))
+
+                    print('1st W upper',np.linalg.norm(vmirr_hyp[:,0] - vmirr_hyp[:,ray_num-1]))
+                    print('1st W lower',np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num]))
+                    print('2nd W upper',np.linalg.norm(vmirr_ell[:,0] - vmirr_ell[:,ray_num-1]))
+                    print('2nd W lower',np.linalg.norm(vmirr_ell[:,-1] - vmirr_ell[:,-ray_num]))
+                    print('3rd W upper',np.linalg.norm(hmirr_ell[:,0] - hmirr_ell[:,-ray_num]))
+                    print('3rd W lower',np.linalg.norm(hmirr_ell[:,ray_num-1] - hmirr_ell[:,-1]))
+                    print('4th W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
+                    print('4th W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
+
                     fig,axs = plt.subplots(2,1,sharex=True)
                     axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
                     axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
@@ -2358,7 +2445,46 @@ if option_wolter_3_1:
                 # plt.colorbar(label='wavefront error (nm)')
                 plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
                 plt.savefig('waveRaytrace_Corrected.png')
-                plt.show()
+                # plt.show()
+                rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+
+                # plt.figure()
+                # plt.imshow(rectified_img[1:-2, 1:-2], cmap='jet',vmin = -1/4,vmax = 1/4)
+                # plt.colorbar(label='\u03BB')
+                # plt.title("Affine-Corrected Square Cutout")
+                # # plt.show()
+                
+
+                assesorder = 5
+                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                length = len(inner_products)
+                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                for i in range(length):
+                    ny = orders[i][0]
+                    nx = orders[i][1]
+                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
+                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                    ### set colorbar for each subplot
+                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
+                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                fit_sum = np.sum(fit_datas, axis=0)
+                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+
+                plt.tight_layout()
+                if option_legendre:
+                    plt.close()
+                    print('inner_products',inner_products)
+                    print('orders',orders)
+                    return inner_products, orders
+                else:
+                    plt.show()
+
+
 
                 if False:
                     # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
@@ -8716,7 +8842,7 @@ def objective_function(var_params, fixed_params, var_indices, num_params,option_
     area_min = auto_focus_NA(50, params,1,1, False,'D')
     return area_min
 #####################################
-def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray',option_mode=False,source_shift0=[0.,0.,0.]):
+def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,option_param,option_disp='ray',option_mode=False,source_shift0=[0.,0.,0.],option_legendre=False):
     initial_a_min = -0.3 + initial_params[0].copy()  # Initial minimum value for 'a'
     initial_a_max = 0.3 + initial_params[0].copy() # Initial maximum value for 'a'
     shrink_factor = 0.1    # Range reduction factor per loop
@@ -8826,6 +8952,9 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         print('params = ',initial_params[0:1])
         vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
         return detcenter
+    if option_legendre:
+        innerproducts, orders = plot_result_debug(initial_params, 'ray_wave',option_legendre=True)
+        return innerproducts, orders
     if option:
         print('params = ',initial_params[0:26])
         if option_AKB:
@@ -9808,6 +9937,31 @@ def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
     
     
     return
+
+def Legendrealignment(initial_params, num_param, range_param):
+    # Legendre alignment
+    innerproducts = []
+    for i in range(int(len(range_param))):
+        initial_params1 = initial_params.copy()
+        initial_params1[num_param] += range_param[i]
+        inner, order = auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave',option_legendre=True)
+        innerproducts.append(inner)
+
+    innerproducts = np.array(innerproducts)
+    row = innerproducts.shape[0]
+    col = innerproducts.shape[1]
+
+    ### plot
+    plt.figure()
+    for i in range(col):
+        plt.plot(range_param, innerproducts[:,i], label=f'legendre {order[i]}')
+
+    plt.xlabel(f'Alignment{ num_param}')
+    plt.ylabel('Inner Product')
+    plt.title('Legendre Alignment')
+    plt.legend()
+    plt.show()
+
 #####################################
 # defocus, astigH, \
 #    0        1
@@ -10004,6 +10158,7 @@ if option_AKB == True:
             initial_params[21] = -3.44496117e-05
             initial_params[10] = 1.3e-04
             initial_params[22] = 1.3e-04
+
             # initial_params[10] +=  1e-4
             # initial_params[22] +=  1e-4
             # initial_params[20] +=  1e-4
@@ -10017,6 +10172,13 @@ if option_AKB == True:
             # initial_params[14] +=  5e-6
             # initial_params[15] +=  2e-5
             # initial_params[16] +=  1e-5
+            # initial_params[10] += 164.1852798e-6*15
+            # initial_params[10] += 623.752495e-6*15 -4.6e-3
+            # initial_params[22] += 623.752495e-6 -4.6e-3
+            # initial_params[9] += +35.2e-6
+
+            # initial_params[9] += 7.94e-6
+            # initial_params[21] += 7.94e-6
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -10046,8 +10208,10 @@ else:
 
 # plot_result_debug(initial_params,'ray')
 # calc_FoC(initial_params)
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+Legendrealignment(initial_params, [9,21], np.linspace(-1e-4, 1e-4, 5))
+
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 initial_params1 = initial_params.copy()
 # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
 # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
