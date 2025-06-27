@@ -46,7 +46,7 @@ class Ell:
         print('self.q_centre',self.q_centre)
         print('self.theta_centre',self.theta_centre)
         print('self.mirr_length',self.mirr_length)
-        print('Apperture',self.mirr_length*self.theta_centre)
+        print('Aperture',self.mirr_length*self.theta_centre)
         print('self.na_o',self.na_o)
         print('==========================')
         
@@ -168,14 +168,15 @@ def ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin):
     na_o = np.float64(np.arcsin(na_o_sin)*2)
     Ell1 = Ell(l_i1, l_o1, theta_g1, na_o)
     return Ell1
-def ELL_H_design(Ell1, target_l_o2, target_gap, ast,na_o_sin_h):
+def ELL_H_design(Ell1, target_l_o2, target_gap, ast,na_o_sin_h,display=True):
     
     target_x_1 = Ell1.edge + target_gap
-    print('target_x_1',target_x_1)
     target_f = Ell1.f + ast
     l_i1 = Ell1.l_i2 + target_gap
     theta_g1 = Ell1.theta_g1/3
-    print('l_i1',l_i1)
+    if display:
+        print('target_x_1',target_x_1)
+        print('l_i1',l_i1)
     # 最小化対象関数（目的関数）
     na_o = np.float64(np.arcsin(na_o_sin_h)*2)
     # na_o = Ell1.na_o
@@ -192,12 +193,12 @@ def ELL_H_design(Ell1, target_l_o2, target_gap, ast,na_o_sin_h):
     init_params = [l_i1, Ell1.l_o2, theta_g1]
 
     # 範囲制限
-    bounds = [(l_i1-0.1, l_i1+0.1),(0.01,2), (1e-9, np.pi / 4)]
+    bounds = [(l_i1-1, l_i1+1),(0.001,2), (1e-9, np.pi / 4)]
     result = differential_evolution(
         objective,
         bounds,
         strategy='best1bin',
-        maxiter=1000,
+        maxiter=10000,
         popsize=15,
         tol=1e-6,
         mutation=(0.5, 1),
@@ -206,21 +207,21 @@ def ELL_H_design(Ell1, target_l_o2, target_gap, ast,na_o_sin_h):
         polish=True,
         disp=False
     )
-
     # 結果出力
     opt_i1, opt_l_o1, opt_theta_g1 = result.x
-    print(f"\n✅ 最適解:")
-    print(f"  l_i1        = {opt_i1:.6f}")
-    print(f"  l_o1        = {opt_l_o1:.6f}")
-    print(f"  theta_g1    = {np.rad2deg(opt_theta_g1):.4f} deg")
-    print(f"  l_i1        = {opt_i1:.6f}")
-    print(f"  最終誤差    = {result.fun:.6e}")
-
     Ell2 = Ell(l_i1, opt_l_o1, opt_theta_g1, na_o)
-    print(f"　誤差の詳細")
-    print(f"  l_o2        = {Ell2.l_o2-target_l_o2:.6f}")
-    print(f"  x_1         = {Ell2.x_1-target_x_1:.6f}")
-    print(f"  f           = {Ell2.f-target_f:.6f}")
+    if display:
+        print("反復回数:", result.nit)
+        print(f"\n✅ 最適解:")
+        print(f"  l_i1        = {opt_i1:.6f}")
+        print(f"  l_o1        = {opt_l_o1:.6f}")
+        print(f"  theta_g1    = {np.rad2deg(opt_theta_g1):.4f} deg")
+        print(f"  l_i1        = {opt_i1:.6f}")
+        print(f"  最終誤差    = {result.fun:.6e}")
+        print(f"　誤差の詳細")
+        print(f"  l_o2        = {Ell2.l_o2-target_l_o2:.6f}")
+        print(f"  x_1         = {Ell2.x_1-target_x_1:.6f}")
+        print(f"  f           = {Ell2.f-target_f:.6f}")
     return Ell1, Ell2
 def KB_design(l_i1, l_o1, theta_g1, na_o_sin_v, na_o_sin_h,target_l_o2, target_gap, ast):
     Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin_v)
@@ -240,8 +241,8 @@ def plot_ellipses(Ell1, Ell2):
     plt.plot([Ell1.x_1, Ell1.x_1+Ell1.x_2], [Ell1.y_1, Ell1.y_2], 'r--')
     plt.plot(2*Ell1.f, 0, 'ro')
     # plt.plot([0, Ell2.x_1], [0, Ell2.y_1], 'r', label='input beam')
-    plt.plot([Ell2.x_1, Ell2.x_1+Ell2.x_2], [Ell2.y_1, Ell2.y_2], 'r--')
-    plt.plot(2*Ell2.f, 0, 'ro')
+    plt.plot([Ell2.x_1, Ell2.x_1+Ell2.x_2], [Ell2.y_1, Ell2.y_2], 'b--')
+    plt.plot(2*Ell2.f, 0, 'bo')
 
     # fig, ax = plt.subplots(1,2)
     # ax[0].plot([0, Ell1.x_2],[np.rad2deg((Ell1.theta_i1+Ell1.theta_o1)/2), np.rad2deg((Ell1.theta_i2+Ell1.theta_o2)/2)], 'r--')
@@ -250,35 +251,154 @@ def plot_ellipses(Ell1, Ell2):
     # # plt.show()
     fig1, ax1 = plt.subplots(1,2)
     ax1[0].plot([0, Ell1.x_2],[((Ell1.theta_i1+Ell1.theta_o1)/2), ((Ell1.theta_i2+Ell1.theta_o2)/2)], 'r--')
-    ax1[1].plot([0, Ell2.x_2],[((Ell2.theta_i1+Ell2.theta_o1)/2), ((Ell2.theta_i2+Ell2.theta_o2)/2)], 'r--')
+    ax1[1].plot([0, Ell2.x_2],[((Ell2.theta_i1+Ell2.theta_o1)/2), ((Ell2.theta_i2+Ell2.theta_o2)/2)], 'b--')
+    ax1[0].set_xlabel('distance (m)')
+    ax1[1].set_xlabel('distance (m)')
     ax1[0].set_ylabel('incident angle (rad)')
+    ax1[0].set_title('Ell1 incident angle')
+    ax1[1].set_title('Ell2 incident angle')
+    print('Ell1 diverge angle', Ell1.theta_i1-Ell1.theta_i2)
+    print('Ell1 mirror length', Ell1.mirr_length)
+    print('Ell1 mirror angle', [(Ell1.theta_i1+Ell1.theta_o1)/2, (Ell1.theta_i2+Ell1.theta_o2)/2])
+    print('Ell2 diverge angle', Ell2.theta_i1-Ell2.theta_i2)
+    print('Ell2 mirror length', Ell2.mirr_length)
+    print('Ell2 mirror angle', [(Ell2.theta_i1+Ell2.theta_o1)/2, (Ell2.theta_i2+Ell2.theta_o2)/2])
+    print('===========================')
+    print('Ell1 aperture',Ell1.mirr_length*Ell1.theta_centre)
+    print('Ell2 aperture',Ell2.mirr_length*Ell2.theta_centre)
+    print('Area aperture',Ell1.mirr_length*Ell1.theta_centre*Ell2.mirr_length*Ell2.theta_centre)
+    print('Focus distance',Ell1.f-Ell2.f)
     plt.show()
     return
 def plot_mirrors(Ell1, Ell2):
     
     return
 if __name__ == '__main__':
-    # # 初期値
-    # l_i1 = np.float64(145.7500024376426)
-    # l_o1 = np.float64(1.0499975623574187)
-    # theta_g1 = np.float64(0.211)
-    # na_o_sin = np.float64(0.082)
-    # target_l_o2 = np.float64(0.04) ### WD
-    # target_gap = np.float64(0.02)
-
     # 初期値
-    l_i1 = np.float64(110)
-    l_o1 = np.float64(1.55)
-    theta_g1 = np.float64(3.95e-3)
-    na_o_sin_v = np.float64(0.00085)*0.95
-    na_o_sin_h = np.float64(0.0008)*1.75
-    target_l_o2 = np.float64(0.51) ### WD
-    target_gap = np.float64(0.03)
+    
 
+    # # ### 初期値
+    # # # Ell1 aperture 0.01090493366342567
+    # # # Ell2 aperture 0.002279544746263799
+    # # # Area aperture 2.4858284240817232e-05
+    # # l_o1 = np.float64(0.17)
+    # # theta_g1 = np.float64(0.06)
+
+    # l_i1 = np.float64(145.7500024376426)
+    # ### 初期値
+    # # Ell1 aperture 0.009622771816525613
+    # # Ell2 aperture 0.002612969252157888
+    # # Area aperture 2.5144006877112932e-05
+    # l_o1 = np.float64(0.085)
+    # theta_g1 = np.float64(0.2)
+
+    # # ### 初期値
+    # # Ell1 aperture 0.009740844713758013
+    # # Ell2 aperture 0.002571216723527687
+    # # Area aperture 2.5045822829300865e-05
+    # # l_o1 = np.float64(0.0785)
+    # # theta_g1 = np.float64(0.3)
+
+    l_i1 = np.float64(145.7500024376426)
+    # ### 初期値
+    # l_o1 = np.float64(0.3)
+    # theta_g1 = np.float64(0.225)
+    ### 初期値
+    # l_o1 = np.float64(0.12)
+    # theta_g1 = np.float64(0.20)
+    # target_l_o2 = np.float64(0.024) ### WD
+
+    na_o_sin_v = np.float64(0.082)
+    na_o_sin_h = np.float64(0.082)
+    
+    target_gap = np.float64(0.013)
     ast = np.float64(0.)
-    # Ell1, Ell2 = KB_design(l_i1, l_o1, theta_g1, na_o_sin,target_l_o2, target_gap, ast)
+
+
+    ### apertureが5になるように調整
+    var_l_o1 = np.float64(0.23)
+    var_theta_g1 = np.float64(0.16)
+    var_target_l_o2 = np.float64(0.04125) ### WD
+
+    # ### apertureが5になるように調整
+    # var_l_o1 = np.float64(0.15)
+    # theta_g1 = np.float64(0.16)
+    # target_l_o2 = np.float64(0.02125) ### WD
+
+
+    target_aperture1 = np.float64(0.010)
+    target_aperture2 = np.float64(0.010)
+    l_o1 = var_l_o1.copy()  # 初期値の設定
+    theta_g1 = var_theta_g1.copy()  # 初期値の設定
+    target_l_o2 = var_target_l_o2.copy()  # 初期値の設定
+
     Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin_v)
-    Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast,na_o_sin_h)
+    Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast, na_o_sin_h)  
+    plot_ellipses(Ell1, Ell2)
+
+    def objective(params):
+        # l_o1 = params[0]
+        l_o1, theta_g1, target_l_o2 = params
+        Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin_v)
+        Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast, na_o_sin_h,display=False)
+        Focus_gap = Ell1.f - Ell2.f
+        if Focus_gap > 1e-3:
+            return np.inf  # 適切な焦点距離でない場合は無限大を返す
+        if Ell1.m1 < 1000:
+            return np.inf
+        theta_g1_max = np.max([ (Ell1.theta_i1+ Ell1.theta_o1)/2, (Ell1.theta_i2 + Ell1.theta_o2)/2 ])
+        theta_g2_max = np.max([ (Ell2.theta_i1+ Ell2.theta_o1)/2, (Ell2.theta_i2 + Ell2.theta_o2)/2 ])
+        if theta_g1_max > 0.28 or theta_g2_max > 0.28:
+            # print(f"theta_g1_max: {theta_g1_max:.6f}, theta_g2_max: {theta_g2_max:.6f}")
+            return np.inf
+        aperture_Ell1 = Ell1.mirr_length * Ell1.theta_centre
+        aperture_Ell2 = Ell2.mirr_length * Ell2.theta_centre
+        err_aperture1 = aperture_Ell1 - target_aperture1
+        err_aperture2 = aperture_Ell2 - target_aperture2
+        if np.abs(err_aperture2) < 0.001:
+            print(f"l_o1: {l_o1:.6f}, theta_g1: {theta_g1:.6f}, target_l_o2: {target_l_o2:.6f}, aperture_Ell1: {aperture_Ell1:.6f}, aperture_Ell2: {aperture_Ell2:.6f}")
+        eval_err = np.sqrt(err_aperture2**2)
+        return eval_err
+
+    # 探索範囲を定義（各パラメータに対して）
+    bounds = [
+        (0.2, 0.4),           # var_l_o1 の範囲
+        (0.1, 0.26),           # var_theta_g1 の範囲
+        (0.03, 0.05)           # var_target_l_o2 の範囲
+    ]
+
+    # differential evolution で最適化
+    result = differential_evolution(
+        objective,
+        bounds,
+        strategy='best1bin',
+        maxiter=100,
+        popsize=15,
+        tol=1e-4,
+        mutation=(0.5, 1),
+        recombination=0.7,
+        seed=None,
+        polish=True,
+        disp=False
+    )
+    
+    optimized_params = result.x
+
+    Ell1 = ELL_V_design(l_i1, optimized_params[0], optimized_params[1], na_o_sin_v)
+    Ell1, Ell2 = ELL_H_design(Ell1, optimized_params[2], target_gap, ast, na_o_sin_h)
+    print("最適化結果:")
+    print(f"l_o1: {optimized_params[0]:.6f}, theta_g1: {optimized_params[1]:.6f}, target_l_o2: {optimized_params[2]:.6f}")
+    print(f"最終誤差: {result.fun:.6e}")
+
+    # Ell1 = ELL_V_design(l_i1, optimized_params[0], theta_g1, na_o_sin_v)
+    # Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast, na_o_sin_h)
+    # print("最適化結果:")
+    # print(f"l_o1: {optimized_params[0]:.6f}, theta_g1: {theta_g1:.6f}")
+    # print(f"最終誤差: {result.fun:.6e}")
+
+    # Ell1 = ELL_V_design(l_i1, l_o1, theta_g1, na_o_sin_v)
+    # Ell1, Ell2 = ELL_H_design(Ell1, target_l_o2, target_gap, ast, na_o_sin_h)    
+    
     plot_ellipses(Ell1, Ell2)
 
     Ell1.raytrace(2e-3)

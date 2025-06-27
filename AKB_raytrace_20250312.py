@@ -45,7 +45,12 @@ global option_HighNA
 global defocusForWave
 global option_avrgsplt
 global optKBdesign
-optKBdesign=False
+global directory_name
+timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+directory_name = f"output_{timestamp}"
+# 新しいフォルダを作成
+os.makedirs(directory_name, exist_ok=True)
+optKBdesign=True
 option_2mirror =True
 option_rotate = True
 option_avrgsplt = False
@@ -61,11 +66,12 @@ wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
 option_AKB = True
-option_wolter_3_1 = True
+option_wolter_3_1 = False
 option_HighNA = True
 global LowNAratio
 LowNAratio = 1.
 defocusForWave = 1e-3
+
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
     """
     入力データを基に波面誤差を計算する関数
@@ -2246,6 +2252,7 @@ if option_wolter_3_1:
                     axs[1].set_ylabel('Vertical')
                     axs[0].axis('equal')
                     axs[1].axis('equal')
+                    plt.savefig('raytrace_mirror_configuration.png')
                     plt.show()
 
                 angle = reflect4
@@ -2446,7 +2453,8 @@ if option_wolter_3_1:
                 plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
                 plt.savefig('waveRaytrace_Corrected.png')
                 # plt.show()
-                rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+                # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+                rectified_img = extract_affine_square_region(matrixWave2/lambda_, target_size=256)
 
                 # plt.figure()
                 # plt.imshow(rectified_img[1:-2, 1:-2], cmap='jet',vmin = -1/4,vmax = 1/4)
@@ -3146,21 +3154,41 @@ else:
         pitch_ell_h, roll_ell_h, yaw_ell_h, decenterX_ell_h, decenterY_ell_h, decenterZ_ell_h  = params
         if option_HighNA:
             # Mirror parameters EUV
-            a_hyp_v = np.float64(72.96002945938)
-            b_hyp_v = np.float64(0.134829747201017)
-            a_ell_v = np.float64(0.442)
-            b_ell_v = np.float64(0.0607128830733533)
-            length_hyp_v = np.float64(0.115)
-            length_ell_v = np.float64(0.229790269646258)
-            theta1_v = np.float64(4.73536529533549E-05)
+            # a_hyp_v = np.float64(72.96002945938)
+            # b_hyp_v = np.float64(0.134829747201017)
+            # a_ell_v = np.float64(0.442)
+            # b_ell_v = np.float64(0.0607128830733533)
+            # length_hyp_v = np.float64(0.115)
+            # length_ell_v = np.float64(0.229790269646258)
+            # theta1_v = np.float64(4.73536529533549E-05)
 
-            a_hyp_h = np.float64(73.018730871665)
-            b_hyp_h = np.float64(0.0970536727319812)
-            a_ell_h = np.float64(0.38125)
-            b_ell_h = np.float64(0.0397791317992322)
-            length_hyp_h = np.float64(0.25)
-            length_ell_h = np.float64(0.0653872838592807)
-            theta1_h = np.float64(5.6880350884129E-05)
+            # a_hyp_h = np.float64(73.018730871665)
+            # b_hyp_h = np.float64(0.0970536727319812)
+            # a_ell_h = np.float64(0.38125)
+            # b_ell_h = np.float64(0.0397791317992322)
+            # length_hyp_h = np.float64(0.25)
+            # length_ell_h = np.float64(0.0653872838592807)
+            # theta1_h = np.float64(5.6880350884129E-05)
+
+
+            a_hyp_v = np.float64(72.968)
+            b_hyp_v = np.float64(0.250376439249605)
+            a_ell_v = np.float64(0.2195)
+            b_ell_v = np.float64(0.0512440210953413)
+            length_hyp_v = np.float64(0.061)
+            length_ell_v = np.float64(0.103058980190576)
+            theta1_v = np.float64(7.15995481547383E-055)
+
+
+            a_hyp_h = np.float64(72.985)
+            b_hyp_h = np.float64(0.183699830190467)
+            a_ell_h = np.float64(0.203)
+            b_ell_h = np.float64(0.0354925652013309)
+            length_hyp_h = np.float64(0.13)
+            length_ell_h = np.float64(0.0500546018611444)
+            theta1_h = np.float64(8.32243535501736E-05)
+
+
         else:
             # Mirror parameters hardX
             a_hyp_v = np.float64(72.952)
@@ -3950,6 +3978,55 @@ else:
                 coeffs_det[6] = 1
                 coeffs_det[9] = -(s2f_middle + defocus)
                 detcenter = plane_ray_intersection(coeffs_det, reflect4, hmirr_ell)
+                if option == 'ray':
+                    from scipy.spatial import cKDTree
+                    def mindist(A,B):
+                        tree = cKDTree(B.T)
+                        dist, idx = tree.query(A.T, k=1)  # Aの各点からBへの最近点距離
+                        min_dist = np.min(dist)
+                        return min_dist
+                    print('======================')
+                    print('workX srs 1st',np.min(vmirr_hyp[0,:]) - np.max(source[0,:]))
+                    print('workX 1st 2nd',np.min(hmirr_hyp[0,:]) - np.max(vmirr_hyp[0,:]))
+                    print('workX 2nd 3rd',np.min(vmirr_ell[0,:]) - np.max(hmirr_hyp[0,:]))
+                    print('workX 3rd 4th',np.min(hmirr_ell[0,:]) - np.max(vmirr_ell[0,:]))
+                    print('workX 4th fcs',np.min(detcenter[0,:]) - np.max(hmirr_ell[0,:]))
+                    print('======================')
+                    print('workAbs srs 1st',mindist(source,vmirr_hyp))
+                    print('workAbs 1st 2nd',mindist(vmirr_hyp,hmirr_hyp))
+                    print('workAbs 2nd 3rd',mindist(hmirr_hyp,vmirr_ell))
+                    print('workAbs 3rd 4th',mindist(vmirr_ell,hmirr_ell))
+                    print('workAbs 4th fcs',mindist(hmirr_ell,detcenter))
+
+                    print('1st W upper',np.linalg.norm(vmirr_hyp[:,0] - vmirr_hyp[:,ray_num-1]))
+                    print('1st W lower',np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num]))
+                    print('2nd W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
+                    print('2nd W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
+                    print('3rd W upper',np.linalg.norm(vmirr_ell[:,0] - vmirr_ell[:,ray_num-1]))
+                    print('3rd W lower',np.linalg.norm(vmirr_ell[:,-1] - vmirr_ell[:,-ray_num]))
+                    print('4th W upper',np.linalg.norm(hmirr_ell[:,0] - hmirr_ell[:,-ray_num]))
+                    print('4th W lower',np.linalg.norm(hmirr_ell[:,ray_num-1] - hmirr_ell[:,-1]))
+
+                    fig,axs = plt.subplots(2,1,sharex=True)
+                    axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
+                    axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
+                    axs[0].plot(hmirr_ell[0,:],hmirr_ell[1,:])
+                    axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
+                    axs[0].plot(detcenter[0,:],detcenter[1,:])
+                    axs[0].set_ylabel('Horizontal')
+
+                    axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
+                    axs[1].plot(vmirr_ell[0,:],vmirr_ell[2,:])
+                    axs[1].plot(hmirr_ell[0,:],hmirr_ell[2,:])
+                    axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
+                    axs[1].plot(detcenter[0,:],detcenter[2,:])
+                    axs[1].set_ylabel('Vertical')
+                    axs[0].axis('equal')
+                    axs[1].axis('equal')
+                    plt.savefig('raytrace_mirror_configuration.png')
+                    plt.show()
+
+                    
 
                 angle = reflect4
 
@@ -5387,6 +5464,8 @@ class KBDesignManager:
         self.l_o1 = np.float64(l_o1)
         self.theta_g1 = np.float64(theta_g1)
         self.na_o_sin = np.float64(na_o_sin)
+        self.na_o_sin_v = np.float64(na_o_sin)
+        self.na_o_sin_h = np.float64(na_o_sin)
         self.target_l_o2 = np.float64(target_l_o2)  # WD
         self.target_gap = np.float64(target_gap)
         self.ast = np.float64(ast)
@@ -5418,7 +5497,8 @@ class KBDesignManager:
                 file.write(f"target_l_o2 = {self.target_l_o2}\n")
                 file.write(f"target_gap = {self.target_gap}\n")
                 file.write(f"ast = {self.ast}\n")
-            self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin, self.target_l_o2, self.target_gap, self.ast)
+            # self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin, self.target_l_o2, self.target_gap, self.ast)
+            self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin_v, self.na_o_sin_h, self.target_l_o2, self.target_gap, self.ast)
         return self.Ell1, self.Ell2
 kb_manager = KBDesignManager()
 def KB_debug_old(params,na_ratio_h,na_ratio_v,option):
@@ -7163,6 +7243,39 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
         NA_h = np.sin(Ell1.na_o/2)
         NA_v = np.sin(Ell2.na_o/2)
         if option == 'ray':
+
+            print('Ell1 diverge angle', Ell1.theta_i1-Ell1.theta_i2)
+            print('Ell1 mirror length', Ell1.mirr_length)
+            print('Ell1 mirror angle', [(Ell1.theta_i1+Ell1.theta_o1)/2, (Ell1.theta_i2+Ell1.theta_o2)/2])
+            print('Ell2 diverge angle', Ell2.theta_i1-Ell2.theta_i2)
+            print('Ell2 mirror length', Ell2.mirr_length)
+            print('Ell2 mirror angle', [(Ell2.theta_i1+Ell2.theta_o1)/2, (Ell2.theta_i2+Ell2.theta_o2)/2])
+            print('===========================')
+            print('Ell1 aperture',Ell1.mirr_length*Ell1.theta_centre)
+            print('Ell2 aperture',Ell2.mirr_length*Ell2.theta_centre)
+            print('Area aperture',Ell1.mirr_length*Ell1.theta_centre*Ell2.mirr_length*Ell2.theta_centre)
+            print('Focus distance',Ell1.f-Ell2.f)
+            conditions_file_path = os.path.join(directory_name, 'kb_design.txt')
+
+            # テキストファイルに変数の値や計算条件を書き込む
+            with open(conditions_file_path, 'w') as file:
+                file.write(f'Ell1 diverge angle: {Ell1.theta_i1-Ell1.theta_i2}\n')
+                file.write(f'Ell1 mirror length: {Ell1.mirr_length}\n')
+                file.write(f'Ell1 mirror angle: {(Ell1.theta_i1+Ell1.theta_o1)/2, (Ell1.theta_i2+Ell1.theta_o2)/2}\n')
+                file.write(f'Ell2 diverge angle: {Ell2.theta_i1-Ell2.theta_i2}\n')
+                file.write(f'Ell2 mirror length: {Ell2.mirr_length}\n')
+                file.write(f'Ell2 mirror angle: {(Ell2.theta_i1+Ell2.theta_o1)/2, (Ell2.theta_i2+Ell2.theta_o2)/2}\n')
+                file.write('===========================\n')
+                file.write(f'Ell1 aperture: {Ell1.mirr_length*Ell1.theta_centre}\n')
+                file.write(f'Ell2 aperture: {Ell2.mirr_length*Ell2.theta_centre}\n')
+                file.write(f'Area aperture: {Ell1.mirr_length*Ell1.theta_centre*Ell2.mirr_length*Ell2.theta_centre}\n')
+                file.write(f'Focus distance: {Ell1.f-Ell2.f}\n')
+            conditions_file_path = os.path.join(directory_name, 'kb_design_details.txt')
+            # 詳細な設計条件を書き込む
+            with open(conditions_file_path, 'w') as file:
+                file.write(f'Ell1 parameters: {Ell1}\n')
+                file.write(f'Ell2 parameters: {Ell2}\n')
+
             print('NA',NA_h)
             print('NA',NA_v)
             print('theta_g_V1',(Ell1.theta_i1+Ell1.theta_o1)/2)
@@ -7241,21 +7354,21 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             P_VC2_dash_matrix = -P_HC_matrix*np.sin(div_o_V_matrix)**2
             so_fin_V_matrix = calc_so_V(Ell1.x_cent_o_angle, gap_C, P_VC1_dash_matrix, P_VC2_dash_matrix)
 
-            plt.figure()
-            # plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_V_matrix, cmap='jet')
-            plt.imshow(so_fin_V_matrix, extent=(np.min(div_i_H_array), np.max(div_i_H_array), np.min(div_o_V_array), np.max(div_o_V_array)), aspect='auto')
-            plt.colorbar(label='so_fin_V')
-            plt.xlabel('div_i_H')
-            plt.ylabel('div_o_V')
-            plt.title('Contour Plot of so_fin_V')
-            # plt.show()
+            # plt.figure()
+            # # plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_V_matrix, cmap='jet')
+            # plt.imshow(so_fin_V_matrix, extent=(np.min(div_i_H_array), np.max(div_i_H_array), np.min(div_o_V_array), np.max(div_o_V_array)), aspect='auto')
+            # plt.colorbar(label='so_fin_V')
+            # plt.xlabel('div_i_H')
+            # plt.ylabel('div_o_V')
+            # plt.title('Contour Plot of so_fin_V')
+            # # plt.show()
 
-            plt.figure()
-            plt.plot(div_o_V_array, np.mean(so_fin_V_matrix, axis=1), label='Mean so_fin_V')
-            plt.xlabel('div_o_V')
-            plt.ylabel('Mean so_fin_V')
-            plt.title('Mean so_fin_V vs div_o_V')
-            # plt.show()
+            # plt.figure()
+            # plt.plot(div_o_V_array, np.mean(so_fin_V_matrix, axis=1), label='Mean so_fin_V')
+            # plt.xlabel('div_o_V')
+            # plt.ylabel('Mean so_fin_V')
+            # plt.title('Mean so_fin_V vs div_o_V')
+            # # plt.show()
 
             def calc_so_H(si_1_H, gap_C, P_HC1_dash, P_HC2_dash):
                 so_1_H = 1/(P_HC1_dash-1/si_1_H)
@@ -7267,23 +7380,23 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             P_HC2_dash_matrix = P_HC_matrix*np.cos(div_o_V_matrix)**2
             so_fin_H_matrix = calc_so_H(Ell1.x_cent_o_angle, gap_C, P_HC1_dash_matrix, P_HC2_dash_matrix)
 
-            plt.figure()
-            plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_H_matrix, cmap='jet')
-            plt.colorbar(label='so_fin_H')
-            plt.xlabel('div_i_H')
-            plt.ylabel('div_o_V')
-            plt.title('Contour Plot of so_fin_H')
+            # plt.figure()
+            # plt.contourf(div_i_H_matrix, div_o_V_matrix, so_fin_H_matrix, cmap='jet')
+            # plt.colorbar(label='so_fin_H')
+            # plt.xlabel('div_i_H')
+            # plt.ylabel('div_o_V')
+            # plt.title('Contour Plot of so_fin_H')
+            # # plt.show()
+
+            # np.savetxt('so_fin_H_matrix.txt', so_fin_H_matrix)
+            # np.savetxt('so_fin_V_matrix.txt', so_fin_V_matrix)
+
+            # plt.figure()
+            # plt.plot(div_i_H_array, np.mean(so_fin_H_matrix, axis=0), label='Mean so_fin_H')
+            # plt.xlabel('div_i_H')
+            # plt.ylabel('Mean so_fin_H')
+            # plt.title('Mean so_fin_H vs div_i_H')
             # plt.show()
-
-            np.savetxt('so_fin_H_matrix.txt', so_fin_H_matrix)
-            np.savetxt('so_fin_V_matrix.txt', so_fin_V_matrix)
-
-            plt.figure()
-            plt.plot(div_i_H_array, np.mean(so_fin_H_matrix, axis=0), label='Mean so_fin_H')
-            plt.xlabel('div_i_H')
-            plt.ylabel('Mean so_fin_H')
-            plt.title('Mean so_fin_H vs div_i_H')
-            plt.show()
 
             print('si_2_H',si_2_H)
             print('si_2_V',si_2_V)
@@ -8069,6 +8182,60 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             coeffs_det[6] = 1
             coeffs_det[9] = -(s2f_middle + defocus)
             detcenter = plane_ray_intersection(coeffs_det, reflect2, hmirr_hyp)
+
+            if option == 'ray':
+                    from scipy.spatial import cKDTree
+                    def mindist(A,B):
+                        tree = cKDTree(B.T)
+                        dist, idx = tree.query(A.T, k=1)  # Aの各点からBへの最近点距離
+                        min_dist = np.min(dist)
+                        return min_dist
+                    print('======================')
+                    print('workX srs 1st',np.min(vmirr_hyp[0,:]) - np.max(source[0,:]))
+                    print('workX 1st 2nd',np.min(hmirr_hyp[0,:]) - np.max(vmirr_hyp[0,:]))
+                    print('workX 2nd fcs',np.min(detcenter[0,:]) - np.max(hmirr_hyp[0,:]))
+                    print('======================')
+                    print('workAbs srs 1st',mindist(source,vmirr_hyp))
+                    print('workAbs 1st 2nd',mindist(vmirr_hyp,hmirr_hyp))
+                    print('workAbs 2nd fcs',mindist(hmirr_hyp,detcenter))
+
+                    print('1st W upper',np.linalg.norm(vmirr_hyp[:,0] - vmirr_hyp[:,ray_num-1]))
+                    print('1st W lower',np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num]))
+                    print('2nd W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
+                    print('2nd W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
+
+                    conditions_file_path = os.path.join(directory_name, 'kb_configuration.txt')
+
+                    # テキストファイルに変数の値や計算条件を書き込む
+                    with open(conditions_file_path, 'w') as file:
+                        file.write('=== KB configuration ===\n')
+                        file.write('workX srs 1st: {}\n'.format(np.min(vmirr_hyp[0,:]) - np.max(source[0,:])))
+                        file.write('workX 1st 2nd: {}\n'.format(np.min(hmirr_hyp[0,:]) - np.max(vmirr_hyp[0,:])))
+                        file.write('workX 2nd fcs: {}\n'.format(np.min(detcenter[0,:]) - np.max(hmirr_hyp[0,:])))
+                        file.write('workAbs srs 1st: {}\n'.format(mindist(source,vmirr_hyp)))
+                        file.write('workAbs 1st 2nd: {}\n'.format(mindist(vmirr_hyp,hmirr_hyp)))
+                        file.write('workAbs 2nd fcs: {}\n'.format(mindist(hmirr_hyp,detcenter)))
+                        file.write('1st W upper: {}\n'.format(np.linalg.norm(vmirr_hyp[:,0] - vmirr_hyp[:,ray_num-1])))
+                        file.write('1st W lower: {}\n'.format(np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num])))
+                        file.write('2nd W lower: {}\n'.format(np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num])))
+                        file.write('2nd W upper: {}\n'.format(np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1])))
+
+                    fig,axs = plt.subplots(2,1,sharex=True)
+                    axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
+                    axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
+                    axs[0].plot(detcenter[0,:],detcenter[1,:])
+                    axs[0].set_ylabel('Horizontal')
+
+                    axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
+                    axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
+                    axs[1].plot(detcenter[0,:],detcenter[2,:])
+                    axs[1].set_ylabel('Vertical')
+                    axs[0].axis('equal')
+                    axs[1].axis('equal')
+                    plt.savefig(os.path.join(directory_name,'raytrace_mirror_configuration.png'))
+                    plt.show()
+
+
             angle1to2 = reflect1.copy()
             angle = reflect2.copy()
             source_org = source.copy()
@@ -8226,39 +8393,46 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
 
 
-            plt.figure()
-            plt.pcolormesh(grid_H, grid_V, matrixWave2, cmap='jet', shading='auto',vmin = -1,vmax = 1)
-            # plt.colorbar(label='\u03BB')
-            plt.colorbar(label='wavefront error (nm)')
-            plt.savefig('waveRaytrace.png')
-            plt.show()
+            # plt.figure()
+            # plt.pcolormesh(grid_H, grid_V, matrixWave2, cmap='jet', shading='auto',vmin = -1,vmax = 1)
+            # # plt.colorbar(label='\u03BB')
+            # plt.colorbar(label='wavefront error (nm)')
+            # plt.savefig('waveRaytrace.png')
+            # plt.show()
 
             matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
 
             print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
 
             plt.figure()
-            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1,vmax = 1)
-            # plt.axis('equal')
-            # plt.colorbar(label='\u03BB')
-            plt.colorbar(label='wavefront error (nm)')
-            plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
-            plt.savefig('waveRaytrace_Corrected.png')
-            plt.show()
+            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+            plt.colorbar(label='\u03BB')
+            # plt.colorbar(label='wavefront error (nm)')
+            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+            plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
 
             plt.figure()
-            sample_detcenter = detcenter.copy()
-            sample_DistError = DistError.copy()
-            sample = np.vstack([sample_detcenter, sample_DistError])
-            sizeh_here = ray_num_H
-            sizev_here = ray_num_V
-            while sizeh_here > 33:
-                sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-            scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-            # カラーバーを追加
-            plt.colorbar(scatter, label='OPL error (nm)')
-            plt.axis('equal')
+            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
+            plt.colorbar(label='\u03BB')
+            # plt.colorbar(label='wavefront error (nm)')
+            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+            plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
             plt.show()
+            
+
+            # plt.figure()
+            # sample_detcenter = detcenter.copy()
+            # sample_DistError = DistError.copy()
+            # sample = np.vstack([sample_detcenter, sample_DistError])
+            # sizeh_here = ray_num_H
+            # sizev_here = ray_num_V
+            # while sizeh_here > 33:
+            #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
+            # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
+            # # カラーバーを追加
+            # plt.colorbar(scatter, label='OPL error (nm)')
+            # plt.axis('equal')
+            # plt.show()
 
             return
 
@@ -8663,7 +8837,12 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # イベントリスナーを設定
             fig.canvas.mpl_connect('button_press_event', on_click)
 
-            plt.savefig('multipleAroundFocus.png', dpi=300)
+            plt.savefig(os.path.join(directory_name,'multipleAroundFocus.png'), transparent=True, dpi=300)
+
+            plt.figure(figsize=(10, 10))
+            plt.scatter(detcenter[1, :], detcenter[2, :])
+            plt.axis('equal')
+            plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
             plt.show()
             # plt.close()
 
@@ -9980,11 +10159,6 @@ def Legendrealignment(initial_params, num_param, range_param):
 
 plt.rcParams['xtick.direction'] = 'in'
 plt.rcParams['ytick.direction'] = 'in'
-
-timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-directory_name = f"output_{timestamp}"
-# 新しいフォルダを作成
-os.makedirs(directory_name, exist_ok=True)
 # 初期値
 num_params = 26  # 総パラメータ数
 
@@ -10004,63 +10178,6 @@ initial_params = np.array([0., 0.,
 #                   -8.877777778e-3, -1.22212440e-4, -1.17e-5, 0., 0., 0.,
 #                   2.75757575e-7, 0., 2.22222222e-5, 0., 0., 0.,
 #                   2.5e-4, -1.19963131e-4, -1e-6, 0., 0., 0.],dtype=np.longdouble)
-
-if option_AKB == True:
-    # # initial_params = np.array([0., -3.12012012e-5,
-    # #                   0., 0., 0., 0., 0., 0.,
-    # #                   -8.877777778e-3, -1.22212440e-4, -1.17e-5, 0., 0., 0.,
-    # #                   2.75757575e-7, 0., 2.22222222e-5, 0., 0., 0.,
-    # #                   2.5e-4, -1.19963131e-4, -1e-6, 0., 0., 0.],dtype=np.longdouble)
-    # initial_params = np.array([0., -3.12012012e-5,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   0., -1.266666666e-4, -5.555555555555555e-07, 0., 0., 0.,
-    #                   3.6666666e-7, 3.88888888888889e-06, 5.0000000e-4, 0., 0., 0.,
-    #                   0., -1.266666666e-4, 3.6666666e-6, 0., 0., 0.],dtype=np.longdouble)
-    #
-    # initial_params = np.array([0., -3.12012012e-5,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   0., -1.22212440e-4, 0., 0., 0., 0.,
-    #                   2.75757575e-7, 0., 2.22222222e-5, 0., 0., 0.,
-    #                   2.5e-4, -1.19963131e-4, 3.6666666e-6, 0., 0., 0.],dtype=np.longdouble)
-    print('')
-    # # ### except Coma　
-    # initial_params = np.array([0., -4.05667464e-5,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   -5.73911279e-2, -2.28893831e-4, -1.17e-5, 0., 0., 0.,
-    #                   8.404260933333333e-07, -1.1111111111e-6, 1.95548282e-4, 0., 0., 0.,
-    #                   1.18598528e-2, -1.72350327e-4, -2.721680211111111e-06, 0., 0., 0.],dtype=np.longdouble)
-    # initial_params = np.array([0., -3.12012012e-5,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   0., -1.266666666e-4, 0., 0., 0., 0.,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   0., 0., 0., 0., 0., 0.],dtype=np.longdouble)
-
-    # initial_params = np.array([0., -3.12012012e-5,
-    #                   0., 0., 0., 0., 0., 0.,
-    #                   -8.877777778e-3, -1.22212440e-4, -1.17e-5, 0., 0., 0.,
-    #                   3.9800206397795577e-07, 0., 0.00034888888888866666, 0., 0., 0.,
-    #                   2.5e-4, -1.19963131e-4, -1e-6, 0., 0., 0.],dtype=np.longdouble)
-else:
-    if option_HighNA == True:
-        # initial_params[9] = 1.6666666666666673e-07
-        # initial_params[10] = 2.2222222222222217e-07
-        # initial_params[8] = 0.012888882222222222
-        # initial_params[4] = -5.555555555555556e-06
-        # initial_params[9] = 3.20921512e-05
-        # initial_params[10] = 2.77523996e-05
-        # initial_params[8] = 2.8227e-1 #self回転でない
-        # initial_params[1] = 9.03591711e-02
-        # initial_params[0] = -6.65102105e-03
-        print('')
-        # initial_params[0] = -0.0066147
-        # initial_params[1] = 0.08293528
-    else:
-        # initial_params[0] = -7.63301786e-05
-        # initial_params[1] = 9.23475843e-04
-
-        print('')
-
-
 
 if option_AKB == True:
     if option_HighNA == False:
@@ -10201,223 +10318,47 @@ else:
         #
         # initial_params[8] = 4.93753036e-01
         # initial_params[9] = 4.65100097e-08
-        # initial_params[10] = 1.21012885e-07
+        # initial_params[10] = 5e-05
         print('KB L')
         # initial_params[0] = -0.12
         # initial_params[1] = -0.09
+        l_i1 = np.float64(145.7500024376426)
+        
+        # l_o1 = np.float64(0.085)
+        # theta_g1 = np.float64(0.2)
+        # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000        
+
+        var_l_o1 = np.float64(0.15)
+        theta_g1 = np.float64(0.16)
+        target_l_o2 = np.float64(0.02125) ### WD
+
+        target_aperture1 = np.float64(0.005)
+        target_aperture2 = np.float64(0.005)
+        l_o1 = var_l_o1.copy()  # 初期値の設定
+
+        na_o_sin = np.float64(0.082)
+        target_gap = np.float64(0.013)
+        ast = np.float64(0.)
+        conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
+
+        # テキストファイルに変数の値や計算条件を書き込む
+        with open(conditions_file_path, 'w') as file:
+            file.write("input\n")
+            file.write("====================\n")
+            file.write(f"l_i1: {l_i1}\n")
+            file.write(f"l_o1: {l_o1}\n")
+            file.write(f"theta_g1: {theta_g1}\n")
+            file.write(f"na_o_sin: {na_o_sin}\n")
+            file.write(f"target_l_o2: {target_l_o2}\n")
+            file.write(f"target_gap: {target_gap}\n")
+            file.write(f"ast: {ast}\n")
+        kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
 
 # plot_result_debug(initial_params,'ray')
 # calc_FoC(initial_params)
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-Legendrealignment(initial_params, [9,21], np.linspace(-1e-4, 1e-4, 5))
-
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-initial_params1 = initial_params.copy()
-# M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-# M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
-
-if False:
-    M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
-    initial_params[9] = -M9[1,0]/M9[0,0]
-    initial_params[21] = -M9[1,0]/M9[0,0]
-    initial_params1 = initial_params.copy()
-    print('M9',M9)
-    M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
-    initial_params[10] = -M10[1,1]/M10[0,1]
-    initial_params[22] = -M10[1,1]/M10[0,1]
-    print('M10',M10)
-    initial_params1 = initial_params.copy()
-    param_MinH = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'MinimizeH')
-    print('param_MinH',param_MinH)
-    initial_params[10] = param_MinH
-    initial_params[22] = param_MinH
-
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-if True:
-    ###### Torerance WolterH
-    ### incidence
-    initial_params1 = initial_params.copy()
-    initial_params1[10] += 5e-4
-    initial_params1[22] += 5e-4
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ### Perpendicularity
-    initial_params1 = initial_params.copy()
-    initial_params1[9] += 1e-5
-    initial_params1[21] += 1e-5
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ###### Torerance HypH relative angle
-    ### incidence
-    initial_params1 = initial_params.copy()
-    initial_params1[10] += 1e-4
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ### Perpendicularity
-    initial_params1 = initial_params.copy()
-    initial_params1[9] += 4e-5
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ### rotation
-    initial_params1 = initial_params.copy()
-    initial_params1[8] += 1e-4
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ###### Torerance EllV relative angle
-    ### incidence
-    initial_params1 = initial_params.copy()
-    initial_params1[14] += 5e-6
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ### Perpendicularity
-    initial_params1 = initial_params.copy()
-    initial_params1[15] += 2e-5
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    ### rotation
-    initial_params1 = initial_params.copy()
-    initial_params1[16] += 1e-5
-    auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-sys.exit()
-
-M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
-M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
-M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
-print('M14',M14)
-print('M15',M15)
-print('M16',M16)
-
-num_a = 4
-a = np.linspace(0.8, 1.2, num_a)
-size = a.copy()*np.nan
-MrrLen_V = a.copy()*np.nan
-MrrLen_H = a.copy()*np.nan
-theta_H1 = a.copy()*np.nan
-theta_H2 = a.copy()*np.nan
-na_i_H = a.copy()*np.nan
-## original
-l_i1 = np.float64(145.7500024376426) # 固定 original
-l_o1 = np.float64(1.0499975623574187) # 変数 original
-theta_g1 = np.float64(0.21093460929217367) # 変数 original
-na_o_sin = np.float64(0.01)*8.2 # 固定 original
-target_l_o2 = np.float64(0.10000512336116031) # 変数 original
-target_gap = np.float64(0.1458793853059035) # 変数 original
-ast = np.float64(0.)
-
-l_o1 = np.float64(0.8) # 変数
-target_l_o2 = np.float64(0.025) # 変数
-target_gap = np.float64(0.2) # 変数
-kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
-calc_FoC(initial_params,'ray')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-for i in range(num_a):
-    l_i1 = np.float64(145.7500024376426) # 固定
-    # l_o1 = np.float64(1.0499975623574187) # 変数
-    l_o1 = np.float64(a[i]) # 変数
-    theta_g1 = np.float64(0.21093460929217367) # 変数
-    # theta_g1 = np.float64(a[i]) # 変数
-    na_o_sin = np.float64(0.01)*8.2 # 固定
-    # target_l_o2 = np.float64(0.10000512336116031)  # WD
-    target_l_o2 = np.float64(0.025) # 変数
-    target_gap = np.float64(0.1458793853059035+ (a[i]-np.min(a))/2.2) # 変数
-    # target_gap = np.float64(a[i]) # 変数
-    ast = np.float64(0.)
-    kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
-    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-    size[i] = auto_focus_NA(50, initial_params,1,1, False,'D',option_disp='ray')
-    MrrLen_V[i] = kb_manager.Ell1.x_2
-    MrrLen_H[i] = kb_manager.Ell2.x_2
-    theta_H1[i] = (kb_manager.Ell2.theta_o1 + kb_manager.Ell2.theta_i1)/2
-    theta_H2[i] = (kb_manager.Ell2.theta_o2 + kb_manager.Ell2.theta_i2)/2
-    na_i_H[i] = kb_manager.Ell2.theta_i1 - kb_manager.Ell2.theta_i2
-    # if i == num_a - 1:
-    #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    #     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-    kb_manager = KBDesignManager()
-
-print('size',size)
-
-fig,axs = plt.subplots(3, 3)
-axs[0,0].plot(a, size, marker='o')
-axs[0,0].set_xlabel('a')
-axs[0,0].set_ylabel('size')
-axs[0,0].set_title('size')
-axs[0,1].plot(a, MrrLen_V, marker='o')
-axs[0,1].set_xlabel('a')
-axs[0,1].set_ylabel('MrrLen_V')
-axs[0,1].set_title('MrrLen_V')
-axs[0,2].plot(a, MrrLen_H, marker='o')
-axs[0,2].set_xlabel('a')
-axs[0,2].set_ylabel('MrrLen_H')
-axs[0,2].set_title('MrrLen_H')
-axs[1,0].plot(a, theta_H1, marker='o')
-axs[1,0].plot(a, theta_H2, marker='o')
-axs[1,0].set_xlabel('a')
-axs[1,0].set_ylabel('theta_H')
-axs[1,1].plot(MrrLen_H, size, marker='o')
-axs[1,1].set_xlabel('MrrLen_H')
-axs[1,1].set_ylabel('size')
-axs[1,2].plot(MrrLen_V, size, marker='o')
-axs[1,2].set_xlabel('MrrLen_V')
-axs[1,2].set_ylabel('size')
-axs[2,0].plot(na_i_H, size, marker='o')
-axs[2,0].set_xlabel('na_i_H')
-axs[2,0].set_ylabel('size')
-plt.show()
-
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-# abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-# print('initial_params',initial_params)
-# print('abrr',abrr)
-# saveWaveData(initial_params)
-# sys.exit()
-
-# option_abrr = 'inplaneadjustwithcoma'
-# option_abrr = 'inplanefixwithcoma'
-option_fix2ndcoma = False
-# option_abrr = 'inplaneadjust'
-option_abrr = 'KB'
-# option_abrr = 'inplaneadjustwithcoma'
-option_adjust_oblique = False
-
-option_adjust_coma = False
-### 面内回転固定
-if option_abrr == 'KB_coma':
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[10] = - M10[1,1]/M10[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-    print('initial_params',initial_params)
-    print('abrr',abrr)
-if option_adjust_coma:
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-4,1e-4,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-4,1e-4,option = 'matrix', option_eval = '2')
-
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-    print('initial_params',initial_params)
-    print('abrr',abrr)
-    saveWaveData(initial_params)
-
-if option_abrr == 'KB':
+# Legendrealignment(initial_params, [9,21], np.linspace(-1e-4, 1e-4, 5))
+if option_AKB == False:
     initial_params1 = initial_params.copy()
     abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
     print('abrr',abrr)
@@ -10441,295 +10382,437 @@ if option_abrr == 'KB':
     initial_params[10] = initial_params[10] + params[2]
 
     auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
-    abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = 'KB')
-    print('abrr',abrr)
     auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
 
-    saveWaveData(initial_params)
-
-if option_abrr == 'inplanefix':
-    initial_params1 = initial_params
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '3')
-    print('abrr',abrr)
-    M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-    M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-
-    M = np.array(np.vstack([M9[0,:], M15[0,:], M21[0,:]]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-
-    params_woComa = -np.dot(abrr,inverse_M)
-    print('params_woComa',params_woComa)
-
-    initial_params[9] = initial_params[9] + params_woComa[0]
-    initial_params[15] = initial_params[15] + params_woComa[1]
-    initial_params[21] = initial_params[21] + params_woComa[2]
-
-    initial_params1 = initial_params
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-
-    saveWaveData(initial_params)
-
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-elif option_abrr == 'inplanefixwithcoma':
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
-    print('abrr',abrr)
-    M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    initial_params1 = initial_params.copy()
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    initial_params1 = initial_params.copy()
-    M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    initial_params1 = initial_params.copy()
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    initial_params1 = initial_params.copy()
-    if option_fix2ndcoma:
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        M = np.array(np.vstack([M9, M14, M15, M21, M22]),dtype=np.float64)
-    else:
-        M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        M = np.array(np.vstack([M9, M14, M15, M21, M10]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    print(M.dtype)
-    print(np.linalg.det(M))
-    print(abrr.dtype, abrr.shape)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-    params = -np.dot(abrr,inverse_M)
-    print('params_woComa',params)
-    initial_params[9] = initial_params[9] + params[0]
-    initial_params[14] = initial_params[14] + params[1]
-    initial_params[15] = initial_params[15] + params[2]
-    initial_params[21] = initial_params[21] + params[3]
-    if option_fix2ndcoma:
-        initial_params[22] = initial_params[22] + params[4]
-    else:
-        initial_params[10] = initial_params[10] + params[4]
-
-    initial_params1 = initial_params.copy()
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-elif option_abrr == 'inplaneadjust':
-    initial_params1 = initial_params
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '5')
-    print('abrr',abrr)
-    M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5')
-    M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5')
-    M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5')
-    M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5')
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5')
-
-
-    M = np.array(np.vstack([M9, M15, M16, M20, M21]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-
-    params_woComa = -np.dot(abrr,inverse_M)
-    print('params_woComa',params_woComa)
-    # params = -np.dot(abrr,inverse_M)
-    # print('params',params)
-
-    initial_params[9] = initial_params[9] + params_woComa[0]
-    initial_params[15] = initial_params[15] + params_woComa[1]
-    initial_params[16] = initial_params[16] + params_woComa[2]
-    initial_params[20] = initial_params[20] + params_woComa[3]
-    initial_params[21] = initial_params[21] + params_woComa[4]
-    # initial_params[22] = initial_params[22] - abrr[2]/M22[1]
-
-    initial_params1 = initial_params
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-elif option_abrr == 'inplaneadjustwithcoma':
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '7coma')
-    print('abrr',abrr)
-    M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-    initial_params1 = initial_params.copy()
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-
-    M = np.array(np.vstack([M9, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-
-    params_woComa = -np.dot(abrr,inverse_M)
-    print('params_woComa',params_woComa)
-    # params = -np.dot(abrr,inverse_M)
-    # print('params',params)
-
-    initial_params[9] = initial_params[9] + params_woComa[0]
-    initial_params[14] = initial_params[14] + params_woComa[1]
-    initial_params[15] = initial_params[15] + params_woComa[2]
-    initial_params[16] = initial_params[16] + params_woComa[3]
-    initial_params[20] = initial_params[20] + params_woComa[4]
-    initial_params[21] = initial_params[21] + params_woComa[5]
-    initial_params[22] = initial_params[22] + params_woComa[6]
-
-    initial_params1 = initial_params.copy()
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-elif option_abrr == 'alladjust':
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-    print('abrr',abrr)
-    M8 = auto_focus_sep(initial_params1,8,8,-1e-4,1e-4,option = 'matrix', option_eval = '9')
-    M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-    M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-    M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-    M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '9')
-    M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '9')
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-
-    M = np.array(np.vstack([M8, M9, M10, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    print(M.dtype)
-    print(np.linalg.det(M))
-    print(abrr.dtype, abrr.shape)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-
-    params_woComa = -np.dot(abrr,inverse_M)
-    print('params_woComa',params_woComa)
-
-
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+initial_params1 = initial_params.copy()
+# M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+# M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
+if option_wolter_3_1:
     if False:
-        def solve_linear_system(A, x0, y0):
-            """
-            線形方程式 Ax + b = 0 を解く。
+        M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+        initial_params[9] = -M9[1,0]/M9[0,0]
+        initial_params[21] = -M9[1,0]/M9[0,0]
+        initial_params1 = initial_params.copy()
+        print('M9',M9)
+        M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+        initial_params[10] = -M10[1,1]/M10[0,1]
+        initial_params[22] = -M10[1,1]/M10[0,1]
+        print('M10',M10)
+        initial_params1 = initial_params.copy()
+        param_MinH = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'MinimizeH')
+        print('param_MinH',param_MinH)
+        initial_params[10] = param_MinH
+        initial_params[22] = param_MinH
 
-            A: nxn の係数行列
-            x0: 初期点 (x1_0, ..., xn_0) の numpy 配列
-            y0: 初期点における y の値 (y1_0, ..., yn_0) の numpy 配列
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
-            戻り値: y1 = ... = yn = 0 となる (x1, ..., xn)
-            """
-            # 定数ベクトル b の計算
-            b = y0 - A @ x0
-            print(b)
-            print(b.shape)
-            print(np.isnan(b).any())
-            print(np.isinf(b).any())
+    if True:
+        ###### Torerance WolterH
+        ### incidence
+        initial_params1 = initial_params.copy()
+        initial_params1[10] += 5e-4
+        initial_params1[22] += 5e-4
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-            # 係数行列 A のランクを確認して特異行列かどうかを判断
-            if np.linalg.matrix_rank(A) < A.shape[0]:
-                print("警告: 係数行列 A は特異行列です。擬似逆行列を使用して解を求めます。")
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        initial_params1[9] += 1e-5
+        initial_params1[21] += 1e-5
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-            # 擬似逆行列を用いて解を求める
-            x = np.linalg.pinv(A) @ (-b)
-            return x
+        ###### Torerance HypH relative angle
+        ### incidence
+        initial_params1 = initial_params.copy()
+        initial_params1[10] += 1e-4
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-        # 例: A, x0, y0 の設定
-        n = 9  # n×n のサイズを指定
-        x0 = np.array([initial_params[9],initial_params[10],initial_params[11],initial_params[14],initial_params[15],initial_params[16],initial_params[20],initial_params[21],initial_params[22]])  # 初期点
-        y0 = abrr.copy()  # 初期 y の値
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        initial_params1[9] += 4e-5
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-        # 解を求める
-        x_solution = solve_linear_system(M, x0, y0)
-        print("解 (x1, ..., xn):", x_solution)
-        params_woComa = x_solution.copy()
-    # params = -np.dot(abrr,inverse_M)
-    # print('params',params)
-    initial_params[8] = initial_params[8] + params_woComa[0]
-    initial_params[9] = initial_params[9] + params_woComa[1]
-    initial_params[10] = initial_params[10] + params_woComa[2]
-    initial_params[14] = initial_params[14] + params_woComa[3]
-    initial_params[15] = initial_params[15] + params_woComa[4]
-    initial_params[16] = initial_params[16] + params_woComa[5]
-    initial_params[20] = initial_params[20] + params_woComa[6]
-    initial_params[21] = initial_params[21] + params_woComa[7]
-    initial_params[22] = initial_params[22] + params_woComa[8]
+        ### rotation
+        initial_params1 = initial_params.copy()
+        initial_params1[8] += 1e-4
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-    initial_params1 = initial_params
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        ###### Torerance EllV relative angle
+        ### incidence
+        initial_params1 = initial_params.copy()
+        initial_params1[14] += 5e-6
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        initial_params1[15] += 2e-5
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+        ### rotation
+        initial_params1 = initial_params.copy()
+        initial_params1[16] += 1e-5
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    sys.exit()
+
+    M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
+    M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+    M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+    print('M14',M14)
+    print('M15',M15)
+    print('M16',M16)
+
+else:
+    option_fix2ndcoma = False
+    # option_abrr = 'inplaneadjust'
+    option_abrr = 'inplanefix'
+    # option_abrr = 'inplaneadjustwithcoma'
+    option_adjust_oblique = False
+    
+
+
+    option_adjust_coma = False
+    ### 面内回転固定
+    if option_abrr == 'KB_coma':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[10] = - M10[1,1]/M10[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+        print('initial_params',initial_params)
+        print('abrr',abrr)
+    if option_adjust_coma:
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-4,1e-4,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-4,1e-4,option = 'matrix', option_eval = '2')
+
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+        print('initial_params',initial_params)
+        print('abrr',abrr)
+        saveWaveData(initial_params)
+
+    if option_abrr == 'KB':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+        print('initial_params1',initial_params1.copy())
+        M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+        print('initial_params1',initial_params1.copy())
+        M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+        M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+
+        params = -np.dot(abrr,inverse_M)
+        print('params',params)
+        print('initial_params1',initial_params1)
+        print('initial_params',initial_params)
+        initial_params[8] = initial_params[8] + params[0]
+        initial_params[9] = initial_params[9] + params[1]
+        initial_params[10] = initial_params[10] + params[2]
+
+        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = 'KB')
+        print('abrr',abrr)
+        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+
+        saveWaveData(initial_params)
+
+    if option_abrr == 'inplanefix':
+        initial_params1 = initial_params
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '3')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+
+        M = np.array(np.vstack([M9[0,:], M15[0,:], M21[0,:]]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+
+        params_woComa = -np.dot(abrr,inverse_M)
+        print('params_woComa',params_woComa)
+
+        initial_params[9] = initial_params[9] + params_woComa[0]
+        initial_params[15] = initial_params[15] + params_woComa[1]
+        initial_params[21] = initial_params[21] + params_woComa[2]
+
+        initial_params1 = initial_params
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+        saveWaveData(initial_params)
+
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    elif option_abrr == 'inplanefixwithcoma':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        initial_params1 = initial_params.copy()
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        initial_params1 = initial_params.copy()
+        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        initial_params1 = initial_params.copy()
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        initial_params1 = initial_params.copy()
+        if option_fix2ndcoma:
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            M = np.array(np.vstack([M9, M14, M15, M21, M22]),dtype=np.float64)
+        else:
+            M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            M = np.array(np.vstack([M9, M14, M15, M21, M10]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        print(M.dtype)
+        print(np.linalg.det(M))
+        print(abrr.dtype, abrr.shape)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+        params = -np.dot(abrr,inverse_M)
+        print('params_woComa',params)
+        initial_params[9] = initial_params[9] + params[0]
+        initial_params[14] = initial_params[14] + params[1]
+        initial_params[15] = initial_params[15] + params[2]
+        initial_params[21] = initial_params[21] + params[3]
+        if option_fix2ndcoma:
+            initial_params[22] = initial_params[22] + params[4]
+        else:
+            initial_params[10] = initial_params[10] + params[4]
+
+        initial_params1 = initial_params.copy()
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    elif option_abrr == 'inplaneadjust':
+        initial_params1 = initial_params
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '5')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5')
+        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5')
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+
+
+        M = np.array(np.vstack([M9, M15, M16, M20, M21]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+
+        params_woComa = -np.dot(abrr,inverse_M)
+        print('params_woComa',params_woComa)
+        # params = -np.dot(abrr,inverse_M)
+        # print('params',params)
+
+        initial_params[9] = initial_params[9] + params_woComa[0]
+        initial_params[15] = initial_params[15] + params_woComa[1]
+        initial_params[16] = initial_params[16] + params_woComa[2]
+        initial_params[20] = initial_params[20] + params_woComa[3]
+        initial_params[21] = initial_params[21] + params_woComa[4]
+        # initial_params[22] = initial_params[22] - abrr[2]/M22[1]
+
+        initial_params1 = initial_params
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    elif option_abrr == 'inplaneadjustwithcoma':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '7coma')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+        initial_params1 = initial_params.copy()
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+
+        M = np.array(np.vstack([M9, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+
+        params_woComa = -np.dot(abrr,inverse_M)
+        print('params_woComa',params_woComa)
+        # params = -np.dot(abrr,inverse_M)
+        # print('params',params)
+
+        initial_params[9] = initial_params[9] + params_woComa[0]
+        initial_params[14] = initial_params[14] + params_woComa[1]
+        initial_params[15] = initial_params[15] + params_woComa[2]
+        initial_params[16] = initial_params[16] + params_woComa[3]
+        initial_params[20] = initial_params[20] + params_woComa[4]
+        initial_params[21] = initial_params[21] + params_woComa[5]
+        initial_params[22] = initial_params[22] + params_woComa[6]
+
+        initial_params1 = initial_params.copy()
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    elif option_abrr == 'alladjust':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+        print('abrr',abrr)
+        M8 = auto_focus_sep(initial_params1,8,8,-1e-4,1e-4,option = 'matrix', option_eval = '9')
+        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+        M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '9')
+        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '9')
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+
+        M = np.array(np.vstack([M8, M9, M10, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        print(M.dtype)
+        print(np.linalg.det(M))
+        print(abrr.dtype, abrr.shape)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+
+        params_woComa = -np.dot(abrr,inverse_M)
+        print('params_woComa',params_woComa)
+
+
+        if False:
+            def solve_linear_system(A, x0, y0):
+                """
+                線形方程式 Ax + b = 0 を解く。
+
+                A: nxn の係数行列
+                x0: 初期点 (x1_0, ..., xn_0) の numpy 配列
+                y0: 初期点における y の値 (y1_0, ..., yn_0) の numpy 配列
+
+                戻り値: y1 = ... = yn = 0 となる (x1, ..., xn)
+                """
+                # 定数ベクトル b の計算
+                b = y0 - A @ x0
+                print(b)
+                print(b.shape)
+                print(np.isnan(b).any())
+                print(np.isinf(b).any())
+
+                # 係数行列 A のランクを確認して特異行列かどうかを判断
+                if np.linalg.matrix_rank(A) < A.shape[0]:
+                    print("警告: 係数行列 A は特異行列です。擬似逆行列を使用して解を求めます。")
+
+                # 擬似逆行列を用いて解を求める
+                x = np.linalg.pinv(A) @ (-b)
+                return x
+
+            # 例: A, x0, y0 の設定
+            n = 9  # n×n のサイズを指定
+            x0 = np.array([initial_params[9],initial_params[10],initial_params[11],initial_params[14],initial_params[15],initial_params[16],initial_params[20],initial_params[21],initial_params[22]])  # 初期点
+            y0 = abrr.copy()  # 初期 y の値
+
+            # 解を求める
+            x_solution = solve_linear_system(M, x0, y0)
+            print("解 (x1, ..., xn):", x_solution)
+            params_woComa = x_solution.copy()
+        # params = -np.dot(abrr,inverse_M)
+        # print('params',params)
+        initial_params[8] = initial_params[8] + params_woComa[0]
+        initial_params[9] = initial_params[9] + params_woComa[1]
+        initial_params[10] = initial_params[10] + params_woComa[2]
+        initial_params[14] = initial_params[14] + params_woComa[3]
+        initial_params[15] = initial_params[15] + params_woComa[4]
+        initial_params[16] = initial_params[16] + params_woComa[5]
+        initial_params[20] = initial_params[20] + params_woComa[6]
+        initial_params[21] = initial_params[21] + params_woComa[7]
+        initial_params[22] = initial_params[22] + params_woComa[8]
+
+        initial_params1 = initial_params
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    elif option_abrr == 'alladjust34':
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
+        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
+        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+
+        M = np.array(np.vstack([M14, M16, M20, M21, M22]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        print(M)
+        print(M.dtype)
+        print(np.linalg.det(M))
+        print(abrr.dtype, abrr.shape)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+        params = -np.dot(abrr,inverse_M)
+        print('params_woComa',params)
+        initial_params[14] = initial_params[14] + params[0]
+        initial_params[16] = initial_params[16] + params[1]
+        initial_params[20] = initial_params[20] + params[2]
+        initial_params[21] = initial_params[21] + params[3]
+        initial_params[22] = initial_params[22] + params[4]
+
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        print('abrr',abrr)
+        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+        initial_params[14] = - M14[1,0]/M14[0,0]
+        initial_params[22] = - M22[1,1]/M22[0,1]
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+    print('initial_params',initial_params)
     print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-elif option_abrr == 'alladjust34':
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
-    M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
-    M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-
-    M = np.array(np.vstack([M14, M16, M20, M21, M22]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    print(M.dtype)
-    print(np.linalg.det(M))
-    print(abrr.dtype, abrr.shape)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
-    params = -np.dot(abrr,inverse_M)
-    print('params_woComa',params)
-    initial_params[14] = initial_params[14] + params[0]
-    initial_params[16] = initial_params[16] + params[1]
-    initial_params[20] = initial_params[20] + params[2]
-    initial_params[21] = initial_params[21] + params[3]
-    initial_params[22] = initial_params[22] + params[4]
-
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-    print('abrr',abrr)
-    M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-    initial_params[14] = - M14[1,0]/M14[0,0]
-    initial_params[22] = - M22[1,1]/M22[0,1]
-    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-print('initial_params',initial_params)
-print('abrr',abrr)
-saveWaveData(initial_params)
+    saveWaveData(initial_params)
