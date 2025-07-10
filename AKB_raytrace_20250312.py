@@ -1953,32 +1953,32 @@ if option_wolter_3_1:
             if True:
                 center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
                 if pitch_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_y, pitch_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, center_wolter_h)
                 if yaw_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_z, yaw_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_z, yaw_ell_h, center_wolter_h)
                 if roll_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_x, roll_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_x, roll_ell_h, center_wolter_h)
                 if pitch_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_y, pitch_hyp_h, center_wolter_h)
                 if yaw_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, center_wolter_h)
                 if roll_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, center_wolter_h)
                 
                 if False: #option_rotateLocal:
                     center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
                     if yaw_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_z, yaw_ell_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
                     if pitch_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_y, pitch_ell_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, center_wolter_v)
                     if roll_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_x, roll_ell_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, center_wolter_v)
                     if yaw_hyp_v != 0:
-                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_z, yaw_hyp_v, center_wolter_v)
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, center_wolter_v)
                     if pitch_hyp_v != 0:
-                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_y, pitch_hyp_v, center_wolter_v)
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, center_wolter_v)
                     if roll_hyp_v != 0:
-                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_x, roll_hyp_v, center_wolter_v)
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, center_wolter_v)
                 else:
                     if yaw_ell_v != 0:
                         coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
@@ -2022,34 +2022,75 @@ if option_wolter_3_1:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if roll_hyp_h != 0:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+        
+            if option == 'ray':
+                print('axis_x',axis_x)
+                print('axis_y',axis_y)
+                print('axis_z',axis_z)
+                print('axis2_x',axis2_x)
+                print('axis2_y',axis2_y)
+                print('axis2_z',axis2_z)
+                print('axis3_x',axis3_x)
+                print('axis3_y',axis3_y)
+                print('axis3_z',axis3_z)
+                print('axis4_x',axis4_x)
+                print('axis4_y',axis4_y)
+                print('axis4_z',axis4_z)
+            
+            
 
             if decenterX_hyp_v != 0:
-                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v*axis_x[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterX_hyp_v*axis_x[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterX_hyp_v*axis_x[2])
+
             if decenterY_hyp_v != 0:
-                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterY_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterY_hyp_v*axis_y[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterY_hyp_v*axis_y[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterY_hyp_v*axis_y[2])
             if decenterZ_hyp_v != 0:
-                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterZ_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterZ_hyp_v*axis_z[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterZ_hyp_v*axis_z[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterZ_hyp_v*axis_z[2])
 
             if decenterX_hyp_h != 0:
-                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterX_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterX_hyp_h*axis4_x[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterX_hyp_h*axis4_x[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterX_hyp_h*axis4_x[2])
             if decenterY_hyp_h != 0:
-                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterY_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterY_hyp_h*axis4_y[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterY_hyp_h*axis4_y[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterY_hyp_h*axis4_y[2])
             if decenterZ_hyp_h != 0:
-                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterZ_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[2])
 
             if decenterX_ell_v != 0:
-                coeffs_ell_v = shift_x(coeffs_ell_v, decenterX_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterX_ell_v*axis2_x[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterX_ell_v*axis2_x[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterX_ell_v*axis2_x[2])
             if decenterY_ell_v != 0:
-                coeffs_ell_v = shift_y(coeffs_ell_v, decenterY_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterY_ell_v*axis2_y[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterY_ell_v*axis2_y[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterY_ell_v*axis2_y[2])
             if decenterZ_ell_v != 0:
-                coeffs_ell_v = shift_z(coeffs_ell_v, decenterZ_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterZ_ell_v*axis2_z[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterZ_ell_v*axis2_z[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterZ_ell_v*axis2_z[2])
 
             if decenterX_ell_h != 0:
-                coeffs_ell_h = shift_x(coeffs_ell_h, decenterX_ell_h)
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterX_ell_h*axis3_x[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterX_ell_h*axis3_x[1])
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterX_ell_h*axis3_x[2])
             if decenterY_ell_h != 0:
-                coeffs_ell_h = shift_y(coeffs_ell_h, decenterY_ell_h)
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterY_ell_h*axis3_y[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterY_ell_h*axis3_y[1])
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterY_ell_h*axis3_y[2])
             if decenterZ_ell_h != 0:
-                coeffs_ell_h = shift_z(coeffs_ell_h, decenterZ_ell_h)
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterZ_ell_h*axis3_z[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterZ_ell_h*axis3_z[1])
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterZ_ell_h*axis3_z[2])
         else:
             if yaw_ell_v != 0:
                 coeffs_ell_v = rotate_z(coeffs_ell_v, yaw_ell_v, center_ell_v[:, 0])
@@ -2511,7 +2552,7 @@ if option_wolter_3_1:
                 
                 wave_error = matrixWave2_Corrected / lambda_
                 ### PSF calculation
-                if True:
+                if False:
                     phase = wave_error * 2 * np.pi
                     input_complex = np.exp(1j * phase)
                     offset = defocusWave * (np.sqrt(1. + np.tan(grid_H)**2 + np.tan(grid_V)**2) - 1)
@@ -2573,7 +2614,7 @@ if option_wolter_3_1:
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
                 length = len(inner_products)
-                pvs = np.zeros(length)
+                pvs = np.zeros(length+1)
                 fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
                 for i in range(length):
                     ny = orders[i][0]
@@ -2601,6 +2642,7 @@ if option_wolter_3_1:
                     plt.close()
                     print('inner_products',inner_products)
                     print('orders',orders)
+                    pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
                     return inner_products, orders, pvs
                 else:
                     plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
@@ -7448,6 +7490,12 @@ def plane_correction_with_nan_and_outlier_filter(data, sigma_threshold=3):
     def plane(X, a, b, c, d, e):
         x, y = X
         return a * x + b * y + c + d * x **2 + e* y **2
+    
+    def plane2(X, a, b, c):
+        x, y = X
+        return a * x + b * y + c
+    
+    
 
     initial_params, _ = curve_fit(plane, (x_fit, y_fit), z_fit)
 
@@ -7464,10 +7512,10 @@ def plane_correction_with_nan_and_outlier_filter(data, sigma_threshold=3):
     y_fit = y_fit[valid_mask]
     z_fit = z_fit[valid_mask]
 
-    final_params, _ = curve_fit(plane, (x_fit, y_fit), z_fit)
+    final_params, _ = curve_fit(plane2, (x_fit, y_fit), z_fit)
 
     # 最終平面補正
-    plane_surface = plane((x, y), *final_params)
+    plane_surface = plane2((x, y), *final_params)
     corrected_data = data - plane_surface
 
     # 元のNaNは維持
@@ -12140,14 +12188,17 @@ def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
     
     return
 
-def Legendrealignment(initial_params, num_param, range_param):
+def Legendrealignment(initial_params, num_param, range_param,tuning=True):
     # Legendre alignment
     innerproducts = []
     pvs = []
     for i in range(int(len(range_param))):
         initial_params1 = initial_params.copy()
         initial_params1[num_param] += range_param[i]
-        inner, order, pv = auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave',option_legendre=True)
+        if tuning:
+            inner, order, pv = auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave',option_legendre=True)
+        else:
+            inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
         innerproducts.append(inner)
         pvs.append(pv)
 
@@ -12168,6 +12219,7 @@ def Legendrealignment(initial_params, num_param, range_param):
             coeffs = np.polyfit(range_param, innerproducts[:,i], 1)
         else:
             plt.plot(range_param, pvs[:,i], label=f'legendre {order[i]}', color=colors[i])
+            plt.ylim(-0.25, 0.25)
             ### linear fit
             coeffs = np.polyfit(range_param, pvs[:,i], 1)
         fit_line = np.polyval(coeffs, range_param)
@@ -12178,6 +12230,20 @@ def Legendrealignment(initial_params, num_param, range_param):
         plt.legend()
         plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_{order[i]}.png'))
         plt.close()
+
+    plt.figure()
+    plt.plot(range_param, pvs[:,-1], label=f'legendre {order[i]}', color='k')
+    plt.ylim(-0.25, 0.25)
+    ### linear fit
+    coeffs = np.polyfit(range_param, pvs[:,-1], 1)
+    fit_line = np.polyval(coeffs, range_param)
+    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.2e}x + {coeffs[1]:.2e}', color='k')
+    plt.xlabel(f'Alignment{ num_param}')
+    plt.ylabel('Inner Product')
+    plt.title(f'All Alignment')
+    plt.legend()
+    plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_all.png'))
+    plt.close()
 
 
 #####################################
@@ -12328,12 +12394,12 @@ if option_AKB == True:
             # initial_params[19] += (-1.68E-04)*1/4 * factor
             # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
 
-            factor = 10.0
-            initial_params[17] = 1e-5 * factor
-            # initial_params[14] = 4.5e-4-0.000025
-            initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor
-            initial_params[19] += (-1.68E-04)*1/4 * factor
-            initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
+            # factor = 10.0
+            # initial_params[17] = 1e-5 * factor
+            # # initial_params[14] = 4.5e-4-0.000025
+            # initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor
+            # initial_params[19] += (-1.68E-04)*1/4 * factor
+            # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
 
 
             ##-1.68E-04 1.33E-03
@@ -12418,8 +12484,49 @@ else:
 
 # plot_result_debug(initial_params,'ray')
 # calc_FoC(initial_params)
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5))
+initial_params[2] += 1e-5
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [2], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+
+### V Ell
+# Legendrealignment(initial_params, [14], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [15], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [17], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [19], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+
+# Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [10,22], np.linspace(-1e-3, 1e-3, 5), tuning=True)
+# Legendrealignment(initial_params, [10,22], np.linspace(-5e-4, 5e-4, 5), tuning=False)
+# Legendrealignment(initial_params, [8,20], np.linspace(-1e-3, 1e-3, 5), tuning=False)
+
+# Legendrealignment(initial_params, [23], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [24], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [20], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+
+# Legendrealignment(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [9], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [10], np.linspace(-5e-4, 5e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+
+# Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
+# Legendrealignment(initial_params, [2], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [3], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [4], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+
+
+
 if option_AKB == False:
     initial_params1 = initial_params.copy()
     abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
@@ -12451,7 +12558,7 @@ initial_params1 = initial_params.copy()
 # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
 # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
 if option_wolter_3_1 or option_wolter_3_3_tandem:
-    if True:
+    if False:
         M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
         # M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-4,5e-4,option = 'matrix', option_eval = '3_intercept')
         initial_params[9] = -M9[1,0]/M9[0,0]
@@ -12472,7 +12579,7 @@ if option_wolter_3_1 or option_wolter_3_3_tandem:
         auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
         auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
-    if True:
+    if False:
         base_directory = f"output_{timestamp}"
         ###### Torerance WolterH
         ### incidence
@@ -12534,6 +12641,69 @@ if option_wolter_3_1 or option_wolter_3_3_tandem:
         os.makedirs(directory_name, exist_ok=True)
         initial_params1[16] += 1e-5
         auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+
+    if True:
+        base_directory = f"output_{timestamp}"
+        ###### Torerance WolterH
+        ### incidence
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/WolterH_incidence'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[10] += 5e-5
+        initial_params1[22] += 5e-5
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/WolterH_perpendicularity'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[9] += 1e-6
+        initial_params1[21] += 1e-6
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ###### Torerance HypH relative angle
+        ### incidence
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/HypH_incidence'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[10] += 1e-5
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/HypH_perpendicularity'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[9] += 4e-6
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ### rotation
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/HypH_rotation'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[8] += 1e-5
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ###### Torerance EllV relative angle
+        ### incidence
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/EllV_incidence'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[14] += 5e-7
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ### Perpendicularity
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/EllV_perpendicularity'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[15] += 2e-6
+        plot_result_debug(initial_params1,'ray_wave')
+
+        ### rotation
+        initial_params1 = initial_params.copy()
+        directory_name = base_directory + '/EllV_rotation'
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1[16] += 1e-6
+        plot_result_debug(initial_params1,'ray_wave')
 
     sys.exit()
 
