@@ -64,7 +64,7 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 257
+unit = 129
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
@@ -78,6 +78,8 @@ defocusForWave = 1e-3
 
 global option_mpmath
 option_mpmath = False
+global option_set
+option_set = False
 
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
     """
@@ -2119,7 +2121,7 @@ if option_wolter_3_1:
         # if yaw_hyp_h != 0:
         #     coeffs_hyp_h = rotate_z(coeffs_hyp_h, yaw_hyp_h, center_hyp_h[:, 0])
         if option_rotateLocal:
-            if False:
+            if option_set:
                 center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
                 if pitch_ell_h != 0:
                     coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, center_wolter_h)
@@ -2799,6 +2801,63 @@ if option_wolter_3_1:
                     return inner_products, orders, pvs
                 else:
                     plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+
+                    assesorder = 5
+                    fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                    length = len(inner_products)
+                    pvs = np.zeros(length+1)
+                    fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                    for i in range(length):
+                        ny = orders[i][0]
+                        nx = orders[i][1]
+                        print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                        axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                        pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                        axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                        axes[ny, nx].axis('off')
+
+                        ### set colorbar for each subplot
+                        # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                    axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                    cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                    fit_sum = np.sum(fit_datas, axis=0)
+                    axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                    # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                    axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                    plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                    conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                    # テキストファイルに変数の値や計算条件を書き込む
+                    with open(conditions_file_path, 'w') as file:
+                        file.write("input\n")
+                        file.write("====================\n")
+                        file.write(f"params[0]: {params[0]}\n")
+                        file.write(f"params[1]: {params[1]}\n")
+                        file.write(f"params[2]: {params[2]}\n")
+                        file.write(f"params[3]: {params[3]}\n")
+                        file.write(f"params[4]: {params[4]}\n")
+                        file.write(f"params[5]: {params[5]}\n")
+                        file.write(f"params[6]: {params[6]}\n")
+                        file.write(f"params[7]: {params[7]}\n")
+                        file.write(f"params[8]: {params[8]}\n")
+                        file.write(f"params[9]: {params[9]}\n")
+                        file.write(f"params[10]: {params[10]}\n")
+                        file.write(f"params[11]: {params[11]}\n")
+                        file.write(f"params[12]: {params[12]}\n")
+                        file.write(f"params[13]: {params[13]}\n")
+                        file.write(f"params[14]: {params[14]}\n")
+                        file.write(f"params[15]: {params[15]}\n")
+                        file.write(f"params[16]: {params[16]}\n")
+                        file.write(f"params[17]: {params[17]}\n")
+                        file.write(f"params[18]: {params[18]}\n")
+                        file.write(f"params[19]: {params[19]}\n")
+                        file.write(f"params[20]: {params[20]}\n")
+                        file.write(f"params[21]: {params[21]}\n")
+                        file.write(f"params[22]: {params[22]}\n")
+                        file.write(f"params[23]: {params[23]}\n")
+                        file.write(f"params[24]: {params[24]}\n")
+                        file.write(f"params[25]: {params[25]}\n")
                     plt.show()
 
 
@@ -12342,16 +12401,19 @@ def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
     return
 
 def Legendrealignment(initial_params, num_param, range_param,tuning=True):
+    global option_mpmath
     # Legendre alignment
     innerproducts = []
     pvs = []
     for i in range(int(len(range_param))):
         initial_params1 = initial_params.copy()
         initial_params1[num_param] += range_param[i]
+        option_mpmath = False
         if tuning:
             inner, order, pv = auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave',option_legendre=True)
-        else:
-            inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
+        option_mpmath = True
+        inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
+        option_mpmath = False
         innerproducts.append(inner)
         pvs.append(pv)
 
@@ -12390,13 +12452,86 @@ def Legendrealignment(initial_params, num_param, range_param,tuning=True):
     ### linear fit
     coeffs = np.polyfit(range_param, pvs[:,-1], 1)
     fit_line = np.polyval(coeffs, range_param)
-    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.2e}x + {coeffs[1]:.2e}', color='k')
+    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.6e}x + {coeffs[1]:.6e}', color='k')
     plt.xlabel(f'Alignment{ num_param}')
     plt.ylabel('Inner Product')
     plt.title(f'All Alignment')
     plt.legend()
     plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_all.png'))
     plt.close()
+
+
+def Finetuning(initial_params):
+    global option_mpmath
+    # Legendre alignment
+    num_param = 1 
+    range_param = np.linspace(-1e-7, 1e-7, 5)  # 調整範囲を設定
+    innerproducts = []
+    pvs = []
+    for i in range(int(len(range_param))):
+        initial_params1 = initial_params.copy()
+        initial_params1[num_param] += range_param[i]
+        option_mpmath = True
+        inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
+        option_mpmath = False
+        innerproducts.append(inner)
+        pvs.append(pv)
+
+    innerproducts = np.array(innerproducts)
+    pvs = np.array(pvs)
+
+    pv_ast = pvs[:,5] - pvs[:,3]
+    a_ast, b_ast = np.polyfit(range_param, pv_ast, 1)
+    initial_params[num_param] += -b_ast/a_ast
+    print('Finetuning astigmatism',initial_params[num_param])
+
+    plt.figure()
+    plt.plot(range_param, pv_ast, label=f'legendre {order[i]}', color='k')
+    ### linear fit
+    coeffs = np.polyfit(range_param, pv_ast, 1)
+    fit_line = np.polyval(coeffs, range_param)
+    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.6e}x + {coeffs[1]:.6e}', color='k')
+    plt.xlabel(f'Alignment{ num_param}')
+    plt.ylabel('Ast')
+    plt.title(f'Ast Alignment')
+    plt.legend()
+    plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_ast.png'))
+    plt.close()
+
+    num_param = 0
+    range_param = np.linspace(-1e-7, 1e-7, 5)  # 調整範囲を設定
+    innerproducts = []
+    pvs = []
+    for i in range(int(len(range_param))):
+        initial_params1 = initial_params.copy()
+        initial_params1[num_param] += range_param[i]
+        option_mpmath = True
+        inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
+        option_mpmath = False
+        innerproducts.append(inner)
+        pvs.append(pv)
+
+    innerproducts = np.array(innerproducts)
+    pvs = np.array(pvs)
+
+    pv_defocus = (pvs[:,5] + pvs[:,3])
+    a_defocus, b_defocus = np.polyfit(range_param, pv_defocus, 1)
+    initial_params[num_param] += -b_defocus/a_defocus
+    print('Finetuning defocus',initial_params[num_param])
+
+    plt.figure()
+    plt.plot(range_param, pv_defocus, label=f'legendre {order[i]}', color='k')
+    ### linear fit
+    coeffs = np.polyfit(range_param, pv_defocus, 1)
+    fit_line = np.polyval(coeffs, range_param)
+    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.6e}x + {coeffs[1]:.6e}', color='k')
+    plt.xlabel(f'Alignment{ num_param}')
+    plt.ylabel('Defocus')
+    plt.title(f'Defocus Alignment')
+    plt.legend()
+    plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_defocus.png'))
+    plt.close()
+    return initial_params
 
 
 #####################################
@@ -12508,8 +12643,8 @@ if option_AKB == True:
         print('')
         if option_wolter_3_1:
             print('set astigmatism')
-            initial_params[0] = -5.74854825e-03
-            initial_params[1] =  -2.83509873e-03
+            initial_params[0] = -5.74878134e-03
+            initial_params[1] =  -2.87598218e-03
             # # # initial_params[0] = 5.
             # # # initial_params[1] = 10.09
             # # # ## Plane rotation
@@ -12531,10 +12666,20 @@ if option_AKB == True:
             ### setting12
             initial_params[9] = -3.44496117e-05
             initial_params[21] = -3.44496117e-05
-            # initial_params[10] = 1.3e-04
-            # initial_params[22] = 1.3e-04
-            initial_params[10] = 1.3e-05
-            initial_params[22] = 1.3e-05
+
+            option_set = True
+            initial_params[10] = 1.3e-04
+            initial_params[22] = 1.3e-04
+
+            # initial_params[12] += -2e-3
+            # initial_params[24] += -2e-3
+            # initial_params[10] += -6.029604417835369e-05
+            # initial_params[22] += -6.029604417835369e-05
+            
+            # ### independent
+            # option_set = False
+            # initial_params[10] = 1.231404958677686e-05 + 3.0806451612903227e-06
+            # initial_params[22] = 1.231404958677686e-05 + 3.0806451612903227e-06
 
             # initial_params[16] = 1e-3
 
@@ -12637,17 +12782,28 @@ else:
             file.write(f"ast: {ast}\n")
         kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
 
-# plot_result_debug(initial_params,'ray')
+# option_mpmath = True
+# plot_result_debug(initial_params,'ray_wave')
+
 # calc_FoC(initial_params)
 # initial_params[2] += 1e-5
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-option_mpmath = True
-plot_result_debug(initial_params,'ray')
-plot_result_debug(initial_params,'ray_wave')
+
+Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
+
 option_mpmath = False
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+initial_params = Finetuning(initial_params)
+option_mpmath = True
+plot_result_debug(initial_params,'ray_wave')
+
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# option_mpmath = True
+# plot_result_debug(initial_params,'ray')
+# plot_result_debug(initial_params,'ray_wave')
+# option_mpmath = False
 print('initial_params', initial_params)
-Legendrealignment(initial_params, [12,24], np.linspace(-1e-3, 1e-3, 5), tuning=True)
+Legendrealignment(initial_params, [10,22], np.linspace(-2e-5, 2e-5, 5), tuning=True)
+# Legendrealignment(initial_params, [12,24], np.linspace(-2e-3, 2e-3, 5), tuning=True)
 plt.show()
 # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
 # Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)

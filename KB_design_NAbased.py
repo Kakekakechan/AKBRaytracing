@@ -260,9 +260,11 @@ def plot_ellipses(Ell1, Ell2):
     print('Ell1 diverge angle', Ell1.theta_i1-Ell1.theta_i2)
     print('Ell1 mirror length', Ell1.mirr_length)
     print('Ell1 mirror angle', [(Ell1.theta_i1+Ell1.theta_o1)/2, (Ell1.theta_i2+Ell1.theta_o2)/2])
+    print('Ell1 demagnification', [Ell1.m1, Ell1.m2, np.mean([Ell1.m1, Ell1.m2])])
     print('Ell2 diverge angle', Ell2.theta_i1-Ell2.theta_i2)
     print('Ell2 mirror length', Ell2.mirr_length)
     print('Ell2 mirror angle', [(Ell2.theta_i1+Ell2.theta_o1)/2, (Ell2.theta_i2+Ell2.theta_o2)/2])
+    print('Ell2 demagnification', [Ell2.m1, Ell2.m2, np.mean([Ell2.m1, Ell2.m2])])
     print('===========================')
     print('Ell1 aperture',Ell1.mirr_length*Ell1.theta_centre)
     print('Ell2 aperture',Ell2.mirr_length*Ell2.theta_centre)
@@ -299,7 +301,7 @@ if __name__ == '__main__':
     # # l_o1 = np.float64(0.0785)
     # # theta_g1 = np.float64(0.3)
 
-    l_i1 = np.float64(145.7500024376426)
+    l_i1 = np.float64(146.)
     # ### 初期値
     # l_o1 = np.float64(0.3)
     # theta_g1 = np.float64(0.225)
@@ -311,14 +313,14 @@ if __name__ == '__main__':
     na_o_sin_v = np.float64(0.082)
     na_o_sin_h = np.float64(0.082)
     
-    target_gap = np.float64(0.013)
+    target_gap = np.float64(0.005)
     ast = np.float64(0.)
 
 
     ### apertureが5になるように調整
-    var_l_o1 = np.float64(0.23)
-    var_theta_g1 = np.float64(0.16)
-    var_target_l_o2 = np.float64(0.04125) ### WD
+    var_l_o1 = np.float64(0.2)
+    var_theta_g1 = np.float64(0.11)
+    var_target_l_o2 = np.float64(0.02) ### WD
 
     # ### apertureが5になるように調整
     # var_l_o1 = np.float64(0.15)
