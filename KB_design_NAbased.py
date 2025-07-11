@@ -319,7 +319,7 @@ if __name__ == '__main__':
 
     ### apertureが5になるように調整
     var_l_o1 = np.float64(0.2)
-    var_theta_g1 = np.float64(0.11)
+    var_theta_g1 = np.float64(0.2)
     var_target_l_o2 = np.float64(0.02) ### WD
 
     # ### apertureが5になるように調整
