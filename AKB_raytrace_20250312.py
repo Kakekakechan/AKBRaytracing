@@ -30,6 +30,9 @@ import legendre_fit as lf
 # # コア数を設定
 import tifffile
 import cv2
+import mpmath
+from mpmath import mp, mpf, matrix
+mp.dps = 20
 global option_AKB
 global wave_num_H
 global wave_num_V
@@ -72,6 +75,9 @@ option_HighNA = True
 global LowNAratio
 LowNAratio = 1.
 defocusForWave = 1e-3
+
+global option_mpmath
+option_mpmath = False
 
 def calculate_wavefront_error_v2(defocus_positions, path_length_distribution, angle_distribution, focal_plane_positions, wavelength):
     """
@@ -351,34 +357,165 @@ def CalcDataPitch(points_array,h_num,v_num):
     print('dif_z1 data pitch',np.mean(dif_z1))
     return
 
-def mirr_ray_intersection(coeffs, ray, source,negative=False):
-    a, b, c, d, e, f, g, h, i, j = coeffs
-    l, m, n = ray
-    p, q, r = source
 
-    A = a * l**2 + b * m**2 + c * n**2 + d * m * l + e * n * l + f * m * n
-    B = (2 * a * p * l + 2 * b * q * m + 2 * c * r * n +
-         d * (p * m + q * l) + e * (p * n + r * l) + f * (r * m + q * n) +
-         g * l + h * m + i * n)
-    C = (a * p**2 + b * q**2 + c * r**2 + d * p * q + e * p * r + f * q * r +
-         g * p + h * q + i * r + j)
+def mirr_ray_intersection(coeffs, ray, source, negative=False):
+    if option_mpmath:
+        print("mpmathを使用して計算中...")
+        coeffs = np_to_mpmath_matrix(coeffs)
+        ray = np_to_mpmath_matrix(ray)
+        source = np_to_mpmath_matrix(source)
 
-    D = B**2 - 4 * A * C
-    if not all(x > 0 for x in D):
-        point = np.full(source.shape, np.nan)
+        coeffs = [mpf(x) for x in coeffs]
+        a, b, c, d, e, f_, g, h, i, j = coeffs
+
+        # mpmath matrix (3×n)
+        assert ray.rows == 3 and source.rows == 3
+        n_cols = ray.cols
+
+        point = matrix(3, n_cols)
+
+        for col in range(n_cols):
+            l, m, n = ray[0, col], ray[1, col], ray[2, col]
+            p, q, r = source[0, col], source[1, col], source[2, col]
+
+            A = a*l**2 + b*m**2 + c*n**2 + d*m*l + e*n*l + f_*m*n
+            B = (2*a*p*l + 2*b*q*m + 2*c*r*n +
+                d*(p*m + q*l) + e*(p*n + r*l) + f_*(r*m + q*n) +
+                g*l + h*m + i*n)
+            C = (a*p**2 + b*q**2 + c*r**2 + d*p*q + e*p*r + f_*q*r +
+                g*p + h*q + i*r + j)
+
+            D = B**2 - 4*A*C
+            if D < 0:
+                point[0, col] = mpmath.nan
+                point[1, col] = mpmath.nan
+                point[2, col] = mpmath.nan
+                continue
+
+            sqrtD = sqrt(D)
+            if negative:
+                t = (-B - sqrtD) / (2*A)
+            else:
+                t = (-B + sqrtD) / (2*A)
+
+            point[0, col] = t*l + p
+            point[1, col] = t*m + q
+            point[2, col] = t*n + r
+        # mpmath matrixをnumpy arrayに変換
+        point = mpmath_matrix_to_numpy(point)
+        return point
+    else:
+        a, b, c, d, e, f, g, h, i, j = coeffs
+        l, m, n = ray
+        p, q, r = source
+
+        A = a * l**2 + b * m**2 + c * n**2 + d * m * l + e * n * l + f * m * n
+        B = (2 * a * p * l + 2 * b * q * m + 2 * c * r * n +
+            d * (p * m + q * l) + e * (p * n + r * l) + f * (r * m + q * n) +
+            g * l + h * m + i * n)
+        C = (a * p**2 + b * q**2 + c * r**2 + d * p * q + e * p * r + f * q * r +
+            g * p + h * q + i * r + j)
+
+        D = B**2 - 4 * A * C
+        if not all(x > 0 for x in D):
+            point = np.full(source.shape, np.nan)
+            return point
+
+        if negative:
+            t = (-B - np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+        else:
+            t = (-B + np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+
+        point = np.zeros_like(source)
+        point[0, :] = t * l + p
+        point[1, :] = t * m + q
+        point[2, :] = t * n + r
+
         return point
 
-    if negative:
-        t = (-B - np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+def reflect_ray(ray, N):
+    if option_mpmath:
+        ray = np_to_mpmath_matrix(ray)
+        N = np_to_mpmath_matrix(N)
+        # 入力: ray と N は 3x1 または 3xn の行列を想定
+        cols = ray.cols
+        phai = matrix(3, cols)
+
+        for j in range(cols):
+            # 各列を取り出す
+            l = ray[0, j]
+            m = ray[1, j]
+            n = ray[2, j]
+            nx = N[0, j]
+            ny = N[1, j]
+            nz = N[2, j]
+
+            # スカラー積
+            A = l * nx + m * ny + n * nz
+
+            # phi = ray - 2*A*N
+            phai[0, j] = l - 2 * A * nx
+            phai[1, j] = m - 2 * A * ny
+            phai[2, j] = n - 2 * A * nz
+
+        phai = mpmath_normalize_vector(phai)
+        phai = mpmath_matrix_to_numpy(phai)  # mpmath matrixをnumpy arrayに変換
+        return phai
     else:
-        t = (-B + np.sqrt(B**2 - 4 * A * C)) / (2 * A)
+        l, m, n = ray
+        nx, ny, nz = N
 
-    point = np.zeros_like(source)
-    point[0, :] = t * l + p
-    point[1, :] = t * m + q
-    point[2, :] = t * n + r
+        A = l * nx + m * ny + n * nz
+        phai = ray - 2 * A * N
 
-    return point
+        phai = normalize_vector(phai)
+        return phai
+def mpmath_normalize_vector(vector):
+    norm = mpmath_norm(vector, axis=0)
+
+    # normがスカラーならリスト化して統一処理（例）
+    if not isinstance(norm, (list, tuple)):
+        norm = [norm]
+
+    # 全てゼロ判定
+    if all(n == 0 for n in norm):
+        return vector
+
+    # 要素ごとに割る（ベクトル割り）
+    for j, n in enumerate(norm):
+        if n == 0:
+            continue  # 0割り回避
+        for i in range(vector.rows):
+            vector[i, j] /= n
+
+    return vector
+
+def normalize_vector(vector):
+    norm = np.linalg.norm(vector, axis=0)
+    return vector / norm if np.all(norm != 0) else vector
+
+def mpmath_norm(mat, axis=None):
+    """
+    mpmath.matrix に対してノルムを計算する。
+    
+    - mat: mpmath.matrix, shape = (3, n) または (3, 1)
+    - axis=None … 全体のノルム（3×1の場合のみ）
+    - axis=0 … 列ごとのノルム
+    """
+    if axis is None:
+        # 3x1の場合: 全体のノルム
+        return sqrt(mat[0]**2 + mat[1]**2 + mat[2]**2)
+    elif axis == 0:
+        # 列ごとのノルム
+        n_cols = mat.cols
+        result = []
+        for j in range(n_cols):
+            norm_j = sqrt(mat[0,j]**2 + mat[1,j]**2 + mat[2,j]**2)
+            result.append(norm_j)
+        return result
+    else:
+        raise ValueError(f"axis={axis} は未サポートです")
+
 
 def generate_grid_on_mirror_with_normal(mirror_coeffs, points, num_divisions_H,num_divisions_V):
     """
@@ -467,20 +604,6 @@ def tang_vector(coeffs, ray, points):
     dot_product = np.einsum('ij,ij->j', ray, N)  # rayと法線の内積
     T = ray - dot_product * N  # 法線方向の成分を引く
     return normalize_vector(T)
-
-def normalize_vector(vector):
-    norm = np.linalg.norm(vector, axis=0)
-    return vector / norm if np.all(norm != 0) else vector
-
-def reflect_ray(ray, N):
-    l, m, n = ray
-    nx, ny, nz = N
-
-    A = l * nx + m * ny + n * nz
-    phai = ray - 2 * A * N
-
-    phai = normalize_vector(phai)
-    return phai
 
 def shift_x(coeffs, s):
     a, b, c, d, e, f, g, h, i, j = coeffs
@@ -957,6 +1080,52 @@ def extract_affine_square_region(img: np.ndarray, target_size: int = None) -> np
     warped[mask_warped == 0] = np.nan
 
     return warped
+
+
+def np_to_mpmath_matrix(arr):
+    """
+    numpy.ndarray または list を mpmath.matrix に変換
+    """
+    # numpy配列なら一度リスト化
+    if isinstance(arr, np.ndarray):
+        arr_list = arr.tolist()
+    else:
+        arr_list = arr
+
+    # 次元数確認
+    if isinstance(arr_list[0], list):  # 2次元配列
+        rows = len(arr_list)
+        cols = len(arr_list[0])
+        mat = mpmath.matrix(rows, cols)
+        for i in range(rows):
+            for j in range(cols):
+                mat[i, j] = mpmath.mpf(arr_list[i][j])
+    else:  # 1次元ベクトル
+        mat = mpmath.matrix(len(arr_list), 1)
+        for i in range(len(arr_list)):
+            mat[i] = mpmath.mpf(arr_list[i])
+
+    return mat
+
+def mpmath_matrix_to_numpy(mat):
+    """
+    mpmath.matrix を np.ndarray (dtype=np.float64) に変換する
+
+    Parameters
+    ----------
+    mat : mpmath.matrix
+        変換したい mpmath の行列
+
+    Returns
+    -------
+    np.ndarray
+        numpy の float64 配列
+    """
+    arr = np.zeros((mat.rows, mat.cols), dtype=np.float64)
+    for i in range(mat.rows):
+        for j in range(mat.cols):
+            arr[i, j] = float(mat[i, j])
+    return arr
 
 if option_wolter_3_1:
     def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False):
@@ -1950,7 +2119,7 @@ if option_wolter_3_1:
         # if yaw_hyp_h != 0:
         #     coeffs_hyp_h = rotate_z(coeffs_hyp_h, yaw_hyp_h, center_hyp_h[:, 0])
         if option_rotateLocal:
-            if True:
+            if False:
                 center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
                 if pitch_ell_h != 0:
                     coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, center_wolter_h)
@@ -2011,17 +2180,17 @@ if option_wolter_3_1:
                     coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
 
                 if pitch_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_y, pitch_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
                 if yaw_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_z, yaw_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_z, yaw_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
                 if roll_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_x, roll_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_x, roll_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
                 if pitch_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if yaw_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if roll_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
         
             if option == 'ray':
                 print('axis_x',axis_x)
@@ -2178,21 +2347,12 @@ if option_wolter_3_1:
 
             phai0 = normalize_vector(phai0)
 
-            # plt.figure()
-            # plt.scatter(phai0[1, :], phai0[2, :])
-            # plt.title('angle')
-            # plt.xlabel('Horizontal Angle (rad)')
-            # plt.ylabel('Vertical Angle (rad)')
-            # plt.show()
-
             vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source)
             reflect1 = reflect_ray(phai0, norm_vector(coeffs_hyp_v, vmirr_hyp))
 
 
             vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
             reflect2 = reflect_ray(reflect1, norm_vector(coeffs_ell_v, vmirr_ell))
-            # if option == 'ray':
-            #     plot_ray_sideview(75,85,2,reflect2,vmirr_ell,ray_num)
 
             hmirr_ell = mirr_ray_intersection(coeffs_ell_h, reflect2, vmirr_ell)
             reflect3 = reflect_ray(reflect2, norm_vector(coeffs_ell_h, hmirr_ell))
@@ -2200,15 +2360,8 @@ if option_wolter_3_1:
             hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect3, hmirr_ell,negative=True)
             reflect4 = reflect_ray(reflect3, norm_vector(coeffs_hyp_h, hmirr_hyp))
 
-            # if option == 'ray':
-            #     plot_ray_sideview(146,1,2,reflect4,hmirr_hyp,ray_num)
-
             mean_reflect4 = np.mean(reflect4,1)
-            # print(mean_reflect2)
-            # print(np.sum(mean_reflect2*mean_reflect2))
             mean_reflect4 = normalize_vector(mean_reflect4)
-            # print(mean_reflect2)
-            # print(np.sum(mean_reflect2*mean_reflect2))
 
             if option == 'sep_direct':
                 defocus = find_defocus(reflect4, hmirr_hyp, s2f_middle,defocus,ray_num)
@@ -12378,8 +12531,10 @@ if option_AKB == True:
             ### setting12
             initial_params[9] = -3.44496117e-05
             initial_params[21] = -3.44496117e-05
-            initial_params[10] = 1.3e-04
-            initial_params[22] = 1.3e-04
+            # initial_params[10] = 1.3e-04
+            # initial_params[22] = 1.3e-04
+            initial_params[10] = 1.3e-05
+            initial_params[22] = 1.3e-05
 
             # initial_params[16] = 1e-3
 
@@ -12484,9 +12639,16 @@ else:
 
 # plot_result_debug(initial_params,'ray')
 # calc_FoC(initial_params)
-initial_params[2] += 1e-5
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# initial_params[2] += 1e-5
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+option_mpmath = True
+plot_result_debug(initial_params,'ray')
+plot_result_debug(initial_params,'ray_wave')
+option_mpmath = False
+print('initial_params', initial_params)
+Legendrealignment(initial_params, [12,24], np.linspace(-1e-3, 1e-3, 5), tuning=True)
+plt.show()
 # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
 # Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
 # Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
@@ -12554,6 +12716,7 @@ if option_AKB == False:
     auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
 
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
 initial_params1 = initial_params.copy()
 # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
 # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
