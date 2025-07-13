@@ -3,6 +3,7 @@ os.environ['NUMBA_NUM_THREADS'] = '10'
 os.environ['OMP_NUM_THREADS'] = '10'
 import sys
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
@@ -11048,11 +11049,11 @@ else:
         # l_o1 = var_l_o1.copy()  # 初期値の設定
         # na_o_sin = np.float64(0.082)
         # target_gap = np.float64(0.013)
-        vals1 = 146 + np.linspace(-100, 100, 3)
-        vals2 = np.linspace(0.005, 0.02, 3)
-        vals3 = np.linspace(0.01, 0.03, 3)
+        # vals1 = 146 + np.linspace(-100, 100, 3)
+        vals2 = np.linspace(0.005, 0.02, 5)
+        vals3 = np.linspace(0.01, 0.03, 5)
         vals4 = np.linspace(0.1, 0.22, 5)
-        vals5 = np.linspace(0.18, 0.22, 3)
+        vals5 = np.linspace(0.18, 0.22, 5)
         
         pvs = []
         div_angle1 = []
@@ -11074,51 +11075,51 @@ else:
         
         na_o_sin = np.float64(0.082)
         ast = np.float64(0.)
-        for val1 in vals1:
-            for val2 in vals2:
-                for val3 in vals3:
-                    for val4 in vals4:
-                        for val5 in vals5:
-                            l_i1 = np.float64(val1)
-                            target_gap = np.float64(val2)
-                            target_l_o2 = np.float64(val3)  # WD
-                            theta_g1 = np.float64(val4)
-                            l_o1 = np.float64(val5)
-                            # 各変数の値を設定
-                            directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                            # 新しいフォルダを作成
-                            os.makedirs(directory_name, exist_ok=True)
+        # for val1 in vals1:
+        for val2 in vals2:
+            for val3 in vals3:
+                for val4 in vals4:
+                    for val5 in vals5:
+                        # l_i1 = np.float64(val1)
+                        target_gap = np.float64(val2)
+                        target_l_o2 = np.float64(val3)  # WD
+                        theta_g1 = np.float64(val4)
+                        l_o1 = np.float64(val5)
+                        # 各変数の値を設定
+                        directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        # 新しいフォルダを作成
+                        os.makedirs(directory_name, exist_ok=True)
 
-                            conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
+                        conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
 
-                            # テキストファイルに変数の値や計算条件を書き込む
-                            with open(conditions_file_path, 'w') as file:
-                                file.write("input\n")
-                                file.write("====================\n")
-                                file.write(f"l_i1: {l_i1}\n")
-                                file.write(f"l_o1: {l_o1}\n")
-                                file.write(f"theta_g1: {theta_g1}\n")
-                                file.write(f"na_o_sin: {na_o_sin}\n")
-                                file.write(f"target_l_o2: {target_l_o2}\n")
-                                file.write(f"target_gap: {target_gap}\n")
-                                file.write(f"ast: {ast}\n")
-                            kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+                        # テキストファイルに変数の値や計算条件を書き込む
+                        with open(conditions_file_path, 'w') as file:
+                            file.write("input\n")
+                            file.write("====================\n")
+                            file.write(f"l_i1: {l_i1}\n")
+                            file.write(f"l_o1: {l_o1}\n")
+                            file.write(f"theta_g1: {theta_g1}\n")
+                            file.write(f"na_o_sin: {na_o_sin}\n")
+                            file.write(f"target_l_o2: {target_l_o2}\n")
+                            file.write(f"target_gap: {target_gap}\n")
+                            file.write(f"ast: {ast}\n")
+                        kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
 
-                            option_mpmath = False
-                            # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-                            pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
-                            div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
-                            div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
-                            mirr_length1.append(kb_manager.Ell1.mirr_length)
-                            mirr_length2.append(kb_manager.Ell2.mirr_length)
-                            Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
-                            Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
-                            Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
-                            Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
+                        option_mpmath = False
+                        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                        pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
+                        div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
+                        div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
+                        mirr_length1.append(kb_manager.Ell1.mirr_length)
+                        mirr_length2.append(kb_manager.Ell2.mirr_length)
+                        Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
+                        Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
+                        Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
+                        Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
 
-                            plt.close('all')
-                            
-                            kb_manager = KBDesignManager()
+                        plt.close('all')
+                        
+                        kb_manager = KBDesignManager()
 
         directory_name = f"output_{timestamp}_KB"
         pvs = np.array(pvs)
@@ -11132,6 +11133,15 @@ else:
         Mag2 = np.array(Mag2)
         names = ['Div Angle1', 'Div Angle2', 'Mirror Length1', 'Mirror Length2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
         param_stack = np.vstack((div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+
+        savenames = ['PV','DivAngle1', 'DivAngle2', 'MirrorLength1', 'MirrorLength2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
+        savedata = np.vstack((pvs, div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+        # pandas.DataFrame にする
+        df = pd.DataFrame(savedata.T, columns=savenames)
+
+        # CSV に保存
+        df.to_csv(os.path.join(directory_name,'parameters.csv'), index=False)
+
         num_parameter = 8
         fig, ax = plt.subplots(3,3, figsize=(15, 15))
         ax = ax.ravel()
