@@ -52,7 +52,7 @@ global option_avrgsplt
 global optKBdesign
 global directory_name
 
-optKBdesign=True
+optKBdesign=False
 option_2mirror =True
 option_rotate = True
 option_avrgsplt = False
@@ -79,6 +79,8 @@ global option_mpmath
 option_mpmath = False
 global option_set
 option_set = False
+global var_input
+var_input = 1
 
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 if option_AKB:
@@ -2770,14 +2772,7 @@ if option_wolter_3_1:
                 np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
                 # plt.show()
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
-                rectified_img = extract_affine_square_region(matrixWave2/lambda_, target_size=256)
-
-                # plt.figure()
-                # plt.imshow(rectified_img[1:-2, 1:-2], cmap='jet',vmin = -1/4,vmax = 1/4)
-                # plt.colorbar(label='\u03BB')
-                # plt.title("Affine-Corrected Square Cutout")
-                # # plt.show()
-                
+                rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=matrixWave2.shape[0])
 
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -3552,103 +3547,103 @@ elif option_wolter_3_3_tandem:
 
         if True:  # 初期設定 2025/06/30
             ### 3型V Setting2
-            a_hyp_v  =   np.float64(72.9845)
-            b_hyp_v  =   np.float64(0.21238958153899)
-            a_ell_v  =   np.float64(0.281)
-            b_ell_v  =   np.float64(0.0531241733689647)
-            hyp_length_v  =   np.float64(0.05)
-            ell_length_v  =   np.float64(0.266860702984731)
-            theta1_v  =   np.float64(4.21919940469323E-05)
-            theta2_v  =   np.float64(0.1)
-            theta3_v  =   np.float64(0.200042191994047)
-            theta4_v  =   np.float64(0.190438080754236)
-            theta5_v  =   np.float64(-0.180833969514426)
-            phai_hyp_v  =   np.float64(-0.100042191994047)
-            phai_ell_v  =   np.float64(0.0453183883535131)
-            F_eff_v  =   np.float64(0.0338049837589551)
-            Mag_v  =   np.float64(4333.31604026723)
-            NA_v  =   np.float64(0.0818366883383903)
-            Aperture_v  =   np.float64(0.0505138153539869)
-            F0_F2_v  =   np.float64(146.521483347413)
-
-            a_hyp_v  =   np.float64(72.9848)
-            b_hyp_v  =   np.float64(0.210324155665437)
-            a_ell_v  =   np.float64(0.2857)
-            b_ell_v  =   np.float64(0.0530618591483233)
-            hyp_length_v  =   np.float64(0.05)
-            ell_length_v  =   np.float64(0.276166893612172)
-            theta1_v  =   np.float64(4.13752081278497E-05)
-            theta2_v  =   np.float64(0.1)
-            theta3_v  =   np.float64(0.200041375208128)
-            theta4_v  =   np.float64(0.187243234395316)
-            theta5_v  =   np.float64(-0.174445093582505)
-            phai_hyp_v  =   np.float64(-0.100041375208128)
-            phai_ell_v  =   np.float64(0.0488521496575497)
-            F_eff_v  =   np.float64(0.0343933172595428)
-            Mag_v  =   np.float64(4259.46907766477)
-            NA_v  =   np.float64(0.0811197336351448)
-            Aperture_v  =   np.float64(0.0514087503904502)
-            F0_F2_v  =   np.float64(146.531664662596)
+            # a_hyp_v  =   np.float64(72.9845)
+            # b_hyp_v  =   np.float64(0.21238958153899)
+            # a_ell_v  =   np.float64(0.281)
+            # b_ell_v  =   np.float64(0.0531241733689647)
+            # hyp_length_v  =   np.float64(0.05)
+            # ell_length_v  =   np.float64(0.266860702984731)
+            # theta1_v  =   np.float64(4.21919940469323E-05)
+            # theta2_v  =   np.float64(0.1)
+            # theta3_v  =   np.float64(0.200042191994047)
+            # theta4_v  =   np.float64(0.190438080754236)
+            # theta5_v  =   np.float64(-0.180833969514426)
+            # phai_hyp_v  =   np.float64(-0.100042191994047)
+            # phai_ell_v  =   np.float64(0.0453183883535131)
+            # F_eff_v  =   np.float64(0.0338049837589551)
+            # Mag_v  =   np.float64(4333.31604026723)
+            # NA_v  =   np.float64(0.0818366883383903)
+            # Aperture_v  =   np.float64(0.0505138153539869)
+            # F0_F2_v  =   np.float64(146.521483347413)
 
             # a_hyp_v  =   np.float64(72.9848)
             # b_hyp_v  =   np.float64(0.210324155665437)
-            # a_ell_v  =   np.float64(0.3257)
-            # b_ell_v  =   np.float64(0.0609957911371367)
+            # a_ell_v  =   np.float64(0.2857)
+            # b_ell_v  =   np.float64(0.0530618591483233)
             # hyp_length_v  =   np.float64(0.05)
-            # ell_length_v  =   np.float64(0.316162847545838)
+            # ell_length_v  =   np.float64(0.276166893612172)
             # theta1_v  =   np.float64(4.13752081278497E-05)
             # theta2_v  =   np.float64(0.1)
             # theta3_v  =   np.float64(0.200041375208128)
-            # theta4_v  =   np.float64(0.188723956733222)
-            # theta5_v  =   np.float64(-0.177406538258317)
+            # theta4_v  =   np.float64(0.187243234395316)
+            # theta5_v  =   np.float64(-0.174445093582505)
             # phai_hyp_v  =   np.float64(-0.100041375208128)
-            # phai_ell_v  =   np.float64(0.0480340729020616)
-            # F_eff_v  =   np.float64(0.0338255011587307)
-            # Mag_v  =   np.float64(4333.30625052992)
-            # NA_v  =   np.float64(0.0824831338396396)
-            # Aperture_v  =   np.float64(0.0593139402081157)
-            # F0_F2_v  =   np.float64(146.610081099594)
+            # phai_ell_v  =   np.float64(0.0488521496575497)
+            # F_eff_v  =   np.float64(0.0343933172595428)
+            # Mag_v  =   np.float64(4259.46907766477)
+            # NA_v  =   np.float64(0.0811197336351448)
+            # Aperture_v  =   np.float64(0.0514087503904502)
+            # F0_F2_v  =   np.float64(146.531664662596)
+
+            a_hyp_v  =   np.float64(72.9848)
+            b_hyp_v  =   np.float64(0.210324155665437)
+            a_ell_v  =   np.float64(0.3257)
+            b_ell_v  =   np.float64(0.0609957911371367)
+            hyp_length_v  =   np.float64(0.05)
+            ell_length_v  =   np.float64(0.316162847545838)
+            theta1_v  =   np.float64(4.13752081278497E-05)
+            theta2_v  =   np.float64(0.1)
+            theta3_v  =   np.float64(0.200041375208128)
+            theta4_v  =   np.float64(0.188723956733222)
+            theta5_v  =   np.float64(-0.177406538258317)
+            phai_hyp_v  =   np.float64(-0.100041375208128)
+            phai_ell_v  =   np.float64(0.0480340729020616)
+            F_eff_v  =   np.float64(0.0338255011587307)
+            Mag_v  =   np.float64(4333.30625052992)
+            NA_v  =   np.float64(0.0824831338396396)
+            Aperture_v  =   np.float64(0.0593139402081157)
+            F0_F2_v  =   np.float64(146.610081099594)
 
 
 
             ### 3型H setting2
-            a_hyp_h  =   np.float64(73.1626385934245)
-            b_hyp_h  =   np.float64(0.28245130901327)
-            a_ell_h  =   np.float64(0.101)
-            b_ell_h  =   np.float64(0.0261431003274516)
-            hyp_length_h  =   np.float64(0.043)
-            ell_length_h  =   np.float64(0.0593351406813002)
-            theta1_h  =   np.float64(6.33844354505952E-05)
-            theta2_h  =   np.float64(0.117)
-            theta3_h  =   np.float64(0.234063384435451)
-            theta4_h  =   np.float64(0.263427681323838)
-            theta5_h  =   np.float64(-0.292791978212226)
-            phai_hyp_h  =   np.float64(-0.117063384435451)
-            phai_ell_h  =   np.float64(-0.00628857148389368)
-            F_eff_h  =   np.float64(0.0308012818374266)
-            Mag_h  =   np.float64(4755.99304104836)
-            NA_h  =   np.float64(0.0813737660485408)
-            Aperture_h  =   np.float64(0.0154503670007265)
-            F0_F2_h  =   np.float64(146.521483356008)
-
-            # a_hyp_h  =   np.float64(73.206937469515)
-            # b_hyp_h  =   np.float64(0.282536782718687)
+            # a_hyp_h  =   np.float64(73.1626385934245)
+            # b_hyp_h  =   np.float64(0.28245130901327)
             # a_ell_h  =   np.float64(0.101)
-            # b_ell_h  =   np.float64(0.0261430961181383)
+            # b_ell_h  =   np.float64(0.0261431003274516)
             # hyp_length_h  =   np.float64(0.043)
-            # ell_length_h  =   np.float64(0.0593351486637329)
-            # theta1_h  =   np.float64(6.33460806383912E-05)
+            # ell_length_h  =   np.float64(0.0593351406813002)
+            # theta1_h  =   np.float64(6.33844354505952E-05)
             # theta2_h  =   np.float64(0.117)
-            # theta3_h  =   np.float64(0.234063346080638)
-            # theta4_h  =   np.float64(0.263427637900091)
-            # theta5_h  =   np.float64(-0.292791929719544)
-            # phai_hyp_h  =   np.float64(-0.117063346080638)
-            # phai_ell_h  =   np.float64(-0.0062885701083498)
-            # F_eff_h  =   np.float64(0.0308012663400348)
-            # Mag_h  =   np.float64(4758.87186668706)
-            # NA_h  =   np.float64(0.0813737648885928)
-            # Aperture_h  =   np.float64(0.0154503665916128)
-            # F0_F2_h  =   np.float64(146.610081110267)
+            # theta3_h  =   np.float64(0.234063384435451)
+            # theta4_h  =   np.float64(0.263427681323838)
+            # theta5_h  =   np.float64(-0.292791978212226)
+            # phai_hyp_h  =   np.float64(-0.117063384435451)
+            # phai_ell_h  =   np.float64(-0.00628857148389368)
+            # F_eff_h  =   np.float64(0.0308012818374266)
+            # Mag_h  =   np.float64(4755.99304104836)
+            # NA_h  =   np.float64(0.0813737660485408)
+            # Aperture_h  =   np.float64(0.0154503670007265)
+            # F0_F2_h  =   np.float64(146.521483356008)
+
+            a_hyp_h  =   np.float64(73.206937469515)
+            b_hyp_h  =   np.float64(0.282536782718687)
+            a_ell_h  =   np.float64(0.101)
+            b_ell_h  =   np.float64(0.0261430961181383)
+            hyp_length_h  =   np.float64(0.043)
+            ell_length_h  =   np.float64(0.0593351486637329)
+            theta1_h  =   np.float64(6.33460806383912E-05)
+            theta2_h  =   np.float64(0.117)
+            theta3_h  =   np.float64(0.234063346080638)
+            theta4_h  =   np.float64(0.263427637900091)
+            theta5_h  =   np.float64(-0.292791929719544)
+            phai_hyp_h  =   np.float64(-0.117063346080638)
+            phai_ell_h  =   np.float64(-0.0062885701083498)
+            F_eff_h  =   np.float64(0.0308012663400348)
+            Mag_h  =   np.float64(4758.87186668706)
+            NA_h  =   np.float64(0.0813737648885928)
+            Aperture_h  =   np.float64(0.0154503665916128)
+            F0_F2_h  =   np.float64(146.610081110267)
 
 
 
@@ -3854,9 +3849,9 @@ elif option_wolter_3_3_tandem:
             theta2_v, theta3_v, theta4_v, theta5_v, l1_v, l2_v, l3_v, l4_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
             theta2_v1, theta3_v1, theta4_v1, theta5_v1, l1_v1, l2_v1, l3_v1, l4_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
             theta2_v2, theta3_v2, theta4_v2, theta5_v2, l1_v2, l2_v2, l3_v2, l4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
-            omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
+            # omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
             # omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
-            # omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
+            omega_v = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
             # omega_v = omega_v*0.6
             if option == 'ray':
                 print('===== ===== =====')
@@ -4214,6 +4209,19 @@ elif option_wolter_3_3_tandem:
         #     coeffs_hyp_h = rotate_x(coeffs_hyp_h, roll_hyp_h, center_hyp_h[:, 0])
         # if yaw_hyp_h != 0:
         #     coeffs_hyp_h = rotate_z(coeffs_hyp_h, yaw_hyp_h, center_hyp_h[:, 0])
+        if option == 'ray':
+            print('axis_x',axis_x)
+            print('axis_y',axis_y)
+            print('axis_z',axis_z)
+            print('axis2_x',axis2_x)
+            print('axis2_y',axis2_y)
+            print('axis2_z',axis2_z)
+            print('axis3_x',axis3_x)
+            print('axis3_y',axis3_y)
+            print('axis3_z',axis3_z)
+            print('axis4_x',axis4_x)
+            print('axis4_y',axis4_y)
+            print('axis4_z',axis4_z)
         if option_rotateLocal:
             if True:
                 center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
@@ -4399,8 +4407,8 @@ elif option_wolter_3_3_tandem:
 
             vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
             reflect2 = reflect_ray(reflect1, norm_vector(coeffs_ell_v, vmirr_ell))
-            # if option == 'ray':
-            #     plot_ray_sideview(75,85,2,reflect2,vmirr_ell,ray_num)
+            if option == 'ray':
+                plot_ray_sideview(75,85,2,reflect2,vmirr_ell,ray_num)
 
             hmirr_hyp = mirr_ray_intersection(coeffs_hyp_h, reflect2, vmirr_ell)
             reflect3 = reflect_ray(reflect2, norm_vector(coeffs_hyp_h, hmirr_hyp))
@@ -4408,8 +4416,8 @@ elif option_wolter_3_3_tandem:
             hmirr_ell = mirr_ray_intersection(coeffs_ell_h, reflect3, hmirr_hyp)
             reflect4 = reflect_ray(reflect3, norm_vector(coeffs_ell_h, hmirr_ell))
 
-            # if option == 'ray':
-            #     plot_ray_sideview(146,1,2,reflect4,hmirr_hyp,ray_num)
+            if option == 'ray':
+                plot_ray_sideview(146,1,2,reflect4,hmirr_hyp,ray_num)
 
             mean_reflect4 = np.mean(reflect4,1)
             # print(mean_reflect2)
@@ -4871,7 +4879,7 @@ elif option_wolter_3_3_tandem:
                 print('s2f_V',s2f_V)
                 mabiki = round(np.sqrt(ray_num_H*ray_num_V)/50)
                 mabiki =  1
-                defocussize = 4e-5
+                defocussize = 4e-4
                 coeffs_det = np.zeros(10)
                 coeffs_det[6] = 1
                 coeffs_det[9] = -(s2f_middle + defocus) + defocussize
@@ -5423,7 +5431,7 @@ elif option_wolter_3_3_tandem:
                         fig.canvas.draw_idle()  # 再描画
                 # イベントリスナーを設定
                 fig.canvas.mpl_connect('button_press_event', on_click)
-                plt.savefig('multipleAroundFocus.png', dpi=300)
+                plt.savefig(os.path.join(directory_name, 'multipleAroundFocus.png'), dpi=300)
                 plt.show()
 
 
@@ -7994,12 +8002,19 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
         if option_HighNA == True:
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+
+            # ### acceptance 小さめ
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2), np.float64(0.110), np.float64(0.030), np.float64(0.17611931722709173), np.float64(0.03)]
+            
+            # ### acceptance 大きめ
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.152), np.float64(0.05*var_input)]
 
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
-            # from scipy.optimize import fsolve
+            
+
+            from scipy.optimize import fsolve
             # # `fsolve` を使用して `inc_h` を調整
             # # def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
             # #     # `KB_define` を呼び出して `NA_h` を計算
@@ -8016,22 +8031,67 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # # print(f"調整後の inc_h: {optimized_inc_h}")
             # # inc_h = optimized_inc_h.copy()
 
-            # def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
-            #     # `KB_define` を呼び出して `NA_h` を計算
-            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            #     NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
-            #     return NA_v - target_NA_v  # 目標値との差を返す
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22/2)]
-            # initial_inc_v = inc_v.copy()
-            # target_NA_v = NA_v.copy()  # 目標とする NA_h の値を設定
+            def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
+                # `KB_define` を呼び出して `NA_h` を計算
+                a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
+                return NA_v - target_NA_v  # 目標値との差を返す
+            
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            
+            initial_inc_v = inc_v.copy()
+            target_NA_v = NA_h.copy()  # 目標とする NA_h の値を設定
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            # optimized_inc_v = fsolve(calculate_NA_v, initial_inc_v, args=(target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v))[0]
-
-            # print(f"目標 NA_v: {target_NA_v}")
-            # print(f"調整後の inc_v: {optimized_inc_v}")
-            # inc_v = optimized_inc_v.copy()
-            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-
+            optimized_inc_v = fsolve(calculate_NA_v, initial_inc_v, args=(target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v))[0]
+            if option == 'ray':
+                print(f"目標 NA_v: {target_NA_v}")
+                print(f"調整後の inc_v: {optimized_inc_v}")
+            inc_v = optimized_inc_v.copy()
+            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            
+            # print('NA_h', NA_h)
+            # print('NA_v', NA_v)
+            # print('accept_h', accept_h)
+            # print('accept_v', accept_v)
+            # print('m_h', np.tan(sita3h)/ np.tan(sita1h))
+            # print('m_v', np.tan(sita3v)/ np.tan(sita1v))
+            # sys.exit()
+            
+            if option == 'ray':
+                 conditions_file_path = os.path.join(directory_name, 'kb_design.txt')
+                 with open(conditions_file_path, 'w') as file:
+                    file.write(f'l1h: {l1h}\n')
+                    file.write(f'l2h: {l2h}\n')
+                    file.write(f'inc_h: {inc_h}\n')
+                    file.write(f'mlen_h: {mlen_h}\n')
+                    file.write(f'wd_v: {wd_v}\n')
+                    file.write(f'inc_v: {inc_v}\n')
+                    file.write(f'mlen_v: {mlen_v}\n')
+                    file.write(f'a_h: {a_h}\n')
+                    file.write(f'b_h: {b_h}\n')
+                    file.write(f'a_v: {a_v}\n')
+                    file.write(f'b_v: {b_v}\n')
+                    file.write(f'l1v: {l1v}\n')
+                    file.write(f'l2v: {l2v}\n')
+                    file.write(f'xh_s: {xh_s}\n')
+                    file.write(f'xh_e: {xh_e}\n')
+                    file.write(f'yh_s: {yh_s}\n')
+                    file.write(f'yh_e: {yh_e}\n')
+                    file.write(f'sita1h: {sita1h}\n')
+                    file.write(f'sita3h: {sita3h}\n')
+                    file.write(f'accept_h: {accept_h}\n')
+                    file.write(f'NA_h: {NA_h}\n')
+                    file.write(f'xv_s: {xv_s}\n')
+                    file.write(f'xv_e: {xv_e}\n')
+                    file.write(f'yv_s: {yv_s}\n')
+                    file.write(f'yv_e: {yv_e}\n')
+                    file.write(f'sita1v: {sita1v}\n')
+                    file.write(f'sita3v: {sita3v}\n')
+                    file.write(f'accept_v: {accept_v}\n')
+                    file.write(f'NA_v: {NA_v}\n')
+                    file.write(f's2f_h: {s2f_h}\n')
+                    file.write(f'diff: {diff}\n')
+                    file.write(f'gap: {gap}\n')
 
         else:
             # gapf = -0.230
@@ -8989,19 +9049,100 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # plt.show()
             pv = np.nanstd(matrixWave2_Corrected/lambda_)*6
 
-            # plt.figure()
-            # sample_detcenter = detcenter.copy()
-            # sample_DistError = DistError.copy()
-            # sample = np.vstack([sample_detcenter, sample_DistError])
-            # sizeh_here = ray_num_H
-            # sizev_here = ray_num_V
-            # while sizeh_here > 33:
-            #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-            # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-            # # カラーバーを追加
-            # plt.colorbar(scatter, label='OPL error (nm)')
-            # plt.axis('equal')
-            # plt.show()
+            rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+
+            np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
+
+            assesorder = 5
+            fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+            length = len(inner_products)
+            pvs = np.zeros(length+1)
+            fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+            for i in range(length):
+                ny = orders[i][0]
+                nx = orders[i][1]
+                print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
+                pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                axes[ny, nx].axis('off')
+
+                ### set colorbar for each subplot
+                # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+            axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
+            cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+            fit_sum = np.sum(fit_datas, axis=0)
+            axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+            # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+            axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+            # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+            np.savetxt(os.path.join(directory_name, 'inner_products.txt'), inner_products)
+            np.savetxt(os.path.join(directory_name, 'orders.txt'), orders)
+            np.savetxt(os.path.join(directory_name, 'pvs.txt'), pvs)
+            np.savetxt(os.path.join(directory_name, 'fit_sum.txt'), fit_sum)
+            np.savetxt(os.path.join(directory_name, 'pv.txt'), np.array([pv]))
+            plt.tight_layout()
+
+            plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+
+            assesorder = 5
+            fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+            length = len(inner_products)
+            pvs = np.zeros(length+1)
+            fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+            for i in range(length):
+                ny = orders[i][0]
+                nx = orders[i][1]
+                print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                axes[ny, nx].axis('off')
+
+                ### set colorbar for each subplot
+                # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+            axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+            cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+            fit_sum = np.sum(fit_datas, axis=0)
+            axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+            # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+            axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+            plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+            conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+            # テキストファイルに変数の値や計算条件を書き込む
+            with open(conditions_file_path, 'w') as file:
+                file.write("input\n")
+                file.write("====================\n")
+                file.write(f"params[0]: {params[0]}\n")
+                file.write(f"params[1]: {params[1]}\n")
+                file.write(f"params[2]: {params[2]}\n")
+                file.write(f"params[3]: {params[3]}\n")
+                file.write(f"params[4]: {params[4]}\n")
+                file.write(f"params[5]: {params[5]}\n")
+                file.write(f"params[6]: {params[6]}\n")
+                file.write(f"params[7]: {params[7]}\n")
+                file.write(f"params[8]: {params[8]}\n")
+                file.write(f"params[9]: {params[9]}\n")
+                file.write(f"params[10]: {params[10]}\n")
+                file.write(f"params[11]: {params[11]}\n")
+                file.write(f"params[12]: {params[12]}\n")
+                file.write(f"params[13]: {params[13]}\n")
+                file.write(f"params[14]: {params[14]}\n")
+                file.write(f"params[15]: {params[15]}\n")
+                file.write(f"params[16]: {params[16]}\n")
+                file.write(f"params[17]: {params[17]}\n")
+                file.write(f"params[18]: {params[18]}\n")
+                file.write(f"params[19]: {params[19]}\n")
+                file.write(f"params[20]: {params[20]}\n")
+                file.write(f"params[21]: {params[21]}\n")
+                file.write(f"params[22]: {params[22]}\n")
+                file.write(f"params[23]: {params[23]}\n")
+                file.write(f"params[24]: {params[24]}\n")
+                file.write(f"params[25]: {params[25]}\n")
+            # plt.close()
+
 
             return pv
 
@@ -9412,6 +9553,9 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             plt.scatter(detcenter[1, :], detcenter[2, :])
             plt.axis('equal')
             plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
+
+            np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
+
             # plt.show()
             # plt.close()
 
@@ -10108,7 +10252,7 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
 
         # suptitle のフォントサイズを指定
         fig.suptitle(f'param_{adj_param1}', fontsize=suptitle_fontsize)
-        plt.savefig(f'contribution_plots_prm{adj_param1}_2.png', dpi=600)
+        plt.savefig(os.path.join(directory_name, f'contribution_plots_prm{adj_param1}_2.png'), dpi=600)
         plt.close()
 
         fig2, axes2 = plt.subplots(2, 1)
@@ -10117,7 +10261,7 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
         axes2[0].set_title('size_v')
         axes2[1].set_title('size_h')
         fig.suptitle(f'param_{adj_param1}', fontsize=suptitle_fontsize)
-        plt.savefig(f'size_plots_prm{adj_param1}_2.png', dpi=600)
+        plt.savefig(os.path.join(directory_name, f'size_plots_prm{adj_param1}_2.png')  , dpi=600)
         plt.close()
 
         if option_eval == '7':
@@ -10881,52 +11025,7 @@ if option_AKB == True:
 
 
     else:
-        ### AKB Large
-        # # initial_params[9] =  -0.01264161
-        # # initial_params[15] = 0.00455386
-        # # initial_params[21] = -0.0027282
-        # #
-        # # initial_params[16] = 0.02445858
-        # # initial_params[20] = -0.01597553
-        # #
-        # ### 1 Oblique
-        # initial_params[9] =  -0.0085
-        # initial_params[21] =  -0.0085
-        # ### 2 Coma
-        # initial_params[14] = 0.00023628
-        # initial_params[22] = 0.00044446
-        # # ### 3 Plane rotation
-        # # initial_params[9] = -0.09595625
-        # # initial_params[15] = -0.00410658
-        # # initial_params[21] = -0.01190125
-        # # ### 4 Coma
-        # # initial_params[14] = -0.015
-        # # initial_params[22] = 0.02
-        #
-        # # 3 Manual adjust
-        # # initial_params[15] = -1e-4
-        # # initial_params[21] = initial_params[21] - 3e-4
-        # # initial_params[22] = initial_params[22] - 5e-5
-        # # initial_params[20] = initial_params[20] + 0.022470357969894193
-        # # initial_params[15] = initial_params[15] - 0.00023172392349930375
-        # # initial_params[21] = initial_params[21] - 0.0013973110019272002
-        # # initial_params[22] = initial_params[22] - 0.00010106315071820974
-        # # initial_params[14] = initial_params[14] - 1.6e-06
-        # ###  Best alignment
-        # initial_params[14] = 6.25887113e-05
-        # initial_params[15] = -7.11817756e-05
-        # initial_params[16] = -1.92915809e-03
-        # initial_params[20] = 1.84049615e-02
-        # initial_params[21] = -8.63695329e-03
-        # initial_params[22] = -9.47159502e-04
-        # initial_params[9] = -8.78294573e-04
-
-        # ### Fix inplane
-        # initial_params[9] = 0.00188414
-        # initial_params[14] = 1.53960991e-5
-        # initial_params[15] = 5.69757870e-4
-        # initial_params[21] = -0.00675583
-        # initial_params[22] = -0.0011852
+        
         print('')
         if option_wolter_3_1:
             print('set astigmatism')
@@ -11011,6 +11110,63 @@ if option_AKB == True:
 
             # initial_params[9] += 7.94e-6
             # initial_params[21] += 7.94e-6
+        elif option_wolter_3_3_tandem:
+            initial_params[9] = -0.0006931946174047766
+            initial_params[21] = -0.0006931946174047766
+            initial_params[10] = -0.0049
+            initial_params[22] = -0.0049
+            # initial_params[8] = 0.36
+            # initial_params[20] = 0.36
+             
+            print('')
+        else:
+            ### AKB Large
+            # # initial_params[9] =  -0.01264161
+            # # initial_params[15] = 0.00455386
+            # # initial_params[21] = -0.0027282
+            # #
+            # # initial_params[16] = 0.02445858
+            # # initial_params[20] = -0.01597553
+            # #
+            # ### 1 Oblique
+            # initial_params[9] =  -0.0085
+            # initial_params[21] =  -0.0085
+            # ### 2 Coma
+            # initial_params[14] = 0.00023628
+            # initial_params[22] = 0.00044446
+            # # ### 3 Plane rotation
+            # # initial_params[9] = -0.09595625
+            # # initial_params[15] = -0.00410658
+            # # initial_params[21] = -0.01190125
+            # # ### 4 Coma
+            # # initial_params[14] = -0.015
+            # # initial_params[22] = 0.02
+            #
+            # # 3 Manual adjust
+            # # initial_params[15] = -1e-4
+            # # initial_params[21] = initial_params[21] - 3e-4
+            # # initial_params[22] = initial_params[22] - 5e-5
+            # # initial_params[20] = initial_params[20] + 0.022470357969894193
+            # # initial_params[15] = initial_params[15] - 0.00023172392349930375
+            # # initial_params[21] = initial_params[21] - 0.0013973110019272002
+            # # initial_params[22] = initial_params[22] - 0.00010106315071820974
+            # # initial_params[14] = initial_params[14] - 1.6e-06
+            # ###  Best alignment
+            # initial_params[14] = 6.25887113e-05
+            # initial_params[15] = -7.11817756e-05
+            # initial_params[16] = -1.92915809e-03
+            # initial_params[20] = 1.84049615e-02
+            # initial_params[21] = -8.63695329e-03
+            # initial_params[22] = -9.47159502e-04
+            # initial_params[9] = -8.78294573e-04
+
+            # ### Fix inplane
+            # initial_params[9] = 0.00188414
+            # initial_params[14] = 1.53960991e-5
+            # initial_params[15] = 5.69757870e-4
+            # initial_params[21] = -0.00675583
+            # initial_params[22] = -0.0011852    
+            print('')
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -11037,130 +11193,132 @@ else:
         print('KB L')
         # initial_params[0] = -0.12
         # initial_params[1] = -0.09
-        # l_i1 = np.float64(145.7500024376426)
-        
-        # # l_o1 = np.float64(0.085)
-        # # theta_g1 = np.float64(0.2)
-        # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000        
 
-        # var_l_o1 = np.float64(0.15)
-        # theta_g1 = np.float64(0.16)
-        # target_l_o2 = np.float64(0.02125) ### WD
-        # l_o1 = var_l_o1.copy()  # 初期値の設定
-        # na_o_sin = np.float64(0.082)
-        # target_gap = np.float64(0.013)
-        # vals1 = 146 + np.linspace(-100, 100, 3)
-        vals2 = np.linspace(0.005, 0.02, 5)
-        vals3 = np.linspace(0.01, 0.03, 5)
-        vals4 = np.linspace(0.1, 0.22, 5)
-        vals5 = np.linspace(0.18, 0.22, 5)
-        
-        pvs = []
-        div_angle1 = []
-        div_angle2 = []
-        mirr_length1 = []
-        mirr_length2 = []
-        Aperture1 = []
-        Aperture2 = []
-        Mag1 = []
-        Mag2 = []
+        if optKBdesign:
+            # l_i1 = np.float64(145.7500024376426)
+            
+            # # l_o1 = np.float64(0.085)
+            # # theta_g1 = np.float64(0.2)
+            # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000        
 
-        l_i1 = np.float64(140.) 
-        target_gap = np.float64(0.005)
-        target_l_o2 = np.float64(0.02) ### WD
-        theta_g1 = np.float64(0.18)
-        l_o1 = np.float64(0.2)
-        
-        
-        
-        na_o_sin = np.float64(0.082)
-        ast = np.float64(0.)
-        # for val1 in vals1:
-        for val2 in vals2:
-            for val3 in vals3:
-                for val4 in vals4:
-                    for val5 in vals5:
-                        # l_i1 = np.float64(val1)
-                        target_gap = np.float64(val2)
-                        target_l_o2 = np.float64(val3)  # WD
-                        theta_g1 = np.float64(val4)
-                        l_o1 = np.float64(val5)
-                        # 各変数の値を設定
-                        directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-                        # 新しいフォルダを作成
-                        os.makedirs(directory_name, exist_ok=True)
+            # var_l_o1 = np.float64(0.15)
+            # theta_g1 = np.float64(0.16)
+            # target_l_o2 = np.float64(0.02125) ### WD
+            # l_o1 = var_l_o1.copy()  # 初期値の設定
+            # na_o_sin = np.float64(0.082)
+            # target_gap = np.float64(0.013)
+            vals1 = 146 + np.linspace(-100, 1000, 12)
+            # vals2 = np.linspace(0.005, 0.02, 5)
+            # vals3 = np.linspace(0.01, 0.03, 5)
+            # vals4 = np.linspace(0.1, 0.22, 5)
+            # vals5 = np.linspace(0.18, 0.22, 5)
+            
+            pvs = []
+            div_angle1 = []
+            div_angle2 = []
+            mirr_length1 = []
+            mirr_length2 = []
+            Aperture1 = []
+            Aperture2 = []
+            Mag1 = []
+            Mag2 = []
 
-                        conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
+            l_i1 = np.float64(140.) 
+            target_gap = np.float64(0.005)
+            target_l_o2 = np.float64(0.02) ### WD
+            theta_g1 = np.float64(0.18)
+            l_o1 = np.float64(0.2)
+            
+            
+            
+            na_o_sin = np.float64(0.082)
+            ast = np.float64(0.)
+            for val1 in vals1:
+            # for val2 in vals2:
+            #     for val3 in vals3:
+            #         for val4 in vals4:
+            #             for val5 in vals5:
+                l_i1 = np.float64(val1)
+                # target_gap = np.float64(val2)
+                # target_l_o2 = np.float64(val3)  # WD
+                # theta_g1 = np.float64(val4)
+                # l_o1 = np.float64(val5)
+                # 各変数の値を設定
+                directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                # 新しいフォルダを作成
+                os.makedirs(directory_name, exist_ok=True)
 
-                        # テキストファイルに変数の値や計算条件を書き込む
-                        with open(conditions_file_path, 'w') as file:
-                            file.write("input\n")
-                            file.write("====================\n")
-                            file.write(f"l_i1: {l_i1}\n")
-                            file.write(f"l_o1: {l_o1}\n")
-                            file.write(f"theta_g1: {theta_g1}\n")
-                            file.write(f"na_o_sin: {na_o_sin}\n")
-                            file.write(f"target_l_o2: {target_l_o2}\n")
-                            file.write(f"target_gap: {target_gap}\n")
-                            file.write(f"ast: {ast}\n")
-                        kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+                conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
 
-                        option_mpmath = False
-                        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-                        pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
-                        div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
-                        div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
-                        mirr_length1.append(kb_manager.Ell1.mirr_length)
-                        mirr_length2.append(kb_manager.Ell2.mirr_length)
-                        Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
-                        Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
-                        Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
-                        Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
+                # テキストファイルに変数の値や計算条件を書き込む
+                with open(conditions_file_path, 'w') as file:
+                    file.write("input\n")
+                    file.write("====================\n")
+                    file.write(f"l_i1: {l_i1}\n")
+                    file.write(f"l_o1: {l_o1}\n")
+                    file.write(f"theta_g1: {theta_g1}\n")
+                    file.write(f"na_o_sin: {na_o_sin}\n")
+                    file.write(f"target_l_o2: {target_l_o2}\n")
+                    file.write(f"target_gap: {target_gap}\n")
+                    file.write(f"ast: {ast}\n")
+                kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
 
-                        plt.close('all')
-                        
-                        kb_manager = KBDesignManager()
+                option_mpmath = False
+                # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
+                div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
+                div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
+                mirr_length1.append(kb_manager.Ell1.mirr_length)
+                mirr_length2.append(kb_manager.Ell2.mirr_length)
+                Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
+                Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
+                Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
+                Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
 
-        directory_name = f"output_{timestamp}_KB"
-        pvs = np.array(pvs)
-        div_angle1 = np.array(div_angle1)
-        div_angle2 = np.array(div_angle2)
-        mirr_length1 = np.array(mirr_length1)
-        mirr_length2 = np.array(mirr_length2)
-        Aperture1 = np.array(Aperture1)
-        Aperture2 = np.array(Aperture2)
-        Mag1 = np.array(Mag1)
-        Mag2 = np.array(Mag2)
-        names = ['Div Angle1', 'Div Angle2', 'Mirror Length1', 'Mirror Length2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
-        param_stack = np.vstack((div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+                plt.close('all')
+                
+                kb_manager = KBDesignManager()
 
-        savenames = ['PV','DivAngle1', 'DivAngle2', 'MirrorLength1', 'MirrorLength2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
-        savedata = np.vstack((pvs, div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
-        # pandas.DataFrame にする
-        df = pd.DataFrame(savedata.T, columns=savenames)
+            directory_name = f"output_{timestamp}_KB"
+            pvs = np.array(pvs)
+            div_angle1 = np.array(div_angle1)
+            div_angle2 = np.array(div_angle2)
+            mirr_length1 = np.array(mirr_length1)
+            mirr_length2 = np.array(mirr_length2)
+            Aperture1 = np.array(Aperture1)
+            Aperture2 = np.array(Aperture2)
+            Mag1 = np.array(Mag1)
+            Mag2 = np.array(Mag2)
+            names = ['Div Angle1', 'Div Angle2', 'Mirror Length1', 'Mirror Length2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
+            param_stack = np.vstack((div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
 
-        # CSV に保存
-        df.to_csv(os.path.join(directory_name,'parameters.csv'), index=False)
+            savenames = ['PV','DivAngle1', 'DivAngle2', 'MirrorLength1', 'MirrorLength2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
+            savedata = np.vstack((pvs, div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+            # pandas.DataFrame にする
+            df = pd.DataFrame(savedata.T, columns=savenames)
 
-        num_parameter = 8
-        fig, ax = plt.subplots(3,3, figsize=(15, 15))
-        ax = ax.ravel()
-        fig.suptitle('KB Design PV Dependence on Divergence Angles')
+            # CSV に保存
+            df.to_csv(os.path.join(directory_name,'parameters.csv'), index=False)
 
-        for i in range(num_parameter):
-            ax[i].scatter(param_stack[i], pvs, color='k')
-            coeff = np.polyfit(param_stack[i], pvs, 1)
-            fit_line = np.polyval(coeff, param_stack[i])
-            r2 = np.corrcoef(param_stack[i], pvs)[0, 1]**2
-            ax[i].plot(param_stack[i], fit_line, '--', label=f'y={coeff[0]:.2e}x + {coeff[1]:.2e} (R²={r2:.2f})', color='k')
-            ax[i].set_xlabel(names[i])
-            ax[i].set_ylabel('PV')
-            ax[i].set_title('KB Design PV')
-            ax[i].legend()
-        fig.subplots_adjust(hspace=0.5)  # デフォルトは 0.2 くらい
-        plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
-        plt.show()
-        sys.exit()
+            num_parameter = 8
+            fig, ax = plt.subplots(3,3, figsize=(15, 15))
+            ax = ax.ravel()
+            fig.suptitle('KB Design PV Dependence on Divergence Angles')
+
+            for i in range(num_parameter):
+                ax[i].scatter(param_stack[i], pvs, color='k')
+                coeff = np.polyfit(param_stack[i], pvs, 1)
+                fit_line = np.polyval(coeff, param_stack[i])
+                r2 = np.corrcoef(param_stack[i], pvs)[0, 1]**2
+                ax[i].plot(param_stack[i], fit_line, '--', label=f'y={coeff[0]:.2e}x + {coeff[1]:.2e} (R²={r2:.2f})', color='k')
+                ax[i].set_xlabel(names[i])
+                ax[i].set_ylabel('PV')
+                ax[i].set_title('KB Design PV')
+                ax[i].legend()
+            fig.subplots_adjust(hspace=0.5)  # デフォルトは 0.2 くらい
+            plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
+            plt.show()
+            sys.exit()
 
 # option_mpmath = True
 # plot_result_debug(initial_params,'ray_wave')
@@ -11170,87 +11328,114 @@ else:
 
 # Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
 
-option_mpmath = False
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-initial_params = Finetuning(initial_params)
-option_mpmath = True
-plot_result_debug(initial_params,'ray_wave')
-
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# option_mpmath = True
-# plot_result_debug(initial_params,'ray')
-# plot_result_debug(initial_params,'ray_wave')
 # option_mpmath = False
-print('initial_params', initial_params)
-Legendrealignment(initial_params, [10,22], np.linspace(-2e-5, 2e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [12,24], np.linspace(-2e-3, 2e-3, 5), tuning=True)
-plt.show()
-# Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [2], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# print('initial_params', initial_params)
+# sys.exit()
 
-### V Ell
-# Legendrealignment(initial_params, [14], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [15], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [17], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [19], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# initial_params1 = initial_params.copy()
+# M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-1,1e-1,option = 'matrix', option_eval = '3')
+# M9 = auto_focus_sep(initial_params1.copy(),9,21,-2e-4,2e-4,option = 'matrix', option_eval = '3')
+# M10 = auto_focus_sep(initial_params1.copy(),10,22,-2e-4,2e-4,option = 'matrix', option_eval = '3')
+# M14 = auto_focus_sep(initial_params1.copy(),14,14,-2e-4,2e-4,option = 'matrix', option_eval = '3')
 
-# Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [10,22], np.linspace(-1e-3, 1e-3, 5), tuning=True)
-# Legendrealignment(initial_params, [10,22], np.linspace(-5e-4, 5e-4, 5), tuning=False)
-# Legendrealignment(initial_params, [8,20], np.linspace(-1e-3, 1e-3, 5), tuning=False)
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# initial_params = Finetuning(initial_params)
+# option_mpmath = True
+# plot_result_debug(initial_params,'ray_wave')
 
-# Legendrealignment(initial_params, [23], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [24], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [20], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# # option_mpmath = True
+# # plot_result_debug(initial_params,'ray')
+# # plot_result_debug(initial_params,'ray_wave')
+# # option_mpmath = False
+# print('initial_params', initial_params)
+# Legendrealignment(initial_params, [10,22], np.linspace(-2e-5, 2e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [12,24], np.linspace(-2e-3, 2e-3, 5), tuning=True)
+# plt.show()
+# # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [2], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=False)
 
-# Legendrealignment(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [9], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [10], np.linspace(-5e-4, 5e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# ### V Ell
+# # Legendrealignment(initial_params, [14], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [15], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [17], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [19], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 
-# Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
-# Legendrealignment(initial_params, [2], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [3], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-# Legendrealignment(initial_params, [4], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-# Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [10,22], np.linspace(-1e-3, 1e-3, 5), tuning=True)
+# # Legendrealignment(initial_params, [10,22], np.linspace(-5e-4, 5e-4, 5), tuning=False)
+# # Legendrealignment(initial_params, [8,20], np.linspace(-1e-3, 1e-3, 5), tuning=False)
+
+# # Legendrealignment(initial_params, [23], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [24], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [20], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+
+# # Legendrealignment(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [9], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [10], np.linspace(-5e-4, 5e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+
+# # Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
+# # Legendrealignment(initial_params, [2], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [3], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+# # Legendrealignment(initial_params, [4], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# # Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 
 
 
 if option_AKB == False:
-    initial_params1 = initial_params.copy()
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
-    print('abrr',abrr)
-    M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-    print('initial_params1',initial_params1.copy())
-    M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-    print('initial_params1',initial_params1.copy())
-    M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
-    M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
-    M = M.astype(np.float64)  # 明示的に float64 に変換
-    print(M)
-    inverse_M = np.linalg.inv(M)
-    print('inverse_M',inverse_M)
+    ratio = 0.1*(np.arange(15)+5)
+    initial_params_org = initial_params.copy()
+    for i in range(len(ratio)):
+        initial_params = initial_params_org.copy()
+        var_input = ratio[i]
 
-    params = -np.dot(abrr,inverse_M)
-    print('params',params)
-    print('initial_params1',initial_params1)
-    print('initial_params',initial_params)
-    initial_params[8] = initial_params[8] + params[0]
-    initial_params[9] = initial_params[9] + params[1]
-    initial_params[10] = initial_params[10] + params[2]
+        directory_name = f"output_{timestamp}_KB/{i}/Default"
+        os.makedirs(directory_name, exist_ok=True)
+        option_mpmath = False
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+        print('initial_params', initial_params)
+        directory_name = f"output_{timestamp}_KB/{i}/AlignmentFit"
+        os.makedirs(directory_name, exist_ok=True)
+        initial_params1 = initial_params.copy()
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+        print('abrr',abrr)
+        M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+        print('initial_params1',initial_params1.copy())
+        M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+        print('initial_params1',initial_params1.copy())
+        M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+        M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+        M = M.astype(np.float64)  # 明示的に float64 に変換
+        np.savetxt(os.path.join(directory_name, 'M.txt'), M)
+        print(M)
+        inverse_M = np.linalg.inv(M)
+        print('inverse_M',inverse_M)
+        np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
 
-    auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
-    auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+        params = -np.dot(abrr,inverse_M)
+        print('params',params)
+        print('initial_params1',initial_params1)
+        print('initial_params',initial_params)
+        initial_params[8] = initial_params[8] + params[0]
+        initial_params[9] = initial_params[9] + params[1]
+        initial_params[10] = initial_params[10] + params[2]
+
+        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+    sys.exit()
 
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 

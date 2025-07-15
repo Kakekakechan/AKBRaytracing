@@ -275,6 +275,9 @@ def plot_ellipses(Ell1, Ell2):
 def plot_mirrors(Ell1, Ell2):
     
     return
+
+
+
 if __name__ == '__main__':
     # 初期値
     
@@ -313,14 +316,14 @@ if __name__ == '__main__':
     na_o_sin_v = np.float64(0.082)
     na_o_sin_h = np.float64(0.082)
     
-    target_gap = np.float64(0.005)
+    target_gap = np.float64(0.030)
     ast = np.float64(0.)
 
 
     ### apertureが5になるように調整
-    var_l_o1 = np.float64(0.2)
-    var_theta_g1 = np.float64(0.2)
-    var_target_l_o2 = np.float64(0.02) ### WD
+    var_l_o1 = np.float64(0.3)
+    var_theta_g1 = np.float64(0.14)
+    var_target_l_o2 = np.float64(0.03) ### WD
 
     # ### apertureが5になるように調整
     # var_l_o1 = np.float64(0.15)
