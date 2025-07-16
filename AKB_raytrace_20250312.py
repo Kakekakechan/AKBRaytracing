@@ -8007,46 +8007,52 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2), np.float64(0.110), np.float64(0.030), np.float64(0.17611931722709173), np.float64(0.03)]
             
             # ### acceptance 大きめ
-            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.152), np.float64(0.05*var_input)]
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21*var_input),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
-            
+            # print('NA_h', NA_h)
+            # print('NA_v', NA_v)
+            # print('accept_h', accept_h)
+            # print('accept_v', accept_v)
+            # print('m_h', np.tan(sita3h)/ np.tan(sita1h))
+            # print('m_v', np.tan(sita3v)/ np.tan(sita1v))
+            # sys.exit()
 
             from scipy.optimize import fsolve
             # # `fsolve` を使用して `inc_h` を調整
-            # # def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
-            # #     # `KB_define` を呼び出して `NA_h` を計算
-            # #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            # #     NA_h = params[7]  # `params` の 7 番目の要素が `NA_h`
-            # #     return NA_h - target_NA_h  # 目標値との差を返す
-            # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5*1.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
-            # # initial_inc_h = inc_h.copy()
-            # # target_NA_h = NA_h.copy()  # 目標とする NA_h の値を設定
-            # # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            # # optimized_inc_h = fsolve(calculate_NA_h, initial_inc_h, args=(target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v))[0]
-
-            # # print(f"目標 NA_h: {target_NA_h}")
-            # # print(f"調整後の inc_h: {optimized_inc_h}")
-            # # inc_h = optimized_inc_h.copy()
-
-            def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
+            def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
                 # `KB_define` を呼び出して `NA_h` を計算
                 a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-                NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
-                return NA_v - target_NA_v  # 目標値との差を返す
-            
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
-            
-            initial_inc_v = inc_v.copy()
-            target_NA_v = NA_h.copy()  # 目標とする NA_h の値を設定
-            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            optimized_inc_v = fsolve(calculate_NA_v, initial_inc_v, args=(target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v))[0]
+                NA_h = params[7]  # `params` の 7 番目の要素が `NA_h`
+                return NA_h - target_NA_h  # 目標値との差を返す
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5*1.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            initial_inc_h = inc_h.copy()
+            target_NA_h = NA_v.copy()  # 目標とする NA_h の値を設定
+            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            optimized_inc_h = fsolve(calculate_NA_h, initial_inc_h, args=(target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v))[0]
             if option == 'ray':
-                print(f"目標 NA_v: {target_NA_v}")
-                print(f"調整後の inc_v: {optimized_inc_v}")
-            inc_v = optimized_inc_v.copy()
+                print(f"目標 NA_h: {target_NA_h}")
+                print(f"調整後の inc_h: {optimized_inc_h}")
+            inc_h = optimized_inc_h.copy()
+
+            # def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
+            #     # `KB_define` を呼び出して `NA_h` を計算
+            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            #     NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
+            #     return NA_v - target_NA_v  # 目標値との差を返す
+            
+            # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            
+            # initial_inc_v = inc_v.copy()
+            # target_NA_v = NA_h.copy()  # 目標とする NA_h の値を設定
+            # # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # optimized_inc_v = fsolve(calculate_NA_v, initial_inc_v, args=(target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v))[0]
+            # if option == 'ray':
+            #     print(f"目標 NA_v: {target_NA_v}")
+            #     print(f"調整後の inc_v: {optimized_inc_v}")
+            # inc_v = optimized_inc_v.copy()
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
             
             # print('NA_h', NA_h)
@@ -11395,7 +11401,7 @@ else:
 
 
 if option_AKB == False:
-    ratio = 0.1*(np.arange(15)+5)
+    ratio = 0.1*(np.arange(15)+9)
     initial_params_org = initial_params.copy()
     for i in range(len(ratio)):
         initial_params = initial_params_org.copy()
