@@ -67,10 +67,10 @@ unit = 129
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = False
+option_AKB = True
 option_wolter_3_1 = False
 option_wolter_3_3_tandem = False
-option_HighNA = True
+option_HighNA = False
 global LowNAratio
 LowNAratio = 1.
 defocusForWave = 1e-3
@@ -2773,6 +2773,16 @@ if option_wolter_3_1:
                 # plt.show()
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
                 rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=matrixWave2.shape[0])
+                
+                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
+                plt.figure()
+                plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
+                plt.savefig(os.path.join(directory_name, 'rectified_img.png'), transparent=True, dpi=300)
+
+                plt.figure()
+                plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
+                plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
+                
 
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -3512,6 +3522,13 @@ if option_wolter_3_1:
                 # イベントリスナーを設定
                 fig.canvas.mpl_connect('button_press_event', on_click)
                 plt.savefig(os.path.join(directory_name, 'multipleAroundFocus.png'), dpi=300)
+
+                plt.figure(figsize=(10, 10))
+                plt.scatter(detcenter[1, :], detcenter[2, :])
+                plt.axis('equal')
+                plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
+
+                np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
                 plt.show()
 
 
@@ -4752,6 +4769,7 @@ elif option_wolter_3_3_tandem:
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
                 rectified_img = extract_affine_square_region(matrixWave2/lambda_, target_size=256)
 
+                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
                 # plt.figure()
                 # plt.imshow(rectified_img[1:-2, 1:-2], cmap='jet',vmin = -1/4,vmax = 1/4)
                 # plt.colorbar(label='\u03BB')
@@ -5432,6 +5450,14 @@ elif option_wolter_3_3_tandem:
                 # イベントリスナーを設定
                 fig.canvas.mpl_connect('button_press_event', on_click)
                 plt.savefig(os.path.join(directory_name, 'multipleAroundFocus.png'), dpi=300)
+
+                plt.figure(figsize=(10, 10))
+                plt.scatter(detcenter[1, :], detcenter[2, :])
+                plt.axis('equal')
+                plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
+
+                np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
+                
                 plt.show()
 
 
@@ -5442,7 +5468,7 @@ elif option_wolter_3_3_tandem:
         return vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle
     
 else:
-    def plot_result_debug(params,option):
+    def plot_result_debug(params,option,option_legendre=False):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -5450,39 +5476,39 @@ else:
         pitch_ell_h, roll_ell_h, yaw_ell_h, decenterX_ell_h, decenterY_ell_h, decenterZ_ell_h  = params
         if option_HighNA:
             # Mirror parameters EUV
-            # a_hyp_v = np.float64(72.96002945938)
-            # b_hyp_v = np.float64(0.134829747201017)
-            # a_ell_v = np.float64(0.442)
-            # b_ell_v = np.float64(0.0607128830733533)
-            # length_hyp_v = np.float64(0.115)
-            # length_ell_v = np.float64(0.229790269646258)
-            # theta1_v = np.float64(4.73536529533549E-05)
+            a_hyp_v = np.float64(72.96002945938)
+            b_hyp_v = np.float64(0.134829747201017)
+            a_ell_v = np.float64(0.442)
+            b_ell_v = np.float64(0.0607128830733533)
+            length_hyp_v = np.float64(0.115)
+            length_ell_v = np.float64(0.229790269646258)
+            theta1_v = np.float64(4.73536529533549E-05)
 
-            # a_hyp_h = np.float64(73.018730871665)
-            # b_hyp_h = np.float64(0.0970536727319812)
-            # a_ell_h = np.float64(0.38125)
-            # b_ell_h = np.float64(0.0397791317992322)
-            # length_hyp_h = np.float64(0.25)
-            # length_ell_h = np.float64(0.0653872838592807)
-            # theta1_h = np.float64(5.6880350884129E-05)
-
-
-            a_hyp_v = np.float64(72.968)
-            b_hyp_v = np.float64(0.250376439249605)
-            a_ell_v = np.float64(0.2195)
-            b_ell_v = np.float64(0.0512440210953413)
-            length_hyp_v = np.float64(0.061)
-            length_ell_v = np.float64(0.103058980190576)
-            theta1_v = np.float64(7.15995481547383E-055)
+            a_hyp_h = np.float64(73.018730871665)
+            b_hyp_h = np.float64(0.0970536727319812)
+            a_ell_h = np.float64(0.38125)
+            b_ell_h = np.float64(0.0397791317992322)
+            length_hyp_h = np.float64(0.25)
+            length_ell_h = np.float64(0.0653872838592807)
+            theta1_h = np.float64(5.6880350884129E-05)
 
 
-            a_hyp_h = np.float64(72.985)
-            b_hyp_h = np.float64(0.183699830190467)
-            a_ell_h = np.float64(0.203)
-            b_ell_h = np.float64(0.0354925652013309)
-            length_hyp_h = np.float64(0.13)
-            length_ell_h = np.float64(0.0500546018611444)
-            theta1_h = np.float64(8.32243535501736E-05)
+            # a_hyp_v = np.float64(72.968)
+            # b_hyp_v = np.float64(0.250376439249605)
+            # a_ell_v = np.float64(0.2195)
+            # b_ell_v = np.float64(0.0512440210953413)
+            # length_hyp_v = np.float64(0.061)
+            # length_ell_v = np.float64(0.103058980190576)
+            # theta1_v = np.float64(7.15995481547383E-055)
+
+
+            # a_hyp_h = np.float64(72.985)
+            # b_hyp_h = np.float64(0.183699830190467)
+            # a_ell_h = np.float64(0.203)
+            # b_ell_h = np.float64(0.0354925652013309)
+            # length_hyp_h = np.float64(0.13)
+            # length_ell_h = np.float64(0.0500546018611444)
+            # theta1_h = np.float64(8.32243535501736E-05)
 
 
         else:
@@ -6407,8 +6433,8 @@ else:
                     defocusWave = 1e-2
                     lambda_ = 13.5
                 else:
-                    defocusWave = 1e-3
-                    lambda_ = 1.35
+                    defocusWave = 1e-2
+                    lambda_ = 13.5/4
                 coeffs_det2 = np.zeros(10)
                 coeffs_det2[6] = 1
                 coeffs_det2[9] = -(s2f_middle + defocus + defocusWave)
@@ -6444,55 +6470,6 @@ else:
                 print('np.mean(totalDist2)',np.mean(totalDist2))
                 print('np.mean(totalDist2-totalDist)',np.mean(totalDist2-totalDist))
                 print('np.std(totalDist2-totalDist)',np.std(totalDist2-totalDist))
-                from numpy.fft import fft2, fftshift, fftfreq
-                def fresnel_psf(phi, lambda_, z, grid_x, grid_y):
-                    """
-                    フレネル近似により、光路長分布から焦点面のPSFを計算する。
-
-                    Parameters:
-                    - phi : 2D array (光路長分布, NaNで開口外をマスク)
-                    - lambda_ : float (波長 [m])
-                    - z : float (焦点面までの距離 [m])
-                    - grid_x, grid_y : 2D array (各ピクセルの物理座標 [m])
-
-                    Returns:
-                    - psf : 2D array (正規化されたPSF)
-                    - x_out, y_out : 1D array (出力PSFのx, y座標軸 [m])
-                    """
-                    # 振幅マスクとNaN補完
-                    A = ~np.isnan(phi)
-                    phi = np.nan_to_num(phi, nan=0.0)
-                    
-                    # 入力複素波面
-                    U = A * np.exp(1j * 2 * np.pi / lambda_ * phi)
-                    
-                    # ピクセルサイズ
-                    dx = np.mean(np.diff(grid_x[0, :]))
-                    dy = np.mean(np.diff(grid_y[:, 0]))
-
-                    # 前項の二次位相因子
-                    Q1 = np.exp(1j * np.pi / (lambda_ * z) * (grid_x**2 + grid_y**2))
-                    U1 = U * Q1
-
-                    # FFT: Fresnel伝搬の中心部分
-                    U2 = fftshift(fft2(U1))
-
-                    # 出力座標系（周波数 -> 空間座標）
-                    ny, nx = phi.shape
-                    fx = fftshift(fftfreq(nx, d=dx))
-                    fy = fftshift(fftfreq(ny, d=dy))
-                    x_out = fx * lambda_ * z
-                    y_out = fy * lambda_ * z
-
-                    # 出力側の二次位相因子（optional, 位相計算には必要だがPSFには不要）
-                    # Q2 = np.exp(1j * np.pi / (lambda_ * z) * (grid_x**2 + grid_y**2))
-
-                    # PSFの計算
-                    psf = np.abs(U2)**2
-                    psf /= np.nanmax(psf)
-
-                    return psf, x_out, y_out
-
                 # 補間するグリッドを作成
                 grid_H, grid_V = np.meshgrid(
                     np.linspace(detcenter2[1, :].min(), detcenter2[1, :].max(), ray_num_H),
@@ -6513,22 +6490,14 @@ else:
                     matrixWave2 = matrixDistError2 - matrixSph2
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
                 else:
-                    matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
+                    # matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
                     meanFocus = np.mean(detcenter,axis=1)
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
 
                     Wave2 = DistError2 - Sph
-                    print('meanFocus',meanFocus)
-                    print('np.mean(DistError2)',np.mean(DistError2))
-                    print('np.std(DistError2)',np.std(DistError2))
-                    print('np.mean(Sph)',np.mean(Sph))
-                    print('np.std(Sph)',np.std(Sph))
-                    print('np.mean(Wave2)',np.mean(Wave2))
-                    print('np.std(Wave2)',np.std(Wave2))
                     print('grid_H.shape',grid_H.shape)
                     print('Wave2.shape',Wave2.shape)
                     print('detcenter2.shape',detcenter2.shape)
-
                     matrixWave2 = griddata((detcenter2[1, :], detcenter2[2, :]), Wave2, (grid_H, grid_V), method='cubic')
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
 
@@ -6536,49 +6505,139 @@ else:
                 tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
 
 
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
-                # plt.colorbar(label='\u03BB')
-                plt.colorbar(label='wavefront error (nm)')
-                plt.savefig('waveRaytrace.png')
-                plt.show()
+                # plt.figure()
+                # plt.pcolormesh(grid_H, grid_V, matrixWave2, cmap='jet', shading='auto',vmin = -1,vmax = 1)
+                # # plt.colorbar(label='\u03BB')
+                # plt.colorbar(label='wavefront error (nm)')
+                # plt.savefig('waveRaytrace.png')
+                # plt.show()
 
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
+
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
-                
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin = -1e-2,vmax = 1e-2)
-                # plt.colorbar(label='\u03BB')
-                plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV={np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected)}')
-                plt.savefig('waveRaytrace_Corrected.png')
-                plt.show()
-
-                psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=defocusWave, grid_x=grid_H, grid_y=grid_V)
-                plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
-                plt.xlabel("x [m]")
-                plt.ylabel("y [m]")
-                plt.title("PSF (Fresnel Approx.)")
-                plt.colorbar()
-                plt.show()
-
-
 
                 plt.figure()
-                sample_detcenter = detcenter2.copy()
-                sample_DistError = DistError2.copy()
-                sample = np.vstack([sample_detcenter, sample_DistError])
-                sizeh_here = ray_num_H
-                sizev_here = ray_num_V
-                while sizeh_here > 33:
-                    sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                # カラーバーを追加
-                plt.colorbar(scatter, label='OPL error (nm)')
-                plt.axis('equal')
-                plt.show()
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+                plt.colorbar(label='\u03BB')
+                # plt.colorbar(label='wavefront error (nm)')
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
 
-                return
+                plt.figure()
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
+                plt.colorbar(label='\u03BB')
+                # plt.colorbar(label='wavefront error (nm)')
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
+
+                np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
+                # plt.show()
+                pv = np.nanstd(matrixWave2_Corrected/lambda_)*6
+
+                rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+
+                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
+
+                plt.figure()
+                plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
+                plt.savefig(os.path.join(directory_name, 'rectified_img.png'), transparent=True, dpi=300)
+
+                plt.figure()
+                plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
+                plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
+
+                assesorder = 6
+                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                length = len(inner_products)
+                pvs = np.zeros(length+1)
+                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                for i in range(length):
+                    ny = orders[i][0]
+                    nx = orders[i][1]
+                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
+                    pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                    axes[ny, nx].axis('off')
+
+                    ### set colorbar for each subplot
+                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
+                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                fit_sum = np.sum(fit_datas, axis=0)
+                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+                np.savetxt(os.path.join(directory_name, 'inner_products.txt'), inner_products)
+                np.savetxt(os.path.join(directory_name, 'orders.txt'), orders)
+                np.savetxt(os.path.join(directory_name, 'pvs.txt'), pvs)
+                np.savetxt(os.path.join(directory_name, 'fit_sum.txt'), fit_sum)
+                np.savetxt(os.path.join(directory_name, 'pv.txt'), np.array([pv]))
+                plt.tight_layout()
+
+                plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+
+                assesorder = 5
+                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                length = len(inner_products)
+                pvs = np.zeros(length+1)
+                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                for i in range(length):
+                    ny = orders[i][0]
+                    nx = orders[i][1]
+                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                    pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                    axes[ny, nx].axis('off')
+
+                    ### set colorbar for each subplot
+                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                fit_sum = np.sum(fit_datas, axis=0)
+                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                # テキストファイルに変数の値や計算条件を書き込む
+                with open(conditions_file_path, 'w') as file:
+                    file.write("input\n")
+                    file.write("====================\n")
+                    file.write(f"params[0]: {params[0]}\n")
+                    file.write(f"params[1]: {params[1]}\n")
+                    file.write(f"params[2]: {params[2]}\n")
+                    file.write(f"params[3]: {params[3]}\n")
+                    file.write(f"params[4]: {params[4]}\n")
+                    file.write(f"params[5]: {params[5]}\n")
+                    file.write(f"params[6]: {params[6]}\n")
+                    file.write(f"params[7]: {params[7]}\n")
+                    file.write(f"params[8]: {params[8]}\n")
+                    file.write(f"params[9]: {params[9]}\n")
+                    file.write(f"params[10]: {params[10]}\n")
+                    file.write(f"params[11]: {params[11]}\n")
+                    file.write(f"params[12]: {params[12]}\n")
+                    file.write(f"params[13]: {params[13]}\n")
+                    file.write(f"params[14]: {params[14]}\n")
+                    file.write(f"params[15]: {params[15]}\n")
+                    file.write(f"params[16]: {params[16]}\n")
+                    file.write(f"params[17]: {params[17]}\n")
+                    file.write(f"params[18]: {params[18]}\n")
+                    file.write(f"params[19]: {params[19]}\n")
+                    file.write(f"params[20]: {params[20]}\n")
+                    file.write(f"params[21]: {params[21]}\n")
+                    file.write(f"params[22]: {params[22]}\n")
+                    file.write(f"params[23]: {params[23]}\n")
+                    file.write(f"params[24]: {params[24]}\n")
+                    file.write(f"params[25]: {params[25]}\n")
+                # plt.close()
+
+
+                return pv
 
             if option == 'ray':
                 print(theta1_v)
@@ -7136,13 +7195,14 @@ else:
                         fig.canvas.draw_idle()  # 再描画
                 # イベントリスナーを設定
                 fig.canvas.mpl_connect('button_press_event', on_click)
-                plt.savefig('multipleAroundFocus.png', dpi=300)
-                plt.show()
+                plt.savefig(os.path.join(directory_name,'multipleAroundFocus.png'), transparent=True, dpi=300)
 
-                print('NA_h')
-                print(np.sin((np.max(angles_yx_rad) - np.min(angles_yx_rad))/2))
-                print('NA_v')
-                print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
+                plt.figure(figsize=(10, 10))
+                plt.scatter(detcenter[1, :], detcenter[2, :])
+                plt.axis('equal')
+                plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
+
+                np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
 
 
     # 焦点面での標準偏差を計算
@@ -8004,11 +8064,17 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
             # ### acceptance 小さめ
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2), np.float64(0.110), np.float64(0.030), np.float64(0.17611931722709173), np.float64(0.03)]
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2571791717574601), np.float64(0.110), np.float64(0.030), np.float64(0.22647110067476411), np.float64(0.03)]
             
             # ### acceptance 大きめ
-            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21*var_input),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
+
+            ### woltter と揃えて
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.10811916636581032),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
+
+            
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
@@ -8021,21 +8087,21 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # sys.exit()
 
             from scipy.optimize import fsolve
-            # # `fsolve` を使用して `inc_h` を調整
-            def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
-                # `KB_define` を呼び出して `NA_h` を計算
-                a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-                NA_h = params[7]  # `params` の 7 番目の要素が `NA_h`
-                return NA_h - target_NA_h  # 目標値との差を返す
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5*1.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
-            initial_inc_h = inc_h.copy()
-            target_NA_h = NA_v.copy()  # 目標とする NA_h の値を設定
-            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            optimized_inc_h = fsolve(calculate_NA_h, initial_inc_h, args=(target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v))[0]
-            if option == 'ray':
-                print(f"目標 NA_h: {target_NA_h}")
-                print(f"調整後の inc_h: {optimized_inc_h}")
-            inc_h = optimized_inc_h.copy()
+            # # # `fsolve` を使用して `inc_h` を調整
+            # def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
+            #     # `KB_define` を呼び出して `NA_h` を計算
+            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            #     NA_h = params[7]  # `params` の 7 番目の要素が `NA_h`
+            #     return NA_h - target_NA_h  # 目標値との差を返す
+            # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5*1.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
+            # initial_inc_h = inc_h.copy()
+            # target_NA_h = NA_v.copy()  # 目標とする NA_h の値を設定
+            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # optimized_inc_h = fsolve(calculate_NA_h, initial_inc_h, args=(target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v))[0]
+            # if option == 'ray':
+            #     print(f"目標 NA_h: {target_NA_h}")
+            #     print(f"調整後の inc_h: {optimized_inc_h}")
+            # inc_h = optimized_inc_h.copy()
 
             # def calculate_NA_v(inc_v, target_NA_v, l1h, l2h, mlen_h, wd_v, inc_h, mlen_v):
             #     # `KB_define` を呼び出して `NA_h` を計算
@@ -8053,7 +8119,74 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             #     print(f"目標 NA_v: {target_NA_v}")
             #     print(f"調整後の inc_v: {optimized_inc_v}")
             # inc_v = optimized_inc_v.copy()
-            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            
+
+            # def cost(vars, l1h, l2h, inc_h, mlen_h, mlen_v):
+            #     wd_v, inc_v = vars
+            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(
+            #         l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v
+            #     )
+            #     accept_v = params[14]
+            #     NA_v = params[15]
+            #     return (accept_v - target_accept_v)**2 + (NA_v - target_NA_v)**2
+
+            # initial_inc_v = inc_v.copy()
+            # target_NA_v = NA_h.copy()
+            # target_accept_v = 0.005*var_input
+
+            # # 初期値
+            # x0 = [wd_v.copy(), inc_v.copy()]
+            # res = minimize(cost, x0, args=(l1h, l2h, inc_h, mlen_h, mlen_v), method='Nelder-Mead')
+
+            # if res.success:
+            #     optimized_wd_v, optimized_inc_v = res.x
+            #     if option == 'ray':
+            #         print(f"目標 NA_v: {target_NA_v}")
+            #         print(f"目標 accept_v: {target_accept_v}")
+            #         print(f"調整後の wd_v: {optimized_wd_v}")
+            #         print(f"調整後の inc_v: {optimized_inc_v}")
+            #     wd_v = optimized_wd_v
+            #     inc_v = optimized_inc_v
+            # else:
+            #     print("最適化が収束しませんでした:", res.message)
+            #     optimized_wd_v, optimized_inc_v = x0  # 初期値を使用
+            #     inc_v = optimized_inc_v.copy()
+            #     wd_v = optimized_wd_v
+
+            # def cost(vars, l1h, l2h, inc_h, inc_v, mlen_h):
+            #     wd_v, mlen_v = vars
+            #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(
+            #         l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v
+            #     )
+            #     accept_v = params[14]
+            #     NA_v = params[15]
+            #     return (accept_v - target_accept_v)**2 + (NA_v - target_NA_v)**2
+            
+            # initial_mlen_v = mlen_v.copy()
+            # target_NA_v = NA_h.copy()
+            # target_accept_v = 0.005
+
+            # # 初期値
+            # x0 = [wd_v.copy(), mlen_v.copy()]
+            # res = minimize(cost, x0, args=(l1h, l2h, inc_h, mlen_h, inc_v), method='Nelder-Mead')
+            
+            # if res.success:
+            #     optimized_wd_v, optimized_mlen_v = res.x
+            #     if option == 'ray':
+            #         print(f"目標 NA_v: {target_NA_v}")
+            #         print(f"目標 accept_v: {target_accept_v}")
+            #         print(f"調整後の wd_v: {optimized_wd_v}")
+            #         print(f"調整後の mlen_v: {optimized_mlen_v}")
+            #     wd_v = optimized_wd_v
+            #     mlen_v = optimized_mlen_v
+            # else:
+            #     print("最適化が収束しませんでした:", res.message)
+            #     optimized_wd_v, optimized_mlen_v = x0  # 初期値を使用
+            #     mlen_v = optimized_mlen_v.copy()
+            #     wd_v = optimized_wd_v
+
+            # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
             
             # print('NA_h', NA_h)
             # print('NA_v', NA_v)
@@ -8064,8 +8197,12 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # sys.exit()
             
             if option == 'ray':
-                 conditions_file_path = os.path.join(directory_name, 'kb_design.txt')
-                 with open(conditions_file_path, 'w') as file:
+                m_v = np.tan(sita3v) / np.tan(sita1v)
+                m_h = np.tan(sita3h) / np.tan(sita1h)
+                div_s_v = accept_v/l1v
+                div_s_h = accept_h/l1h
+                conditions_file_path = os.path.join(directory_name, 'kb_design.txt')
+                with open(conditions_file_path, 'w') as file:
                     file.write(f'l1h: {l1h}\n')
                     file.write(f'l2h: {l2h}\n')
                     file.write(f'inc_h: {inc_h}\n')
@@ -8098,6 +8235,47 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
                     file.write(f's2f_h: {s2f_h}\n')
                     file.write(f'diff: {diff}\n')
                     file.write(f'gap: {gap}\n')
+                    file.write(f'm_v: {m_v}\n')
+                    file.write(f'm_h: {m_h}\n')
+                    file.write(f'div_s_h: {div_s_h}\n')
+                    file.write(f'div_s_v: {div_s_v}\n')
+                print(f'l1h: {l1h}')
+                print(f'l2h: {l2h}')
+                print(f'inc_h: {inc_h}')
+                print(f'mlen_h: {mlen_h}')
+                print(f'wd_v: {wd_v}')
+                print(f'inc_v: {inc_v}')
+                print(f'mlen_v: {mlen_v}')
+                print(f'a_h: {a_h}')
+                print(f'b_h: {b_h}')
+                print(f'a_v: {a_v}')
+                print(f'b_v: {b_v}')
+                print(f'l1v: {l1v}')
+                print(f'l2v: {l2v}')
+                print(f'xh_s: {xh_s}')
+                print(f'xh_e: {xh_e}')
+                print(f'yh_s: {yh_s}')
+                print(f'yh_e: {yh_e}')
+                print(f'sita1h: {sita1h}')
+                print(f'sita3h: {sita3h}')
+                print(f'accept_h: {accept_h}')
+                print(f'NA_h: {NA_h}')
+                print(f'xv_s: {xv_s}')
+                print(f'xv_e: {xv_e}')
+                print(f'yv_s: {yv_s}')
+                print(f'yv_e: {yv_e}')
+                print(f'sita1v: {sita1v}')
+                print(f'sita3v: {sita3v}')
+                print(f'accept_v: {accept_v}')
+                print(f'NA_v: {NA_v}')
+                print(f's2f_h: {s2f_h}')
+                print(f'diff: {diff}')
+                print(f'gap: {gap}')
+                print(f'm_v: {m_v}')
+                print(f'm_h: {m_h}')
+                print(f'div_s_h: {div_s_h}')
+                print(f'div_s_v: {div_s_v}')
+                print('===========================')
 
         else:
             # gapf = -0.230
@@ -9187,7 +9365,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             detcenter2 = plane_ray_intersection(coeffs_det, reflect2, hmirr_hyp)
 
             # plot_ray_sideview(18,10,5,reflect1,vmirr_hyp,ray_num)
-            # plot_ray_sideview(0.2,0.2,5,reflect1,vmirr_hyp,ray_num)
+            # plot_ray_sideview(146,146,5,reflect1,vmirr_hyp,ray_num)
 
             phai0 = normalize_vector(phai0)
 
@@ -10061,49 +10239,49 @@ def auto_focus_sep(initial_params0,adj_param1,adj_param2,la,ua,option='none',opt
     #     opt_param = a_param[opt_arg]
     #     print(f'param {adj_param1} =',opt_param)
 
-    if adj_param1 == 8 or adj_param1 == 20:
-        opt_arg = np.argmin(abs(focus_len_v0))
-        opt_param = a_param[opt_arg]
-        print('adjust focus_len_v0')
-        print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 8 or adj_param1 == 20:
+    #     opt_arg = np.argmin(abs(focus_len_v0))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust focus_len_v0')
+    #     print(f'param {adj_param1} =',opt_param)
 
-    if adj_param1 == 10 or adj_param1 == 22:
-        opt_arg = np.argmin(abs(coma_h_v0 ))
-        opt_param = a_param[opt_arg]
-        print('adjust coma_h_v0')
-        print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 10 or adj_param1 == 22:
+    #     opt_arg = np.argmin(abs(coma_h_v0 ))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust coma_h_v0')
+    #     print(f'param {adj_param1} =',opt_param)
 
-    if adj_param1 == 16:
-        opt_arg = np.argmin(abs(focus_len_h0))
-        opt_param = a_param[opt_arg]
-        print('adjust focus_len_h0')
-        print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 16:
+    #     opt_arg = np.argmin(abs(focus_len_h0))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust focus_len_h0')
+    #     print(f'param {adj_param1} =',opt_param)
 
-    if adj_param1 == 14:
-        opt_arg = np.argmin(abs(coma_v_h0 ))
-        opt_param = a_param[opt_arg]
-        print('adjust coma_v_h0')
-        print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 14:
+    #     opt_arg = np.argmin(abs(coma_v_h0 ))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust coma_v_h0')
+    #     print(f'param {adj_param1} =',opt_param)
 
-    if adj_param1 == 15 or adj_param1 == 21:
-        opt_arg = np.argmin(abs(oblique_ast))
-        opt_param = a_param[opt_arg]
-        print('adjust oblique_ast')
-        print(f'param {adj_param1} =',opt_param)
-    if adj_param1 == 9:
-        opt_arg = np.argmin(abs(focus_valance_cnt_edg_v0 + focus_valance_cnt_edg_h0))
-        opt_param = a_param[opt_arg]
-        print('adjust focus_len_cnt_edg')
-        print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 15 or adj_param1 == 21:
+    #     opt_arg = np.argmin(abs(oblique_ast))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust oblique_ast')
+    #     print(f'param {adj_param1} =',opt_param)
+    # if adj_param1 == 9:
+    #     opt_arg = np.argmin(abs(focus_valance_cnt_edg_v0 + focus_valance_cnt_edg_h0))
+    #     opt_param = a_param[opt_arg]
+    #     print('adjust focus_len_cnt_edg')
+    #     print(f'param {adj_param1} =',opt_param)
 
-    print('dif focus length v0 (r-g) =',focus_len_v0[opt_arg])
-    print('coma h v0 (y+(r+g)/2)/2 =',coma_h_v0[opt_arg])
-    print('dif focus length h0 (r-g) =',focus_len_h0[opt_arg])
-    print('coma v h0 (y+(r+g)/2)/2 =',coma_v_h0[opt_arg])
-    print('oblique_ast = ', oblique_ast[opt_arg])
-    print('focus_valance_cnt_edg_v0 = ', focus_valance_cnt_edg_v0[opt_arg])
-    print('focus_valance_cnt_edg_h0 = ', focus_valance_cnt_edg_h0[opt_arg])
-    initial_params0[adj_param1] = opt_param
+    # # print('dif focus length v0 (r-g) =',focus_len_v0[opt_arg])
+    # # print('coma h v0 (y+(r+g)/2)/2 =',coma_h_v0[opt_arg])
+    # # print('dif focus length h0 (r-g) =',focus_len_h0[opt_arg])
+    # # print('coma v h0 (y+(r+g)/2)/2 =',coma_v_h0[opt_arg])
+    # # print('oblique_ast = ', oblique_ast[opt_arg])
+    # # print('focus_valance_cnt_edg_v0 = ', focus_valance_cnt_edg_v0[opt_arg])
+    # # print('focus_valance_cnt_edg_h0 = ', focus_valance_cnt_edg_h0[opt_arg])
+    # initial_params0[adj_param1] = opt_param
 
     def linearfit(a, b):
         model = LinearRegression()
@@ -11016,18 +11194,18 @@ if option_AKB == True:
         initial_params[9] =  -9.33896492e-07 +1.85e-6
         initial_params[14] = 5.84119937e-08
         initial_params[15] = -1.24027287e-05
-        # initial_params[16] = -8.32392236e-04
-        # initial_params[20] = 1.59650980e-03
+        initial_params[16] = -8.32392236e-04
+        initial_params[20] = 1.59650980e-03
         initial_params[21] = -1.37494535e-04 +1.85e-6
         initial_params[22] = -2.27244686e-06
 
-        # ### FiX inplane
-        initial_params[9] =  3.32484327e-5
-        initial_params[10] = 0.
-        initial_params[14] = 5.28700262e-9
-        initial_params[15] = 8.24930354e-6
-        initial_params[21] = -9.83732562e-5
-        initial_params[22] = -2.07390025e-6
+        # # ### FiX inplane
+        # initial_params[9] =  3.32484327e-5
+        # initial_params[10] = 0.
+        # initial_params[14] = 5.28700262e-9
+        # initial_params[15] = 8.24930354e-6
+        # initial_params[21] = -9.83732562e-5
+        # initial_params[22] = -2.07390025e-6
 
 
     else:
@@ -11056,12 +11234,26 @@ if option_AKB == True:
             # initial_params[22] = 7e-05
 
             ### setting12
-            initial_params[9] = -3.44496117e-05
-            initial_params[21] = -3.44496117e-05
-
             option_set = True
-            initial_params[10] = 1.3e-04
-            initial_params[22] = 1.3e-04
+            initial_params[9] = -3.593990214729709e-05
+            initial_params[21] = -3.593990214729709e-05
+            # initial_params[10] = 1.3e-04
+            # initial_params[22] = 1.3e-04
+
+            initial_params[13] = 2.3388953500083895e-06 + 5.647457627118644e-08
+            initial_params[25] = 2.3388953500083895e-06 + 5.647457627118644e-08
+
+            initial_params[8] = 10.5e-3 + 5e-3
+            initial_params[20] = 10.5e-3 + 5e-3
+            
+
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            initial_params = Finetuning(initial_params)
+            option_mpmath = True
+            plot_result_debug(initial_params,'ray')
+            plot_result_debug(initial_params,'ray_wave')
+
+            # plt.show()
 
             # initial_params[12] += -2e-3
             # initial_params[24] += -2e-3
@@ -11116,6 +11308,59 @@ if option_AKB == True:
 
             # initial_params[9] += 7.94e-6
             # initial_params[21] += 7.94e-6
+    
+            if True:
+                directory_name = f"output_{timestamp}_wolter_3_1/Default"
+                os.makedirs(directory_name, exist_ok=True)
+                option_mpmath = False
+                # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+                print('initial_params', initial_params)
+                # option_mpmath = True
+                directory_name = f"output_{timestamp}_wolter_3_1/AlignmentFit"
+                os.makedirs(directory_name, exist_ok=True)
+                initial_params1 = initial_params.copy()
+                abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+                print('abrr',abrr)
+                M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+                print('initial_params1',initial_params1.copy())
+                # M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'KB')
+                M10 = auto_focus_sep(initial_params1.copy(),13,25,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+                print('initial_params1',initial_params1.copy())
+                M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+                # M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+                # M = M.astype(np.float64)  # 明示的に float64 に変換
+
+                M = np.array(np.vstack([M9[:2], M10[:2]]),dtype=np.float64)
+                M = M.astype(np.float64)  # 明示的に float64 に変換
+
+                np.savetxt(os.path.join(directory_name, 'M.txt'), M)
+                print(M)
+                inverse_M = np.linalg.inv(M)
+                print('inverse_M',inverse_M)
+                np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
+
+                params = -np.dot(abrr[:2],inverse_M)
+                print('params',params)
+                print('initial_params1',initial_params1)
+                print('initial_params',initial_params)
+                # initial_params[8] = initial_params[8] + params[0]
+                initial_params[9] = initial_params[9] + params[0]
+                # initial_params[10] = initial_params[10] + params[1]
+                initial_params[13] = initial_params[13] + params[1]
+                initial_params[21] = initial_params[21] + params[0]
+                # initial_params[22] = initial_params[22] + params[1]
+                initial_params[25] = initial_params[25] + params[1]
+
+                option_mpmath = False
+                auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+                # auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+                initial_params = Finetuning(initial_params)
+                option_mpmath = True
+                plot_result_debug(initial_params,'ray')
+                plot_result_debug(initial_params,'ray_wave')
+                sys.exit()
+
         elif option_wolter_3_3_tandem:
             initial_params[9] = -0.0006931946174047766
             initial_params[21] = -0.0006931946174047766
@@ -11130,33 +11375,33 @@ if option_AKB == True:
             # # initial_params[9] =  -0.01264161
             # # initial_params[15] = 0.00455386
             # # initial_params[21] = -0.0027282
-            # #
-            # # initial_params[16] = 0.02445858
-            # # initial_params[20] = -0.01597553
-            # #
+            #
+            # initial_params[16] = 0.02445858
+            # initial_params[20] = -0.01597553
+            #
             # ### 1 Oblique
             # initial_params[9] =  -0.0085
             # initial_params[21] =  -0.0085
             # ### 2 Coma
             # initial_params[14] = 0.00023628
             # initial_params[22] = 0.00044446
-            # # ### 3 Plane rotation
-            # # initial_params[9] = -0.09595625
-            # # initial_params[15] = -0.00410658
-            # # initial_params[21] = -0.01190125
-            # # ### 4 Coma
-            # # initial_params[14] = -0.015
-            # # initial_params[22] = 0.02
-            #
-            # # 3 Manual adjust
-            # # initial_params[15] = -1e-4
-            # # initial_params[21] = initial_params[21] - 3e-4
-            # # initial_params[22] = initial_params[22] - 5e-5
-            # # initial_params[20] = initial_params[20] + 0.022470357969894193
-            # # initial_params[15] = initial_params[15] - 0.00023172392349930375
-            # # initial_params[21] = initial_params[21] - 0.0013973110019272002
-            # # initial_params[22] = initial_params[22] - 0.00010106315071820974
-            # # initial_params[14] = initial_params[14] - 1.6e-06
+            # ### 3 Plane rotation
+            # initial_params[9] = -0.09595625
+            # initial_params[15] = -0.00410658
+            # initial_params[21] = -0.01190125
+            # ### 4 Coma
+            # initial_params[14] = -0.015
+            # initial_params[22] = 0.02
+            
+            # 3 Manual adjust
+            # initial_params[15] = -1e-4
+            # initial_params[21] = initial_params[21] - 3e-4
+            # initial_params[22] = initial_params[22] - 5e-5
+            # initial_params[20] = initial_params[20] + 0.022470357969894193
+            # initial_params[15] = initial_params[15] - 0.00023172392349930375
+            # initial_params[21] = initial_params[21] - 0.0013973110019272002
+            # initial_params[22] = initial_params[22] - 0.00010106315071820974
+            # initial_params[14] = initial_params[14] - 1.6e-06
             # ###  Best alignment
             # initial_params[14] = 6.25887113e-05
             # initial_params[15] = -7.11817756e-05
@@ -11173,6 +11418,17 @@ if option_AKB == True:
             # initial_params[21] = -0.00675583
             # initial_params[22] = -0.0011852    
             print('')
+            # ###  Best alignment?
+            initial_params[8] = 0.008
+            initial_params[9] = -0.00017901
+            initial_params[14] = 3.87502992e-5
+            initial_params[15] = -5.94770620e-4
+            initial_params[16] = -4.86146757e-3
+            initial_params[20] = 0.01421587
+            initial_params[21] = -0.00901764
+            initial_params[22] = -0.00126376
+
+
 else:
     if option_HighNA == False:
         # # KB Small omega 0.06236049099088688
@@ -11335,8 +11591,8 @@ else:
 # Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
 
 # option_mpmath = False
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 # print('initial_params', initial_params)
 # sys.exit()
 
@@ -11398,7 +11654,7 @@ else:
 # # Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 # # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 
-
+sys.exit()
 
 if option_AKB == False:
     ratio = 0.1*(np.arange(15)+9)
