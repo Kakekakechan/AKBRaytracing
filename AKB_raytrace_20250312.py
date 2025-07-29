@@ -68,7 +68,7 @@ wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
 option_AKB = True
-option_wolter_3_1 = False
+option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
 option_HighNA = False
 global LowNAratio
