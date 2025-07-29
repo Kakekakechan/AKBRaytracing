@@ -68,9 +68,9 @@ wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
 option_AKB = True
-option_wolter_3_1 = False
+option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
-option_HighNA = False
+option_HighNA = True
 global LowNAratio
 LowNAratio = 1.
 defocusForWave = 1e-3
@@ -514,7 +514,7 @@ def normalize_vector(vector):
 def mpmath_norm(mat, axis=None):
     """
     mpmath.matrix に対してノルムを計算する。
-    
+
     - mat: mpmath.matrix, shape = (3, n) または (3, 1)
     - axis=None … 全体のノルム（3×1の場合のみ）
     - axis=0 … 列ごとのノルム
@@ -2150,8 +2150,8 @@ if option_wolter_3_1:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, center_wolter_h)
                 if roll_hyp_h != 0:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, center_wolter_h)
-                
-                if False: #option_rotateLocal:
+
+                if True: #option_rotateLocal:
                     center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
                     if yaw_ell_v != 0:
                         coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
@@ -2172,7 +2172,7 @@ if option_wolter_3_1:
                         coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
                     if roll_ell_v != 0:
                         coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
-                    
+
                     if yaw_hyp_v != 0:
                         coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
                     if pitch_hyp_v != 0:
@@ -2180,7 +2180,7 @@ if option_wolter_3_1:
                     if roll_hyp_v != 0:
                         coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
 
-            
+
             else:
                 if yaw_ell_v != 0:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
@@ -2188,7 +2188,7 @@ if option_wolter_3_1:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
                 if roll_ell_v != 0:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
-                
+
                 if yaw_hyp_v != 0:
                     coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
                 if pitch_hyp_v != 0:
@@ -2208,7 +2208,7 @@ if option_wolter_3_1:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if roll_hyp_h != 0:
                     coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
-        
+
             if option == 'ray':
                 print('axis_x',axis_x)
                 print('axis_y',axis_y)
@@ -2222,8 +2222,8 @@ if option_wolter_3_1:
                 print('axis4_x',axis4_x)
                 print('axis4_y',axis4_y)
                 print('axis4_z',axis4_z)
-            
-            
+
+
 
             if decenterX_hyp_v != 0:
                 coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v*axis_x[0])
@@ -2337,7 +2337,7 @@ if option_wolter_3_1:
 
         if bool_point_source:
             source = np.zeros((3, ray_num * ray_num))
-            source[0, :] =+ source_shift[0] 
+            source[0, :] =+ source_shift[0]
             source[1, :] =+ source_shift[1]
             source[2, :] =+ source_shift[2]
             # source[1, :] =+ source_shift[1] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
@@ -2523,7 +2523,7 @@ if option_wolter_3_1:
                     axs[1, 0].set_title(f'Grazing Angle 3\n{1e3*grazing_angle_3.min():.2f}-{1e3*grazing_angle_3.max():.2f} mrad')
                     axs[1, 1].set_title(f'Grazing Angle 4\n{1e3*grazing_angle_4.min():.2f}-{1e3*grazing_angle_4.max():.2f} mrad')
                     plt.tight_layout()
-                    plt.show()
+                    # plt.show()
 
                 angle = reflect4
 
@@ -2580,7 +2580,7 @@ if option_wolter_3_1:
                 else:
                     return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
 
-            
+
             hmirr_hyp0 = hmirr_hyp.copy()
             if option_tilt:
 
@@ -2715,11 +2715,11 @@ if option_wolter_3_1:
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
-                
+
                 ### angle
                 grid_H = np.arctan((grid_H - np.mean(grid_H)) / defocusWave)
                 grid_V = np.arctan((grid_V - np.mean(grid_V)) / defocusWave)
-                
+
                 wave_error = matrixWave2_Corrected / lambda_
                 ### PSF calculation
                 if False:
@@ -2773,7 +2773,7 @@ if option_wolter_3_1:
                 # plt.show()
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
                 rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=matrixWave2.shape[0])
-                
+
                 np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
                 plt.figure()
                 plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
@@ -2782,7 +2782,7 @@ if option_wolter_3_1:
                 plt.figure()
                 plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
                 plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
-                
+
 
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -2876,7 +2876,7 @@ if option_wolter_3_1:
                         file.write(f"params[23]: {params[23]}\n")
                         file.write(f"params[24]: {params[24]}\n")
                         file.write(f"params[25]: {params[25]}\n")
-                    plt.show()
+                    # plt.show()
 
 
 
@@ -2917,7 +2917,7 @@ if option_wolter_3_1:
                     print(f"FWHM_x = {fwhm_x:.3e} m")
                     print(f"FWHM_y = {fwhm_y:.3e} m")
                     print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
-                    
+
                     plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
                     plt.xlabel("x [m]")
                     plt.ylabel("y [m]")
@@ -3529,7 +3529,7 @@ if option_wolter_3_1:
                 plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
 
                 np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
-                plt.show()
+                # plt.show()
 
 
 
@@ -4242,7 +4242,7 @@ elif option_wolter_3_3_tandem:
         if option_rotateLocal:
             if True:
                 center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
-                
+
                 if yaw_ell_v != 0:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
                 if pitch_ell_v != 0:
@@ -4276,7 +4276,7 @@ elif option_wolter_3_3_tandem:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
                 if roll_ell_v != 0:
                     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
-                
+
                 if yaw_hyp_v != 0:
                     coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
                 if pitch_hyp_v != 0:
@@ -4384,7 +4384,7 @@ elif option_wolter_3_3_tandem:
 
         if bool_point_source:
             source = np.zeros((3, ray_num * ray_num))
-            source[0, :] =+ source_shift[0] 
+            source[0, :] =+ source_shift[0]
             source[1, :] =+ source_shift[1]
             source[2, :] =+ source_shift[2]
             # source[1, :] =+ source_shift[1] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
@@ -4614,7 +4614,7 @@ elif option_wolter_3_3_tandem:
                 else:
                     return source_rotated, vmirr_hyp_points_rotated_grid, hmirr_hyp_points_rotated_grid, vmirr_ell_points_rotated_grid, hmirr_ell_points_rotated_grid, detcenter, ray_num_H, ray_num_V, vmirr_norm, hmirr_norm, vmirr2_norm, hmirr2_norm, vec0to1, vec1to2, vec2to3, vec3to4
 
-            
+
             hmirr_ell0 = hmirr_ell.copy()
             if option_tilt:
 
@@ -4749,7 +4749,7 @@ elif option_wolter_3_3_tandem:
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
-                
+
                 plt.figure()
                 plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
                 plt.colorbar(label='\u03BB')
@@ -4775,7 +4775,7 @@ elif option_wolter_3_3_tandem:
                 # plt.colorbar(label='\u03BB')
                 # plt.title("Affine-Corrected Square Cutout")
                 # # plt.show()
-                
+
 
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -4845,7 +4845,7 @@ elif option_wolter_3_3_tandem:
                     print(f"FWHM_x = {fwhm_x:.3e} m")
                     print(f"FWHM_y = {fwhm_y:.3e} m")
                     print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
-                    
+
                     plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
                     plt.xlabel("x [m]")
                     plt.ylabel("y [m]")
@@ -5457,7 +5457,7 @@ elif option_wolter_3_3_tandem:
                 plt.savefig(os.path.join(directory_name,'spotdiagram.png'), transparent=True, dpi=300)
 
                 np.savetxt(os.path.join(directory_name,'spotdiagram.csv'), detcenter.T, delimiter=',')
-                
+
                 plt.show()
 
 
@@ -5466,7 +5466,7 @@ elif option_wolter_3_3_tandem:
 
     # 焦点面での標準偏差を計算
         return vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle
-    
+
 else:
     def plot_result_debug(params,option,option_legendre=False):
         defocus, astigH, \
@@ -6348,7 +6348,7 @@ else:
                     plt.savefig('raytrace_mirror_configuration.png')
                     plt.show()
 
-                    
+
 
                 angle = reflect4
 
@@ -6434,7 +6434,7 @@ else:
                     lambda_ = 13.5
                 else:
                     defocusWave = 1e-2
-                    lambda_ = 13.5/4
+                    lambda_ = 13.5
                 coeffs_det2 = np.zeros(10)
                 coeffs_det2[6] = 1
                 coeffs_det2[9] = -(s2f_middle + defocus + defocusWave)
@@ -6495,6 +6495,7 @@ else:
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
 
                     Wave2 = DistError2 - Sph
+                    # Wave2 = DistError2
                     print('grid_H.shape',grid_H.shape)
                     print('Wave2.shape',Wave2.shape)
                     print('detcenter2.shape',detcenter2.shape)
@@ -6546,6 +6547,8 @@ else:
                 plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
                 plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
 
+                plt.show()
+
                 assesorder = 6
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
                 length = len(inner_products)
@@ -6578,7 +6581,7 @@ else:
 
                 plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
 
-                assesorder = 5
+                assesorder = 6
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
                 length = len(inner_products)
                 pvs = np.zeros(length+1)
@@ -6600,6 +6603,7 @@ else:
                 axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
                 # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
                 axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                plt.tight_layout()
                 plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
 
                 conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
@@ -7783,12 +7787,12 @@ def plane_correction_with_nan_and_outlier_filter(data, sigma_threshold=3):
     def plane(X, a, b, c, d, e):
         x, y = X
         return a * x + b * y + c + d * x **2 + e* y **2
-    
+
     def plane2(X, a, b, c):
         x, y = X
         return a * x + b * y + c
-    
-    
+
+
 
     initial_params, _ = curve_fit(plane, (x_fit, y_fit), z_fit)
 
@@ -7863,7 +7867,7 @@ class KBDesignManager:
             self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin_v, self.na_o_sin_h, self.target_l_o2, self.target_gap, self.ast)
         return self.Ell1, self.Ell2
 kb_manager = KBDesignManager()
-def KB_debug(params,na_ratio_h,na_ratio_v,option):
+def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
     defocus, astigH, \
     pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
     pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -8065,7 +8069,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
 
             # ### acceptance 小さめ
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2571791717574601), np.float64(0.110), np.float64(0.030), np.float64(0.22647110067476411), np.float64(0.03)]
-            
+
             # ### acceptance 大きめ
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
@@ -8074,7 +8078,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             ### woltter と揃えて
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.10811916636581032),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
-            
+
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
@@ -8108,9 +8112,9 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
             #     NA_v = params[15]  # `params` の 15 番目の要素が `NA_v`
             #     return NA_v - target_NA_v  # 目標値との差を返す
-            
+
             # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.242), np.float64(0.5), np.float64(0.1), np.float64(0.128), np.float64(0.22)]
-            
+
             # initial_inc_v = inc_v.copy()
             # target_NA_v = NA_h.copy()  # 目標とする NA_h の値を設定
             # # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
@@ -8120,7 +8124,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             #     print(f"調整後の inc_v: {optimized_inc_v}")
             # inc_v = optimized_inc_v.copy()
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            
+
 
             # def cost(vars, l1h, l2h, inc_h, mlen_h, mlen_v):
             #     wd_v, inc_v = vars
@@ -8162,7 +8166,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             #     accept_v = params[14]
             #     NA_v = params[15]
             #     return (accept_v - target_accept_v)**2 + (NA_v - target_NA_v)**2
-            
+
             # initial_mlen_v = mlen_v.copy()
             # target_NA_v = NA_h.copy()
             # target_accept_v = 0.005
@@ -8170,7 +8174,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # # 初期値
             # x0 = [wd_v.copy(), mlen_v.copy()]
             # res = minimize(cost, x0, args=(l1h, l2h, inc_h, mlen_h, inc_v), method='Nelder-Mead')
-            
+
             # if res.success:
             #     optimized_wd_v, optimized_mlen_v = res.x
             #     if option == 'ray':
@@ -8187,7 +8191,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             #     wd_v = optimized_wd_v
 
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-            
+
             # print('NA_h', NA_h)
             # print('NA_v', NA_v)
             # print('accept_h', accept_h)
@@ -8195,7 +8199,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             # print('m_h', np.tan(sita3h)/ np.tan(sita1h))
             # print('m_v', np.tan(sita3v)/ np.tan(sita1v))
             # sys.exit()
-            
+
             if option == 'ray':
                 m_v = np.tan(sita3v) / np.tan(sita1v)
                 m_h = np.tan(sita3h) / np.tan(sita1h)
@@ -9237,6 +9241,11 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
 
             np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
 
+            plt.figure()
+            plt.imshow(rectified_img, cmap='jet',vmin = -1/512,vmax = 1/512)
+            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+            plt.savefig(os.path.join(directory_name,'rectified_img.png'), transparent=True, dpi=300)
+
             assesorder = 5
             fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
             length = len(inner_products)
@@ -9268,64 +9277,131 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
             plt.tight_layout()
 
             plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+    
+            # assesorder = 5
+            # fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+            # length = len(inner_products)
+            # pvs = np.zeros(length+1)
+            # fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+            # for i in range(length):
+            #     ny = orders[i][0]
+            #     nx = orders[i][1]
+            #     print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+            #     axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+            #     pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+            #     axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+            #     axes[ny, nx].axis('off')
 
-            assesorder = 5
-            fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
-            length = len(inner_products)
-            pvs = np.zeros(length+1)
-            fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
-            for i in range(length):
-                ny = orders[i][0]
-                nx = orders[i][1]
-                print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
-                pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
-                axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
-                axes[ny, nx].axis('off')
+            #     ### set colorbar for each subplot
+            #     # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+            # axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+            # cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+            # fit_sum = np.sum(fit_datas, axis=0)
+            # axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+            # # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+            # axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+            # plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
 
-                ### set colorbar for each subplot
-                # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-            axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
-            cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
-            fit_sum = np.sum(fit_datas, axis=0)
-            axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-            # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-            axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-            plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+            # conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
 
-            conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+            # # テキストファイルに変数の値や計算条件を書き込む
+            # with open(conditions_file_path, 'w') as file:
+            #     file.write("input\n")
+            #     file.write("====================\n")
+            #     file.write(f"params[0]: {params[0]}\n")
+            #     file.write(f"params[1]: {params[1]}\n")
+            #     file.write(f"params[2]: {params[2]}\n")
+            #     file.write(f"params[3]: {params[3]}\n")
+            #     file.write(f"params[4]: {params[4]}\n")
+            #     file.write(f"params[5]: {params[5]}\n")
+            #     file.write(f"params[6]: {params[6]}\n")
+            #     file.write(f"params[7]: {params[7]}\n")
+            #     file.write(f"params[8]: {params[8]}\n")
+            #     file.write(f"params[9]: {params[9]}\n")
+            #     file.write(f"params[10]: {params[10]}\n")
+            #     file.write(f"params[11]: {params[11]}\n")
+            #     file.write(f"params[12]: {params[12]}\n")
+            #     file.write(f"params[13]: {params[13]}\n")
+            #     file.write(f"params[14]: {params[14]}\n")
+            #     file.write(f"params[15]: {params[15]}\n")
+            #     file.write(f"params[16]: {params[16]}\n")
+            #     file.write(f"params[17]: {params[17]}\n")
+            #     file.write(f"params[18]: {params[18]}\n")
+            #     file.write(f"params[19]: {params[19]}\n")
+            #     file.write(f"params[20]: {params[20]}\n")
+            #     file.write(f"params[21]: {params[21]}\n")
+            #     file.write(f"params[22]: {params[22]}\n")
+            #     file.write(f"params[23]: {params[23]}\n")
+            #     file.write(f"params[24]: {params[24]}\n")
+            #     file.write(f"params[25]: {params[25]}\n")
+            # # plt.close()
 
-            # テキストファイルに変数の値や計算条件を書き込む
-            with open(conditions_file_path, 'w') as file:
-                file.write("input\n")
-                file.write("====================\n")
-                file.write(f"params[0]: {params[0]}\n")
-                file.write(f"params[1]: {params[1]}\n")
-                file.write(f"params[2]: {params[2]}\n")
-                file.write(f"params[3]: {params[3]}\n")
-                file.write(f"params[4]: {params[4]}\n")
-                file.write(f"params[5]: {params[5]}\n")
-                file.write(f"params[6]: {params[6]}\n")
-                file.write(f"params[7]: {params[7]}\n")
-                file.write(f"params[8]: {params[8]}\n")
-                file.write(f"params[9]: {params[9]}\n")
-                file.write(f"params[10]: {params[10]}\n")
-                file.write(f"params[11]: {params[11]}\n")
-                file.write(f"params[12]: {params[12]}\n")
-                file.write(f"params[13]: {params[13]}\n")
-                file.write(f"params[14]: {params[14]}\n")
-                file.write(f"params[15]: {params[15]}\n")
-                file.write(f"params[16]: {params[16]}\n")
-                file.write(f"params[17]: {params[17]}\n")
-                file.write(f"params[18]: {params[18]}\n")
-                file.write(f"params[19]: {params[19]}\n")
-                file.write(f"params[20]: {params[20]}\n")
-                file.write(f"params[21]: {params[21]}\n")
-                file.write(f"params[22]: {params[22]}\n")
-                file.write(f"params[23]: {params[23]}\n")
-                file.write(f"params[24]: {params[24]}\n")
-                file.write(f"params[25]: {params[25]}\n")
-            # plt.close()
+            if option_legendre:
+                plt.close()
+                print('inner_products',inner_products)
+                print('orders',orders)
+                pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
+                return inner_products, orders, pvs
+            else:
+                plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+
+                assesorder = 5
+                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                length = len(inner_products)
+                pvs = np.zeros(length+1)
+                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                for i in range(length):
+                    ny = orders[i][0]
+                    nx = orders[i][1]
+                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                    pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                    axes[ny, nx].axis('off')
+
+                    ### set colorbar for each subplot
+                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                fit_sum = np.sum(fit_datas, axis=0)
+                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                # テキストファイルに変数の値や計算条件を書き込む
+                with open(conditions_file_path, 'w') as file:
+                    file.write("input\n")
+                    file.write("====================\n")
+                    file.write(f"params[0]: {params[0]}\n")
+                    file.write(f"params[1]: {params[1]}\n")
+                    file.write(f"params[2]: {params[2]}\n")
+                    file.write(f"params[3]: {params[3]}\n")
+                    file.write(f"params[4]: {params[4]}\n")
+                    file.write(f"params[5]: {params[5]}\n")
+                    file.write(f"params[6]: {params[6]}\n")
+                    file.write(f"params[7]: {params[7]}\n")
+                    file.write(f"params[8]: {params[8]}\n")
+                    file.write(f"params[9]: {params[9]}\n")
+                    file.write(f"params[10]: {params[10]}\n")
+                    file.write(f"params[11]: {params[11]}\n")
+                    file.write(f"params[12]: {params[12]}\n")
+                    file.write(f"params[13]: {params[13]}\n")
+                    file.write(f"params[14]: {params[14]}\n")
+                    file.write(f"params[15]: {params[15]}\n")
+                    file.write(f"params[16]: {params[16]}\n")
+                    file.write(f"params[17]: {params[17]}\n")
+                    file.write(f"params[18]: {params[18]}\n")
+                    file.write(f"params[19]: {params[19]}\n")
+                    file.write(f"params[20]: {params[20]}\n")
+                    file.write(f"params[21]: {params[21]}\n")
+                    file.write(f"params[22]: {params[22]}\n")
+                    file.write(f"params[23]: {params[23]}\n")
+                    file.write(f"params[24]: {params[24]}\n")
+                    file.write(f"params[25]: {params[25]}\n")
+                # plt.show()
 
 
             return pv
@@ -9431,6 +9507,216 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option):
                 hmirr_hyp = hmirr_hyp_points_rotated
                 reflect2 = reflect2_rotated
                 angle = reflect2
+
+            if False:
+                min_Y = np.min(detcenter[1, :]) - 3e-9
+                max_Y = np.max(detcenter[1, :]) + 3e-9
+                min_Z = np.min(detcenter[2, :]) - 3e-9
+                max_Z = np.max(detcenter[2, :]) + 3e-9
+                ### defocus each plot +- defocuss
+                defocussize = 0.3e-8
+                std1 = []
+                std2 = []
+                std3 = []
+                std4 = []
+                std5 = []
+                std6 = []
+                def calc_rms_radius(x, y, center=None):
+                    """
+                    スポットダイアグラムの RMS 半径を計算する。
+
+                    Parameters
+                    ----------
+                    x : array-like
+                        x 座標の配列
+                    y : array-like
+                        y 座標の配列
+                    center : tuple of float, optional
+                        重心の代わりに使う中心座標 (x0, y0)。指定がない場合は重心を使用。
+
+                    Returns
+                    -------
+                    float
+                        RMS 半径
+                    """
+                    x = np.asarray(x)
+                    y = np.asarray(y)
+
+                    if center is None:
+                        x0 = np.mean(x)
+                        y0 = np.mean(y)
+                    else:
+                        x0, y0 = center
+
+                    r_squared = (x - x0)**2 + (y - y0)**2
+                    rms_radius = np.sqrt(np.mean(r_squared))
+
+                    return rms_radius
+                for i in range(13):
+                    defocus_shift = defocussize * (i - 5)
+                    coeffs_det3 = np.zeros(10)
+                    coeffs_det3[6] = 1
+                    coeffs_det3[9] = -(s2f_middle + defocus + defocus_shift)
+                    detcenter3 = plane_ray_intersection(coeffs_det3, reflect2_rotated, hmirr_hyp_points_rotated)
+                    fig0, axs0 = plt.subplots(3, 2, figsize=(10, 15))
+                    fig0.suptitle(f'Defocus shift: {defocus_shift*1e9:.2f} nm', fontsize=16)
+                    matrix_detcenterY = detcenter3[1, :].reshape(ray_num_V, ray_num_H)
+                    matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
+                    ### Z方向1/6ずつ
+                    third = ray_num_V // 6
+                    axs0[0, 0].scatter(matrix_detcenterY[:third, :], matrix_detcenterZ[:third, :])
+                    std1_local = calc_rms_radius(matrix_detcenterY[:third, :], matrix_detcenterZ[:third, :])
+                    std1.append(std1_local)
+                    axs0[0, 0].set_title('Z direction 0-1/6, rms={:.2f}nm'.format(std1_local*1e9))
+                    ### 真ん中 Z方向1/6
+                    axs0[1, 0].scatter(matrix_detcenterY[third*5//2:third*7//2, :], matrix_detcenterZ[third*5//2:third*7//2, :])
+                    std2_local = calc_rms_radius(matrix_detcenterY[third*5//2:third*7//2, :], matrix_detcenterZ[third*5//2:third*7//2, :])
+                    std2.append(std2_local)                
+                    axs0[1, 0].set_title('Z direction 5/12-7/12, rms={:.2f}nm'.format(std2_local*1e9))
+                    axs0[2, 0].scatter(matrix_detcenterY[third*5:, :], matrix_detcenterZ[third*5:, :])
+                    std3_local = (calc_rms_radius(matrix_detcenterY[third*5:, :], matrix_detcenterZ[third*5:, :]))
+                    std3.append(std3_local)
+                    axs0[2, 0].set_title('Z direction 5/6-1, rms={:.2f}nm'.format(std3_local*1e9))
+                    axs0[0, 1].scatter(matrix_detcenterY[:, :third], matrix_detcenterZ[:, :third])
+                    std4_local = (calc_rms_radius(matrix_detcenterY[:, :third], matrix_detcenterZ[:, :third]))
+                    std4.append(std4_local)
+                    axs0[0, 1].set_title('Y direction 0-1/6, rms={:.2f}nm'.format(std4_local*1e9))
+                    axs0[1, 1].scatter(matrix_detcenterY[:, third*5//2:third*7//2], matrix_detcenterZ[:, third*5//2:third*7//2])
+                    std5_local = (calc_rms_radius(matrix_detcenterY[:, third*5//2:third*7//2], matrix_detcenterZ[:, third*5//2:third*7//2]))
+                    std5.append(std5_local)
+                    axs0[1, 1].set_title('Y direction 5/12-7/12, rms={:.2f}nm'.format(std5_local*1e9))
+                    axs0[2, 1].scatter(matrix_detcenterY[:, third*5:], matrix_detcenterZ[:, third*5:])
+                    std6_local = (calc_rms_radius(matrix_detcenterY[:, third*5:], matrix_detcenterZ[:, third*5:]))
+                    std6.append(std6_local)
+                    axs0[2, 1].set_title('Y direction 5/6-1, rms={:.2f}nm'.format(std6_local*1e9))
+                    
+                    for ax in axs0.flat:
+                        ax.set_xlim(min_Y, max_Y)
+                        ax.set_ylim(min_Z, max_Z)
+                    plt.tight_layout()
+                    plt.savefig(os.path.join(directory_name, f'defocus_shift_{defocus_shift*1e9:.2f}nm.png'), transparent=True, dpi=300)
+                    plt.close(fig0)
+                plt.figure()
+                x_here = defocussize*(np.arange(13) - 5)
+                plt.plot(x_here, std1, label='Z direction 0-1/6')
+                plt.plot(x_here, std2, label='Z direction 5/12-7/12')
+                plt.plot(x_here, std3, label='Z direction 5/6-1')
+                plt.plot(x_here, std4, label='Y direction 0-1/6')
+                plt.plot(x_here, std5, label='Y direction 5/12-7/12')
+                plt.plot(x_here, std6, label='Y direction 5/6-1')
+                plt.legend()
+                plt.show()
+            
+            # for i in range(7):
+            #     defocus_shift = defocussize * (i - 2)
+            #     coeffs_det3 = np.zeros(10)
+            #     coeffs_det3[6] = 1
+            #     coeffs_det3[9] = -(s2f_middle + defocus + defocus_shift)
+            #     detcenter3 = plane_ray_intersection(coeffs_det3, reflect2_rotated, hmirr_hyp_points_rotated)
+            #     fig0, axs0 = plt.subplots(3, 2, figsize=(10, 15))
+            #     fig0.suptitle(f'Defocus shift: {defocus_shift*1e9:.2f} nm', fontsize=16)
+            #     matrix_detcenterY = detcenter3[1, :].reshape(ray_num_V, ray_num_H)
+            #     matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
+            #     ### Z方向1/3ずつ
+            #     third = ray_num_V // 3
+            #     axs0[0, 0].scatter(matrix_detcenterY[:third, :], matrix_detcenterZ[:third, :])
+            #     axs0[0, 0].set_title('Z direction 1/3')
+            #     axs0[1, 0].scatter(matrix_detcenterY[third:2*third, :], matrix_detcenterZ[third:2*third, :])
+            #     axs0[1, 0].set_title('Z direction 2/3')
+            #     axs0[2, 0].scatter(matrix_detcenterY[2*third:, :], matrix_detcenterZ[2*third:, :])
+            #     axs0[2, 0].set_title('Z direction 3/3')
+            #     axs0[0, 1].scatter(matrix_detcenterY[:, :third], matrix_detcenterZ[:, :third])
+            #     axs0[0, 1].set_title('Y direction 1/3')
+            #     axs0[1, 1].scatter(matrix_detcenterY[:, third:2*third], matrix_detcenterZ[:, third:2*third])
+            #     axs0[1, 1].set_title('Y direction 2/3')
+            #     axs0[2, 1].scatter(matrix_detcenterY[:, 2*third:], matrix_detcenterZ[:, 2*third:])
+            #     axs0[2, 1].set_title('Y direction 3/3')
+            #     for ax in axs0.flat:
+            #         ax.set_xlim(min_Y, max_Y)
+            #         ax.set_ylim(min_Z, max_Z)
+            #     plt.tight_layout()
+            # plt.show()
+            # ### defocus each plot +- defocuss
+            # min_Y = np.min(detcenter[1, :]) - 2e-9
+            # max_Y = np.max(detcenter[1, :]) + 2e-9
+            # min_Z = np.min(detcenter[2, :]) - 2e-9
+            # max_Z = np.max(detcenter[2, :]) + 2e-9
+            # defocussize = 1e-8
+            
+            # for i in range(7):
+            #     defocus_shift = defocussize * (i - 2)
+            #     coeffs_det3 = np.zeros(10)
+            #     coeffs_det3[6] = 1
+            #     coeffs_det3[9] = -(s2f_middle + defocus + defocus_shift)
+            #     detcenter3 = plane_ray_intersection(coeffs_det3, reflect2_rotated, hmirr_hyp_points_rotated)
+            #     fig0, axs0 = plt.subplots(3, 3, figsize=(15, 15))
+            #     fig0.suptitle(f'Defocus shift: {defocus_shift*1e9:.2f} nm', fontsize=16)
+            #     matrix_detcenterY = detcenter3[1, :].reshape(ray_num_V, ray_num_H)
+            #     matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
+            #     ### Z方向1/3ずつ
+            #     third = ray_num_V // 6
+                
+            #     axs0[0, 0].scatter(matrix_detcenterY[:third, :third], matrix_detcenterZ[:third, :third])
+            #     axs0[0, 0].set_title('Z direction 0-1/6, Y direction 0-1/6')
+            #     axs0[0, 1].scatter(matrix_detcenterY[third*5//2:third*7//2, :third], matrix_detcenterZ[third*5//2:third*7//2, :third])
+            #     axs0[0, 1].set_title('Z direction 5/12-7/12, Y direction 0-1/6')
+            #     axs0[0, 2].scatter(matrix_detcenterY[third*5:, :third], matrix_detcenterZ[third*5:, :third])
+            #     axs0[0, 2].set_title('Z direction 5/6-1, Y direction 0-1/6')
+            #     axs0[1, 0].scatter(matrix_detcenterY[:third, third*5//2:third*7//2], matrix_detcenterZ[:third, third*5//2:third*7//2])
+            #     axs0[1, 0].set_title('Z direction 0-1/6, Y direction 5/12-7/12')
+            #     axs0[1, 1].scatter(matrix_detcenterY[third*5// 2:third*7//2, third*5//2:third*7//2], matrix_detcenterZ[third*5//2:third*7//2, third*5//2:third*7//2])
+            #     axs0[1, 1].set_title('Z direction 5/12-7/12, Y direction 5/12-7/12')
+            #     axs0[1, 2].scatter(matrix_detcenterY[third*5:, third*5//2:third*7//2], matrix_detcenterZ[third*5:, third*5//2:third*7//2])
+            #     axs0[1, 2].set_title('Z direction 5/6-1, Y direction 5/12-7/12')
+            #     axs0[2, 0].scatter(matrix_detcenterY[:third, third*5:], matrix_detcenterZ[:third, third*5:])
+            #     axs0[2, 0].set_title('Z direction 0-1/6, Y direction 5/6-1')
+            #     axs0[2, 1].scatter(matrix_detcenterY[third*5//2:third*7//2, third*5:], matrix_detcenterZ[third*5//2:third*7//2, third*5:])
+            #     axs0[2, 1].set_title('Z direction 5/12-7/12, Y direction 5/6-1')
+            #     axs0[2, 2].scatter(matrix_detcenterY[third*5:, third*5:], matrix_detcenterZ[third*5:, third*5:])
+            #     axs0[2, 2].set_title('Z direction 5/6-1, Y direction 5/6-1')
+            #     for ax in axs0.flat:
+            #         ax.set_xlim(min_Y, max_Y)
+            #         ax.set_ylim(min_Z, max_Z)
+            #     plt.tight_layout()
+            # plt.show()
+            
+            # for i in range(7):
+            #     defocus_shift = defocussize * (i - 2)
+            #     coeffs_det3 = np.zeros(10)
+            #     coeffs_det3[6] = 1
+            #     coeffs_det3[9] = -(s2f_middle + defocus + defocus_shift)
+            #     detcenter3 = plane_ray_intersection(coeffs_det3, reflect2_rotated, hmirr_hyp_points_rotated)
+            #     fig0, axs0 = plt.subplots(3, 3, figsize=(15, 15))
+            #     fig0.suptitle(f'Defocus shift: {defocus_shift*1e9:.2f} nm', fontsize=16)
+            #     matrix_detcenterY = detcenter3[1, :].reshape(ray_num_V, ray_num_H)
+            #     matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
+            #     ### Z方向1/3ずつ
+            #     third = ray_num_V // 3
+                
+            #     axs0[0, 0].scatter(matrix_detcenterY[:third, :third], matrix_detcenterZ[:third, :third])
+            #     axs0[0, 0].set_title('Z direction 1/3, Y direction 1/3')
+            #     axs0[0, 1].scatter(matrix_detcenterY[:third, third:2*third], matrix_detcenterZ[:third, third:2*third])
+            #     axs0[0, 1].set_title('Z direction 1/3, Y direction 2/3')
+            #     axs0[0, 2].scatter(matrix_detcenterY[:third, 2*third:], matrix_detcenterZ[:third, 2*third:])
+            #     axs0[0, 2].set_title('Z direction 1/3, Y direction 3/3')
+            #     axs0[1, 0].scatter(matrix_detcenterY[third:2*third, :third], matrix_detcenterZ[third:2*third, :third])
+            #     axs0[1, 0].set_title('Z direction 2/3, Y direction 1/3')
+            #     axs0[1, 1].scatter(matrix_detcenterY[third:2*third, third:2*third], matrix_detcenterZ[third:2*third, third:2*third])
+            #     axs0[1, 1].set_title('Z direction 2/3, Y direction 2/3')
+            #     axs0[1, 2].scatter(matrix_detcenterY[third:2*third, 2*third:], matrix_detcenterZ[third:2*third, 2*third:])
+            #     axs0[1, 2].set_title('Z direction 2/3, Y direction 3/3')
+            #     axs0[2, 0].scatter(matrix_detcenterY[2*third:, :third], matrix_detcenterZ[2*third:, :third])
+            #     axs0[2, 0].set_title('Z direction 3/3, Y direction 1/3')
+            #     axs0[2, 1].scatter(matrix_detcenterY[2*third:, third:2*third], matrix_detcenterZ[2*third:, third:2*third])
+            #     axs0[2, 1].set_title('Z direction 3/3, Y direction 2/3')
+            #     axs0[2, 2].scatter(matrix_detcenterY[2*third:, 2*third:], matrix_detcenterZ[2*third:, 2*third:])
+            #     axs0[2, 2].set_title('Z direction 3/3, Y direction 3/3')
+            #     for ax in axs0.flat:
+            #         ax.set_xlim(min_Y, max_Y)
+            #         ax.set_ylim(min_Z, max_Z)
+            #     plt.tight_layout()
+            # plt.show()
+
 
             # 範囲内の値を間引く
             original_array = list(range(len(detcenter1[0,:])))
@@ -10029,7 +10315,10 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
         return detcenter
     if option_legendre:
-        innerproducts, orders, pvs = plot_result_debug(initial_params, 'ray_wave',option_legendre=True)
+        if option_AKB:
+            innerproducts, orders, pvs = plot_result_debug(initial_params, 'ray_wave',option_legendre=True)
+        else:
+            innerproducts, orders, pvs = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'ray_wave',option_legendre=True)
         return innerproducts, orders, pvs
     if option:
         print('params = ',initial_params[0:26])
@@ -10048,7 +10337,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
                 pv = KB_debug(initial_params, na_ratio_h, na_ratio_v, option_disp)
                 return pv
             vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params,na_ratio_h,na_ratio_v, option_disp)
-        
+
     if option_param == 'V':
         # return np.min(size_v_)
         return size_v_param, size_h_param,initial_params
@@ -10929,11 +11218,11 @@ def saveWaveData(initial_params, ysize = 1e-6, zsize = 1e-6):
     return
 
 def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
-    
+
     range_h = np.linspace(range_h[0], range_h[1], range_h[2])
     range_v = np.linspace(range_v[0], range_v[1], range_v[2])
 
-    
+
 
     # objectpointX = np.zeros((len(range_h),len(range_v)))
     focuspointX = np.zeros((len(range_h),len(range_v)))
@@ -10956,7 +11245,7 @@ def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
             focuspointZ[i,j] = focuspoint[2]
             focussizeH[i,j] = np.max(detcenter[1,:]) - np.min(detcenter[1,:])
             focussizeV[i,j] = np.max(detcenter[2,:]) - np.min(detcenter[2,:])
-    
+
     fig,axs = plt.subplots(2, 2)
     im00 = axs[0, 0].scatter(focuspointY,focuspointX,c=focussizeH, cmap='jet')
     axs[0, 0].set_title('focussizeH')
@@ -10998,21 +11287,21 @@ def calc_FoC(initial_params,range_h=[-5e-3,5e-3,15],range_v=[-5e-3,5e-3,15]):
     axs2[0,0].plot(focuspointY[int(len(range_v)/2),:],focuspointX[int(len(range_v)/2),:])
     axs2[0, 0].set_ylabel('focuspointY')
     axs2[0, 0].set_xlabel('focuspointX')
-    
+
     axs2[0,1].plot(focuspointZ[int(len(range_v)/2),:],focuspointX[int(len(range_v)/2),:])
     axs2[0, 1].set_ylabel('focuspointZ')
     axs2[0, 1].set_xlabel('focuspointX')
-    
+
     axs2[1,0].plot(focuspointY[:,int(len(range_h)/2)],focuspointX[:,int(len(range_h)/2)])
     axs2[1, 0].set_ylabel('focuspointY')
     axs2[1, 0].set_xlabel('focuspointX')
-    
+
     axs2[1,1].plot(focuspointZ[:,int(len(range_h)/2)],focuspointX[:,int(len(range_h)/2)])
     axs2[1, 1].set_ylabel('focuspointZ')
     axs2[1, 1].set_xlabel('focuspointX')
-    plt.show()        
-    
-    
+    plt.show()
+
+
     return
 
 def Legendrealignment(initial_params, num_param, range_param,tuning=True):
@@ -11038,7 +11327,7 @@ def Legendrealignment(initial_params, num_param, range_param,tuning=True):
     col = innerproducts.shape[1]
 
     ### plot
-    
+
     ### default color map
     colors = plt.cm.viridis(np.linspace(0, 1, col))
     for i in range(col):
@@ -11075,11 +11364,69 @@ def Legendrealignment(initial_params, num_param, range_param,tuning=True):
     plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_all.png'))
     plt.close()
 
+def LegendrealignmentKB(initial_params, num_param, range_param,tuning=True):
+    global option_mpmath
+    # Legendre alignment
+    innerproducts = []
+    pvs = []
+    for i in range(int(len(range_param))):
+        initial_params1 = initial_params.copy()
+        initial_params1[num_param] += range_param[i]
+        option_mpmath = False
+        if tuning:
+            inner, order, pv = auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave',option_legendre=True)
+        # inner, order, pv = plot_result_debug(initial_params1, 'ray_wave',option_legendre=True)
+        innerproducts.append(inner)
+        pvs.append(pv)
+
+    innerproducts = np.array(innerproducts)
+    pvs = np.array(pvs)
+    row = innerproducts.shape[0]
+    col = innerproducts.shape[1]
+
+    ### plot
+
+    ### default color map
+    colors = plt.cm.viridis(np.linspace(0, 1, col))
+    for i in range(col):
+        plt.figure()
+        if False:
+            plt.plot(range_param, innerproducts[:,i], label=f'legendre {order[i]}', color=colors[i])
+            ### linear fit
+            coeffs = np.polyfit(range_param, innerproducts[:,i], 1)
+        else:
+            plt.plot(range_param, pvs[:,i], label=f'legendre {order[i]}', color=colors[i])
+            # plt.ylim(np.min(pvs), np.max(pvs))
+            ### linear fit
+            coeffs = np.polyfit(range_param, pvs[:,i], 1)
+        fit_line = np.polyval(coeffs, range_param)
+        plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.2e}x + {coeffs[1]:.2e}', color=colors[i])
+        plt.xlabel(f'Alignment{ num_param}')
+        plt.ylabel('Inner Product')
+        plt.title(f'Legendre{order[i]} Alignment')
+        plt.legend()
+        plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_{order[i]}.png'))
+        plt.close()
+
+    plt.figure()
+    plt.plot(range_param, pvs[:,-1], label=f'legendre {order[i]}', color='k')
+    # plt.ylim(-0.25, 0.25)
+    ### linear fit
+    coeffs = np.polyfit(range_param, pvs[:,-1], 1)
+    fit_line = np.polyval(coeffs, range_param)
+    plt.plot(range_param, fit_line, '--', label=f'y={coeffs[0]:.6e}x + {coeffs[1]:.6e}', color='k')
+    plt.xlabel(f'Alignment{ num_param}')
+    plt.ylabel('Inner Product')
+    plt.title(f'All Alignment')
+    plt.legend()
+    plt.savefig(os.path.join(directory_name, f'Legendre_alignment_{num_param}_all.png'))
+    plt.close()
+
 
 def Finetuning(initial_params):
     global option_mpmath
     # Legendre alignment
-    num_param = 1 
+    num_param = 1
     range_param = np.linspace(-1e-7, 1e-7, 5)  # 調整範囲を設定
     innerproducts = []
     pvs = []
@@ -11189,6 +11536,7 @@ initial_params = np.array([0., 0.,
 
 if option_AKB == True:
     if option_HighNA == False:
+        print('')
         ### AKB small
         ### Best alignment
         initial_params[9] =  -9.33896492e-07 +1.85e-6
@@ -11199,6 +11547,9 @@ if option_AKB == True:
         initial_params[21] = -1.37494535e-04 +1.85e-6
         initial_params[22] = -2.27244686e-06
 
+        initial_params[21] += 5e-6
+        initial_params[22] += 5e-6
+        initial_params[14] += 5e-6
         # # ### FiX inplane
         # initial_params[9] =  3.32484327e-5
         # initial_params[10] = 0.
@@ -11209,7 +11560,7 @@ if option_AKB == True:
 
 
     else:
-        
+
         print('')
         if option_wolter_3_1:
             print('set astigmatism')
@@ -11220,7 +11571,7 @@ if option_AKB == True:
             # # # ## Plane rotation
             # # # initial_params[8] = 5e-3
             # # # initial_params[20] = 5e-3
-            
+
             # ### setting1
             # initial_params[9] = -27.8843108e-6
             # initial_params[21] = -27.8843108e-6
@@ -11243,15 +11594,19 @@ if option_AKB == True:
             initial_params[13] = 2.3388953500083895e-06 + 5.647457627118644e-08
             initial_params[25] = 2.3388953500083895e-06 + 5.647457627118644e-08
 
-            initial_params[8] = 10.5e-3 + 5e-3
-            initial_params[20] = 10.5e-3 + 5e-3
-            
+            initial_params[8] = 10.5e-3
+            initial_params[20] = 10.5e-3
 
-            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-            initial_params = Finetuning(initial_params)
-            option_mpmath = True
-            plot_result_debug(initial_params,'ray')
-            plot_result_debug(initial_params,'ray_wave')
+
+            # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            # initial_params = Finetuning(initial_params)
+            # # initial_params[0] = 1.3e-04
+            # # initial_params[1] = 1.3e-04
+
+            # option_mpmath = True
+            # plot_result_debug(initial_params,'ray')
+            # plt.plot()
+            # plot_result_debug(initial_params,'ray_wave')
 
             # plt.show()
 
@@ -11259,7 +11614,7 @@ if option_AKB == True:
             # initial_params[24] += -2e-3
             # initial_params[10] += -6.029604417835369e-05
             # initial_params[22] += -6.029604417835369e-05
-            
+
             # ### independent
             # option_set = False
             # initial_params[10] = 1.231404958677686e-05 + 3.0806451612903227e-06
@@ -11308,8 +11663,8 @@ if option_AKB == True:
 
             # initial_params[9] += 7.94e-6
             # initial_params[21] += 7.94e-6
-    
-            if True:
+
+            if False:
                 directory_name = f"output_{timestamp}_wolter_3_1/Default"
                 os.makedirs(directory_name, exist_ok=True)
                 option_mpmath = False
@@ -11368,7 +11723,7 @@ if option_AKB == True:
             initial_params[22] = -0.0049
             # initial_params[8] = 0.36
             # initial_params[20] = 0.36
-             
+
             print('')
         else:
             ### AKB Large
@@ -11392,7 +11747,7 @@ if option_AKB == True:
             # ### 4 Coma
             # initial_params[14] = -0.015
             # initial_params[22] = 0.02
-            
+
             # 3 Manual adjust
             # initial_params[15] = -1e-4
             # initial_params[21] = initial_params[21] - 3e-4
@@ -11416,7 +11771,7 @@ if option_AKB == True:
             # initial_params[14] = 1.53960991e-5
             # initial_params[15] = 5.69757870e-4
             # initial_params[21] = -0.00675583
-            # initial_params[22] = -0.0011852    
+            # initial_params[22] = -0.0011852
             print('')
             # ###  Best alignment?
             initial_params[8] = 0.008
@@ -11449,19 +11804,20 @@ else:
         # initial_params[9] = 4.65100097e-8
         # initial_params[10] = 1.21012885e-7
         #
-        # initial_params[8] = 4.93753036e-01
-        # initial_params[9] = 4.65100097e-08
-        # initial_params[10] = 5e-05
+        initial_params[8] =  -1.29401839e-2
+        initial_params[9] = 1.45758524e-6
+        # initial_params[10] = 1.71175054e-7
+        # initial_params[12] = 1e-6
         print('KB L')
         # initial_params[0] = -0.12
         # initial_params[1] = -0.09
 
         if optKBdesign:
             # l_i1 = np.float64(145.7500024376426)
-            
+
             # # l_o1 = np.float64(0.085)
             # # theta_g1 = np.float64(0.2)
-            # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000        
+            # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000
 
             # var_l_o1 = np.float64(0.15)
             # theta_g1 = np.float64(0.16)
@@ -11474,7 +11830,7 @@ else:
             # vals3 = np.linspace(0.01, 0.03, 5)
             # vals4 = np.linspace(0.1, 0.22, 5)
             # vals5 = np.linspace(0.18, 0.22, 5)
-            
+
             pvs = []
             div_angle1 = []
             div_angle2 = []
@@ -11485,14 +11841,14 @@ else:
             Mag1 = []
             Mag2 = []
 
-            l_i1 = np.float64(140.) 
+            l_i1 = np.float64(140.)
             target_gap = np.float64(0.005)
             target_l_o2 = np.float64(0.02) ### WD
             theta_g1 = np.float64(0.18)
             l_o1 = np.float64(0.2)
-            
-            
-            
+
+
+
             na_o_sin = np.float64(0.082)
             ast = np.float64(0.)
             for val1 in vals1:
@@ -11538,7 +11894,7 @@ else:
                 Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
 
                 plt.close('all')
-                
+
                 kb_manager = KBDesignManager()
 
             directory_name = f"output_{timestamp}_KB"
@@ -11591,8 +11947,43 @@ else:
 # Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
 
 # option_mpmath = False
+
+# initial_params[10] += 1e-5
+# initial_params[2] += 1e-5
+
+# initial_params[2] += 1e-4
+# initial_params[14] += 1e-4
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# plt.show()
+
+steps1 = np.linspace(-1e-4, 1e-4, 5)
+steps2 = np.linspace(-1e-4, 1e-4, 5)
+for step1 in steps1:
+    for step2 in steps2:
+        initial_params1 = initial_params.copy()
+        option_set = True
+        initial_params1[2] += step1
+        initial_params1[14] += step1
+        
+        initial_params1[10] += step2
+        initial_params1[22] += step2
+        
+        folder = f"{step1:.0e}_{step2:.0e}"
+        directory_name = f"output_{timestamp}_wolter_3_1/{folder}"
+        os.makedirs(directory_name, exist_ok=True)
+        txtpath = os.path.join(directory_name, 'initial_params_here.txt')
+        with open(txtpath, 'w') as f:
+            f.write('initial_params1\n')
+            f.write(str(initial_params1) + '\n')
+        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray')
+        # auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+        plt.close('all')
+
+sys.exit()
+plt.show()
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
+plt.show()
 # print('initial_params', initial_params)
 # sys.exit()
 
@@ -11641,9 +12032,9 @@ auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 # # Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 # # Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 
-# # Legendrealignment(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# # Legendrealignment(initial_params, [9], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-# # Legendrealignment(initial_params, [10], np.linspace(-5e-4, 5e-4, 5), tuning=True)
+LegendrealignmentKB(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+LegendrealignmentKB(initial_params, [9], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 # # Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 # # Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
 
@@ -11657,7 +12048,8 @@ auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 sys.exit()
 
 if option_AKB == False:
-    ratio = 0.1*(np.arange(15)+9)
+    ratio = (np.arange(1)+1)
+    print('ratio', ratio)
     initial_params_org = initial_params.copy()
     for i in range(len(ratio)):
         initial_params = initial_params_org.copy()
@@ -11867,7 +12259,7 @@ else:
     option_abrr = 'inplanefix'
     # option_abrr = 'inplaneadjustwithcoma'
     option_adjust_oblique = False
-    
+
 
 
     option_adjust_coma = False
