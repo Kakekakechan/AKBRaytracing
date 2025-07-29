@@ -1145,7 +1145,7 @@ def mpmath_matrix_to_numpy(mat):
     return arr
 
 if option_wolter_3_1:
-    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False, angular_shift = [0.,0.]):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -2345,8 +2345,8 @@ if option_wolter_3_1:
             if option_axial:
                 rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
                 rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
-                rand_p0h = rand_p0h - np.mean(rand_p0h)
-                rand_p0v = rand_p0v - np.mean(rand_p0v)
+                rand_p0h = rand_p0h - np.mean(rand_p0h) + angular_shift[0]
+                rand_p0v = rand_p0v - np.mean(rand_p0v) + angular_shift[1]
             if not option_axial:
                 rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
                 rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
@@ -2361,6 +2361,9 @@ if option_wolter_3_1:
                 phai0[1, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0h)
                 phai0[2, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0v_here)
                 phai0[0, ray_num * i:ray_num * (i + 1)] = 1.
+
+            
+
 
             phai0 = normalize_vector(phai0)
 
@@ -2954,7 +2957,7 @@ if option_wolter_3_1:
                     # plt.axis('equal')
                     # plt.show()
 
-                return
+                return np.nanstd(matrixWave2_Corrected/lambda_)*6
 
             if option == 'ray':
                 print(theta1_v)
@@ -10233,7 +10236,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
                 if option_mode == 'FoC':
                     vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
                 else:
-                    vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
+                    vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0)
             else:
                 vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
             size_v_[i] = np.std(detcenter[2, :])
@@ -10266,7 +10269,7 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
                     if option_mode == 'FoC':
                         vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
                     else:
-                        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test')
+                        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0)
                 else:
                     vmirr_hyp, hmirr_hyp, detcenter, angle = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'test')
                 size_v_[i] = np.std(detcenter[2, :])
@@ -10312,25 +10315,25 @@ def auto_focus_NA(num_adj_astg,initial_params,na_ratio_h,na_ratio_v,option,optio
         print("Warning: Maximum attempts reached. Returning current best result.")
     if option_param == 'FoC':
         print('params = ',initial_params[0:1])
-        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',source_shift=source_shift0,option_tilt = False)
+        vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, 'test',option_tilt = False,source_shift=source_shift0)
         return detcenter
     if option_legendre:
         if option_AKB:
-            innerproducts, orders, pvs = plot_result_debug(initial_params, 'ray_wave',option_legendre=True)
+            innerproducts, orders, pvs = plot_result_debug(initial_params, 'ray_wave',option_legendre=True,source_shift=source_shift0)
         else:
-            innerproducts, orders, pvs = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'ray_wave',option_legendre=True)
+            innerproducts, orders, pvs = KB_debug(initial_params, na_ratio_h, na_ratio_v, 'ray_wave',option_legendre=True,source_shift=source_shift0)
         return innerproducts, orders, pvs
     if option:
         print('params = ',initial_params[0:26])
         if option_AKB:
             if option_disp == 'ray_wave':
-                b = plot_result_debug(initial_params,option_disp)
+                b = plot_result_debug(initial_params,option_disp,source_shift=source_shift0)
                 return b
             # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,option_disp)
             if option_mode == 'FoC':
                 vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, option_disp,source_shift=source_shift0,option_tilt = False)
             else:
-                vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, option_disp)
+                vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params, option_disp,source_shift=source_shift0)
 
         else:
             if option_disp == 'ray_wave':
@@ -11954,7 +11957,41 @@ else:
 # initial_params[2] += 1e-4
 # initial_params[14] += 1e-4
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+# plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
 # plt.show()
+
+length_search = 10
+steps1 = np.linspace(-2e-5, 4e-5, length_search) ### h
+steps2 = np.linspace(-4e-5, 2e-5, length_search) ### v
+pvs = []
+for step2 in steps2:
+    for step1 in steps1:
+        
+        folder = f"angle_h_{step1:.0e}_v_{step2:.0e}"
+        directory_name = f"output_{timestamp}_wolter_3_1/{folder}"
+        os.makedirs(directory_name, exist_ok=True)
+        txtpath = os.path.join(directory_name, 'initial_params_here.txt')
+
+        y_shift = step1* 146.
+        z_shift = step2* 146.
+
+        initial_params1 = initial_params.copy()
+
+        pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift]))
+        # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
+        plt.close('all')
+pvs = np.array(pvs)
+pvs = pvs.reshape(length_search,length_search)
+
+np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
+
+plt.figure()
+plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+plt.colorbar(label='\u03BB')
+plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
+plt.show()
+sys.exit()
 
 steps1 = np.linspace(-1e-4, 1e-4, 5)
 steps2 = np.linspace(-1e-4, 1e-4, 5)
