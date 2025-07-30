@@ -67,8 +67,8 @@ unit = 129
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = True
-option_wolter_3_1 = True
+option_AKB = False
+option_wolter_3_1 = False
 option_wolter_3_3_tandem = False
 option_HighNA = True
 global LowNAratio
@@ -11969,7 +11969,7 @@ for step1 in steps1:
         initial_params1[22] += step2
         
         folder = f"{step1:.0e}_{step2:.0e}"
-        directory_name = f"output_{timestamp}_wolter_3_1/{folder}"
+        directory_name = f"output_{timestamp}_KB{folder}"
         os.makedirs(directory_name, exist_ok=True)
         txtpath = os.path.join(directory_name, 'initial_params_here.txt')
         with open(txtpath, 'w') as f:
