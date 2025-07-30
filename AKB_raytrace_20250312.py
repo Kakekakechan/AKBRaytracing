@@ -1145,7 +1145,7 @@ def mpmath_matrix_to_numpy(mat):
     return arr
 
 if option_wolter_3_1:
-    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False, angular_shift = [0.,0.]):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False, angular_shift = [0.,0.],option_save=True):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -2336,17 +2336,29 @@ if option_wolter_3_1:
                 coeffs_ell_h = shift_z(coeffs_ell_h, decenterZ_ell_h)
 
         if bool_point_source:
+            source_edge_origin = np.zeros((3, 4))
+            phai0_edge_origin = np.zeros((3, 4))
+            rand_p0h_origin = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), 2)
+            rand_p0v_origin = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), 2)
+            rand_p0h_origin = rand_p0h_origin - np.mean(rand_p0h_origin)
+            rand_p0v_origin = rand_p0v_origin - np.mean(rand_p0v_origin)
+            for i in range(2):
+                rand_p0v_origin_here = rand_p0v_origin[i]
+                phai0_edge_origin[1, 2*i : 2*i+2] = np.tan(rand_p0h_origin)
+                phai0_edge_origin[2, 2*i : 2*i+2] = np.tan(rand_p0v_origin_here)
+                phai0_edge_origin[0, 2*i : 2*i+2] = 1.
+
             source = np.zeros((3, ray_num * ray_num))
-            source[0, :] =+ source_shift[0]
-            source[1, :] =+ source_shift[1]
-            source[2, :] =+ source_shift[2]
+            source[0, :] += source_shift[0]
+            source[1, :] += source_shift[1]
+            source[2, :] += source_shift[2]
             # source[1, :] =+ source_shift[1] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
             # source[2, :] =+ source_shift[2] + np.random.uniform(-1e-4, 1e-4, ray_num_H * ray_num_V)
             if option_axial:
                 rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
                 rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
-                rand_p0h = rand_p0h - np.mean(rand_p0h) + angular_shift[0]
-                rand_p0v = rand_p0v - np.mean(rand_p0v) + angular_shift[1]
+                rand_p0h = rand_p0h - np.mean([np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h)])
+                rand_p0v = rand_p0v - np.mean([np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v)])
             if not option_axial:
                 rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
                 rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
@@ -2361,11 +2373,11 @@ if option_wolter_3_1:
                 phai0[1, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0h)
                 phai0[2, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0v_here)
                 phai0[0, ray_num * i:ray_num * (i + 1)] = 1.
-
+            
+            phai0 = normalize_vector(phai0)
+            phai0_edge_origin = normalize_vector(phai0_edge_origin)
             
 
-
-            phai0 = normalize_vector(phai0)
 
             vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source)
             reflect1 = reflect_ray(phai0, norm_vector(coeffs_hyp_v, vmirr_hyp))
@@ -2382,6 +2394,19 @@ if option_wolter_3_1:
 
             mean_reflect4 = np.mean(reflect4,1)
             mean_reflect4 = normalize_vector(mean_reflect4)
+
+            
+
+            vmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_v, phai0_edge_origin, source_edge_origin)
+            reflect1_edge_origin = reflect_ray(phai0_edge_origin, norm_vector(coeffs_hyp_v, vmirr_hyp_edge_origin))
+            vmirr_ell_edge_origin = mirr_ray_intersection(coeffs_ell_v, reflect1_edge_origin, vmirr_hyp_edge_origin)
+            reflect2_edge_origin = reflect_ray(reflect1_edge_origin, norm_vector(coeffs_ell_v, vmirr_ell_edge_origin))
+            hmirr_ell_edge_origin = mirr_ray_intersection(coeffs_ell_h, reflect2_edge_origin, vmirr_ell_edge_origin)
+            reflect3_edge_origin = reflect_ray(reflect2_edge_origin, norm_vector(coeffs_ell_h, hmirr_ell_edge_origin))
+            hmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_h, reflect3_edge_origin, hmirr_ell_edge_origin,negative=True)
+            reflect4_edge_origin = reflect_ray(reflect3_edge_origin, norm_vector(coeffs_hyp_h, hmirr_hyp_edge_origin))
+
+
 
             if option == 'sep_direct':
                 defocus = find_defocus(reflect4, hmirr_hyp, s2f_middle,defocus,ray_num)
@@ -2456,14 +2481,14 @@ if option_wolter_3_1:
                     def mindist(A,B):
                         tree = cKDTree(B.T)
                         dist, idx = tree.query(A.T, k=1)  # Aの各点からBへの最近点距離
-                        min_dist = np.min(dist)
+                        min_dist = np.nanmin(dist)
                         return min_dist
                     print('======================')
-                    print('workX srs 1st',np.min(vmirr_hyp[0,:]) - np.max(source[0,:]))
-                    print('workX 1st 2nd',np.min(vmirr_ell[0,:]) - np.max(vmirr_hyp[0,:]))
-                    print('workX 2nd 3rd',np.min(hmirr_ell[0,:]) - np.max(vmirr_ell[0,:]))
-                    print('workX 3rd 4th',np.min(hmirr_hyp[0,:]) - np.max(hmirr_ell[0,:]))
-                    print('workX 4th fcs',np.min(detcenter[0,:]) - np.max(hmirr_hyp[0,:]))
+                    print('workX srs 1st',np.nanmin(vmirr_hyp[0,:]) - np.nanmax(source[0,:]))
+                    print('workX 1st 2nd',np.nanmin(vmirr_ell[0,:]) - np.nanmax(vmirr_hyp[0,:]))
+                    print('workX 2nd 3rd',np.nanmin(hmirr_ell[0,:]) - np.nanmax(vmirr_ell[0,:]))
+                    print('workX 3rd 4th',np.nanmin(hmirr_hyp[0,:]) - np.nanmax(hmirr_ell[0,:]))
+                    print('workX 4th fcs',np.nanmin(detcenter[0,:]) - np.nanmax(hmirr_hyp[0,:]))
                     print('======================')
                     print('workAbs srs 1st',mindist(source,vmirr_hyp))
                     print('workAbs 1st 2nd',mindist(vmirr_hyp,vmirr_ell))
@@ -2480,23 +2505,35 @@ if option_wolter_3_1:
                     print('4th W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
                     print('4th W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
 
-                    fig,axs = plt.subplots(2,1,sharex=True)
-                    axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
-                    axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
-                    axs[0].plot(hmirr_ell[0,:],hmirr_ell[1,:])
-                    axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
-                    axs[0].plot(detcenter[0,:],detcenter[1,:])
-                    axs[0].set_ylabel('Horizontal')
+                    if option_save:
+                        fig,axs = plt.subplots(2,1,sharex=True)
+                        axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
+                        axs[0].plot(vmirr_ell[0,:],vmirr_ell[1,:])
+                        axs[0].plot(hmirr_ell[0,:],hmirr_ell[1,:])
+                        axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
+                        axs[0].plot(detcenter[0,:],detcenter[1,:])
+                        
+                        axs[0].plot(vmirr_hyp_edge_origin[0,:],vmirr_hyp_edge_origin[1,:],'o')
+                        axs[0].plot(vmirr_ell_edge_origin[0,:],vmirr_ell_edge_origin[1,:],'o')
+                        axs[0].plot(hmirr_ell_edge_origin[0,:],hmirr_ell_edge_origin[1,:],'o')
+                        axs[0].plot(hmirr_hyp_edge_origin[0,:],hmirr_hyp_edge_origin[1,:],'o')
 
-                    axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
-                    axs[1].plot(vmirr_ell[0,:],vmirr_ell[2,:])
-                    axs[1].plot(hmirr_ell[0,:],hmirr_ell[2,:])
-                    axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
-                    axs[1].plot(detcenter[0,:],detcenter[2,:])
-                    axs[1].set_ylabel('Vertical')
-                    axs[0].axis('equal')
-                    axs[1].axis('equal')
-                    plt.savefig('raytrace_mirror_configuration.png')
+                        axs[0].set_ylabel('Horizontal')
+
+                        axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
+                        axs[1].plot(vmirr_ell[0,:],vmirr_ell[2,:])
+                        axs[1].plot(hmirr_ell[0,:],hmirr_ell[2,:])
+                        axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
+                        axs[1].plot(detcenter[0,:],detcenter[2,:])
+
+                        axs[1].plot(vmirr_hyp_edge_origin[0,:],vmirr_hyp_edge_origin[2,:],'o')
+                        axs[1].plot(vmirr_ell_edge_origin[0,:],vmirr_ell_edge_origin[2,:],'o')
+                        axs[1].plot(hmirr_ell_edge_origin[0,:],hmirr_ell_edge_origin[2,:],'o')
+                        axs[1].plot(hmirr_hyp_edge_origin[0,:],hmirr_hyp_edge_origin[2,:],'o')
+                        axs[1].set_ylabel('Vertical')
+                        axs[0].axis('equal')
+                        axs[1].axis('equal')
+                        plt.savefig('raytrace_mirror_configuration.png')
                     # plt.show()
 
                     vec0to1 = normalize_vector(vmirr_hyp - source)
@@ -2505,27 +2542,28 @@ if option_wolter_3_1:
                     vec3to4 = normalize_vector(hmirr_hyp - hmirr_ell)
                     vec4to5 = normalize_vector(detcenter - hmirr_hyp)
 
-                    grazing_angle_1 = np.arccos(np.sum(vec0to1 * vec1to2, axis=0)) / 2
-                    grazing_angle_2 = np.arccos(np.sum(vec1to2 * vec2to3, axis=0)) / 2
-                    grazing_angle_3 = np.arccos(np.sum(vec2to3 * vec3to4, axis=0)) / 2
-                    grazing_angle_4 = np.arccos(np.sum(vec3to4 * vec4to5, axis=0)) / 2
+                    grazing_angle_1 = np.arccos(np.nansum(vec0to1 * vec1to2, axis=0)) / 2
+                    grazing_angle_2 = np.arccos(np.nansum(vec1to2 * vec2to3, axis=0)) / 2
+                    grazing_angle_3 = np.arccos(np.nansum(vec2to3 * vec3to4, axis=0)) / 2
+                    grazing_angle_4 = np.arccos(np.nansum(vec3to4 * vec4to5, axis=0)) / 2
 
                     ### imshow colorbar
-                    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
-                    im0 = axs[0, 0].imshow(grazing_angle_1.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
-                    im1 = axs[0, 1].imshow(grazing_angle_2.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
-                    im2 = axs[1, 0].imshow(grazing_angle_3.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
-                    im3 = axs[1, 1].imshow(grazing_angle_4.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
-                    fig.colorbar(im0, ax=axs[0, 0])
-                    fig.colorbar(im1, ax=axs[0, 1])
-                    fig.colorbar(im2, ax=axs[1, 0])
-                    fig.colorbar(im3, ax=axs[1, 1])
-                    ### title
-                    axs[0, 0].set_title(f'Grazing Angle 1\n{1e3*grazing_angle_1.min():.2f}-{1e3*grazing_angle_1.max():.2f} mrad')
-                    axs[0, 1].set_title(f'Grazing Angle 2\n{1e3*grazing_angle_2.min():.2f}-{1e3*grazing_angle_2.max():.2f} mrad')
-                    axs[1, 0].set_title(f'Grazing Angle 3\n{1e3*grazing_angle_3.min():.2f}-{1e3*grazing_angle_3.max():.2f} mrad')
-                    axs[1, 1].set_title(f'Grazing Angle 4\n{1e3*grazing_angle_4.min():.2f}-{1e3*grazing_angle_4.max():.2f} mrad')
-                    plt.tight_layout()
+                    if option_save:
+                        fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+                        im0 = axs[0, 0].imshow(grazing_angle_1.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                        im1 = axs[0, 1].imshow(grazing_angle_2.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                        im2 = axs[1, 0].imshow(grazing_angle_3.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                        im3 = axs[1, 1].imshow(grazing_angle_4.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                        fig.colorbar(im0, ax=axs[0, 0])
+                        fig.colorbar(im1, ax=axs[0, 1])
+                        fig.colorbar(im2, ax=axs[1, 0])
+                        fig.colorbar(im3, ax=axs[1, 1])
+                        ### title
+                        axs[0, 0].set_title(f'Grazing Angle 1\n{1e3*grazing_angle_1.min():.2f}-{1e3*grazing_angle_1.max():.2f} mrad')
+                        axs[0, 1].set_title(f'Grazing Angle 2\n{1e3*grazing_angle_2.min():.2f}-{1e3*grazing_angle_2.max():.2f} mrad')
+                        axs[1, 0].set_title(f'Grazing Angle 3\n{1e3*grazing_angle_3.min():.2f}-{1e3*grazing_angle_3.max():.2f} mrad')
+                        axs[1, 1].set_title(f'Grazing Angle 4\n{1e3*grazing_angle_4.min():.2f}-{1e3*grazing_angle_4.max():.2f} mrad')
+                        plt.tight_layout()
                     # plt.show()
 
                 angle = reflect4
@@ -2589,26 +2627,26 @@ if option_wolter_3_1:
 
                 if option == 'ray':
                     angles_between_rad, angles_yx_rad, angles_zx_rad = angle_between_2vector(reflect4,norm_vector(coeffs_det, detcenter))
-                    theta_z = (np.max(angles_yx_rad) + np.min(angles_yx_rad))/2
-                    theta_y = -(np.max(angles_zx_rad) + np.min(angles_zx_rad))/2
+                    theta_z = (np.nanmax(angles_yx_rad) + np.nanmin(angles_yx_rad))/2
+                    theta_y = -(np.nanmax(angles_zx_rad) + np.nanmin(angles_zx_rad))/2
                     print('NA_h')
-                    print(np.sin((np.max(angles_yx_rad) - np.min(angles_yx_rad))/2))
+                    print(np.sin((np.nanmax(angles_yx_rad) - np.nanmin(angles_yx_rad))/2))
                     print('angles_yx_rad',np.sort(angles_yx_rad)[:5][::-1])
                     print('angles_yx_rad',np.sort(angles_yx_rad)[-5:][::-1])
                     print('NA_v')
-                    print(np.sin((np.max(angles_zx_rad) - np.min(angles_zx_rad))/2))
+                    print(np.sin((np.nanmax(angles_zx_rad) - np.nanmin(angles_zx_rad))/2))
                     print('angles_zx_rad',np.sort(angles_zx_rad)[:5][::-1])
                     print('angles_zx_rad',np.sort(angles_zx_rad)[-5:][::-1])
                     print('type(detcenter[0,0])',type(detcenter[0,0]))
                     print('theta_y',theta_y)
                     print('theta_z',theta_z)
                 else:
-                    theta_y = -np.mean(np.arctan(angle[2, :]/angle[0, :]))
+                    theta_y = -np.nanmean(np.arctan(angle[2, :]/angle[0, :]))
                     # if option == 'ray':
                     #     plt.figure()
                     #     plt.plot(np.arctan(angle[2, :]/angle[0, :]))
                     #     plt.show()
-                    theta_z = np.mean(np.arctan(angle[1, :]/angle[0, :]))
+                    theta_z = np.nanmean(np.arctan(angle[1, :]/angle[0, :]))
 
                 reflect4_rotated = rotate_vectors(reflect4, -theta_y, -theta_z)
                 focus_apprx = np.mean(detcenter,axis=1)
@@ -2646,33 +2684,33 @@ if option_wolter_3_1:
                 dist4tofocus = np.linalg.norm(detcenter - hmirr_hyp, axis=0)
                 vector4tofocus = (detcenter - hmirr_hyp) / dist4tofocus
                 totalDist = dist0to1 + dist1to2 + dist2to3 + dist3to4 + dist4tofocus
-                DistError = (totalDist - np.mean(totalDist))*1e9
+                DistError = (totalDist - np.nanmean(totalDist))*1e9
 
 
 
                 dist4tofocus2 = np.linalg.norm(detcenter2 - hmirr_hyp, axis=0)
                 vector4tofocus2 = (detcenter2 - hmirr_hyp) / dist4tofocus2
                 totalDist2 = dist0to1 + dist1to2 + dist2to3 + dist3to4 + dist4tofocus2
-                DistError2 = (totalDist2 - np.mean(totalDist2))*1e9
-                print('detcenter',np.mean(detcenter,axis=1))
-                print('detcenter2',np.mean(detcenter2,axis=1))
-                print('dist0to1',np.mean(dist0to1))
-                print('dist1to2',np.mean(dist1to2))
-                print('dist2to3',np.mean(dist2to3))
-                print('dist3to4',np.mean(dist3to4))
-                print('totalDist',np.mean(totalDist))
-                print('dist4tofocus std',np.mean(dist4tofocus))
-                print('dist0to1 std',np.std(dist0to1))
-                print('dist1to2 std',np.std(dist1to2))
-                print('dist2to3 std',np.std(dist2to3))
-                print('dist3to4 std',np.std(dist3to4))
-                print('dist4tofocus std',np.std(dist4tofocus))
-                print('totalDist std',np.std(totalDist))
-                print('np.std(totalDist)',np.std(totalDist))
-                print('np.mean(totalDist)',np.mean(totalDist))
-                print('np.mean(totalDist2)',np.mean(totalDist2))
-                print('np.mean(totalDist2-totalDist)',np.mean(totalDist2-totalDist))
-                print('np.std(totalDist2-totalDist)',np.std(totalDist2-totalDist))
+                DistError2 = (totalDist2 - np.nanmean(totalDist2))*1e9
+                print('detcenter',np.nanmean(detcenter,axis=1))
+                print('detcenter2',np.nanmean(detcenter2,axis=1))
+                print('dist0to1',np.nanmean(dist0to1))
+                print('dist1to2',np.nanmean(dist1to2))
+                print('dist2to3',np.nanmean(dist2to3))
+                print('dist3to4',np.nanmean(dist3to4))
+                print('totalDist',np.nanmean(totalDist))
+                print('dist4tofocus std',np.nanmean(dist4tofocus))
+                print('dist0to1 std',np.nanstd(dist0to1))
+                print('dist1to2 std',np.nanstd(dist1to2))
+                print('dist2to3 std',np.nanstd(dist2to3))
+                print('dist3to4 std',np.nanstd(dist3to4))
+                print('dist4tofocus std',np.nanstd(dist4tofocus))
+                print('totalDist std',np.nanstd(totalDist))
+                print('np.std(totalDist)',np.nanstd(totalDist))
+                print('np.mean(totalDist)',np.nanmean(totalDist))
+                print('np.mean(totalDist2)',np.nanmean(totalDist2))
+                print('np.mean(totalDist2-totalDist)',np.nanmean(totalDist2-totalDist))
+                print('np.std(totalDist2-totalDist)',np.nanstd(totalDist2-totalDist))
                 # 補間するグリッドを作成
                 grid_H, grid_V = np.meshgrid(
                     np.linspace(detcenter2[1, :].min(), detcenter2[1, :].max(), ray_num_H),
@@ -2683,7 +2721,7 @@ if option_wolter_3_1:
                 # グリッド上にデータを補間 (method: 'linear', 'nearest', 'cubic' から選択)
                 if False:
                     matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
-                    meanFocus = np.mean(detcenter,axis=1)
+                    meanFocus = np.nanmean(detcenter,axis=1)
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
                     matrixSph2 = griddata((detcenter2[1, :], detcenter2[2, :]), Sph, (grid_H, grid_V), method='cubic')
 
@@ -2694,17 +2732,17 @@ if option_wolter_3_1:
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
                 else:
                     matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
-                    meanFocus = np.mean(detcenter,axis=1)
+                    meanFocus = np.nanmean(detcenter,axis=1)
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
 
                     Wave2 = DistError2 - Sph
                     print('meanFocus',meanFocus)
-                    print('np.mean(DistError2)',np.mean(DistError2))
-                    print('np.std(DistError2)',np.std(DistError2))
-                    print('np.mean(Sph)',np.mean(Sph))
-                    print('np.std(Sph)',np.std(Sph))
-                    print('np.mean(Wave2)',np.mean(Wave2))
-                    print('np.std(Wave2)',np.std(Wave2))
+                    print('np.mean(DistError2)',np.nanmean(DistError2))
+                    print('np.std(DistError2)',np.nanstd(DistError2))
+                    print('np.mean(Sph)',np.nanmean(Sph))
+                    print('np.std(Sph)',np.nanstd(Sph))
+                    print('np.mean(Wave2)',np.nanmean(Wave2))
+                    print('np.std(Wave2)',np.nanstd(Wave2))
                     print('grid_H.shape',grid_H.shape)
                     print('Wave2.shape',Wave2.shape)
                     print('detcenter2.shape',detcenter2.shape)
@@ -2712,8 +2750,9 @@ if option_wolter_3_1:
                     matrixWave2 = griddata((detcenter2[1, :], detcenter2[2, :]), Wave2, (grid_H, grid_V), method='cubic')
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
 
-                np.savetxt('matrixWave2(nm).txt',matrixWave2)
-                tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
+                if option_save:
+                    np.savetxt('matrixWave2(nm).txt',matrixWave2)
+                    tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
 
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
@@ -2758,70 +2797,35 @@ if option_wolter_3_1:
                     plt.ylabel('Y (nm)')
 
 
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
-                plt.colorbar(label='\u03BB')
-                # plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-                plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
+                if option_save:
+                    plt.figure()
+                    plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+                    plt.colorbar(label='\u03BB')
+                    # plt.colorbar(label='wavefront error (nm)')
+                    plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                    plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
 
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
-                plt.colorbar(label='\u03BB')
-                # plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-                plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
-
-                np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
+                    plt.figure()
+                    plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
+                    plt.colorbar(label='\u03BB')
+                    # plt.colorbar(label='wavefront error (nm)')
+                    plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                    plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
+                if option_save:
+                    np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
                 # plt.show()
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
                 rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=matrixWave2.shape[0])
+                if option_save:
+                    np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
+                    plt.figure()
+                    plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
+                    plt.savefig(os.path.join(directory_name, 'rectified_img.png'), transparent=True, dpi=300)
 
-                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
-                plt.figure()
-                plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
-                plt.savefig(os.path.join(directory_name, 'rectified_img.png'), transparent=True, dpi=300)
+                    plt.figure()
+                    plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
+                    plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
 
-                plt.figure()
-                plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
-                plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
-
-
-                assesorder = 5
-                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
-                length = len(inner_products)
-                pvs = np.zeros(length+1)
-                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
-                for i in range(length):
-                    ny = orders[i][0]
-                    nx = orders[i][1]
-                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
-                    pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
-                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
-                    axes[ny, nx].axis('off')
-
-                    ### set colorbar for each subplot
-                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
-                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
-                fit_sum = np.sum(fit_datas, axis=0)
-                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-                # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
-                np.savetxt(os.path.join(directory_name, 'inner_products.csv'), inner_products, delimiter=',')
-                np.savetxt(os.path.join(directory_name, 'orders.csv'), orders, delimiter=',')
-
-                plt.tight_layout()
-                if option_legendre:
-                    plt.close()
-                    print('inner_products',inner_products)
-                    print('orders',orders)
-                    pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
-                    return inner_products, orders, pvs
-                else:
-                    plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
 
                     assesorder = 5
                     fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -2832,130 +2836,166 @@ if option_wolter_3_1:
                         ny = orders[i][0]
                         nx = orders[i][1]
                         print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                        axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                        axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
                         pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
                         axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
                         axes[ny, nx].axis('off')
 
                         ### set colorbar for each subplot
                         # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-                    axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                    axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
                     cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
                     fit_sum = np.sum(fit_datas, axis=0)
-                    axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                    axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
                     # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-                    axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-                    plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
-
-                    conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
-
-                    # テキストファイルに変数の値や計算条件を書き込む
-                    with open(conditions_file_path, 'w') as file:
-                        file.write("input\n")
-                        file.write("====================\n")
-                        file.write(f"params[0]: {params[0]}\n")
-                        file.write(f"params[1]: {params[1]}\n")
-                        file.write(f"params[2]: {params[2]}\n")
-                        file.write(f"params[3]: {params[3]}\n")
-                        file.write(f"params[4]: {params[4]}\n")
-                        file.write(f"params[5]: {params[5]}\n")
-                        file.write(f"params[6]: {params[6]}\n")
-                        file.write(f"params[7]: {params[7]}\n")
-                        file.write(f"params[8]: {params[8]}\n")
-                        file.write(f"params[9]: {params[9]}\n")
-                        file.write(f"params[10]: {params[10]}\n")
-                        file.write(f"params[11]: {params[11]}\n")
-                        file.write(f"params[12]: {params[12]}\n")
-                        file.write(f"params[13]: {params[13]}\n")
-                        file.write(f"params[14]: {params[14]}\n")
-                        file.write(f"params[15]: {params[15]}\n")
-                        file.write(f"params[16]: {params[16]}\n")
-                        file.write(f"params[17]: {params[17]}\n")
-                        file.write(f"params[18]: {params[18]}\n")
-                        file.write(f"params[19]: {params[19]}\n")
-                        file.write(f"params[20]: {params[20]}\n")
-                        file.write(f"params[21]: {params[21]}\n")
-                        file.write(f"params[22]: {params[22]}\n")
-                        file.write(f"params[23]: {params[23]}\n")
-                        file.write(f"params[24]: {params[24]}\n")
-                        file.write(f"params[25]: {params[25]}\n")
-                    # plt.show()
-
-
-
-                if False:
-                    # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
-                    calcrange=1.e-6
-                    psf, x_out, y_out = fresnel_integral(
-                        phi=matrixWave2_Corrected*1e-9,
-                        grid_x=grid_H-np.mean(grid_H),
-                        grid_y=grid_V-np.mean(grid_V),
-                        lambda_=lambda_*1e-9,
-                        z=-defocusWave,
-                        x_out_range=(-calcrange, calcrange),
-                        y_out_range=(-calcrange, calcrange),
-                        dx_out=calcrange/65,
-                        dy_out=calcrange/65,
-                    )
-
-                    def compute_fwhm(x, intensity_1d):
-                        """1次元の強度分布から FWHM を計算"""
-                        dx = np.abs(x[1] - x[0])
-                        num_over_half_max = np.sum(intensity_1d >= 0.5 * np.max(intensity_1d))
-                        fwhm = (num_over_half_max-1) * dx
-                        return fwhm
-                    psf_x = psf[psf.shape[0] // 2, :]
-                    psf_y = psf[:, psf.shape[1] // 2]
-                    half_max = 0.5 * np.max(psf)
-                    mask = psf >= half_max
-                    dx = np.abs(x_out[1] - x_out[0])
-                    dy = np.abs(y_out[1] - y_out[0])
-                    area = np.sum(mask) * dx * dy
-                    effective_diameter = np.sqrt(area)
-                    # fwhm_x = effective_diameter
-                    # fwhm_y = effective_diameter
-                    fwhm_x = compute_fwhm(x_out, psf_x)
-                    fwhm_y = compute_fwhm(y_out, psf_y)
-
-                    print(f"FWHM_x = {fwhm_x:.3e} m")
-                    print(f"FWHM_y = {fwhm_y:.3e} m")
-                    print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
-
-                    plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
-                    plt.xlabel("x [m]")
-                    plt.ylabel("y [m]")
-                    plt.title("PSF (Fresnel Approx.)")
-                    plt.colorbar()
-                    # plt.show()
-                    fig, ax = plt.subplots(2, 1, figsize=(6, 5))
-                    ax[0].plot(x_out, psf_x)
-                    ax[0].axhline(np.max(psf_x)/2, color='gray', linestyle='--')
-                    ax[0].set_title(f"PSF (Fresnel Approx.) X Profile — FWHM = {fwhm_x*1e6:.2f} μm")
-                    ax[0].set_xlabel("x [m]")
-                    ax[0].set_ylabel("Intensity")
-
-                    ax[1].plot(y_out, psf_y)
-                    ax[1].axhline(np.max(psf_y)/2, color='gray', linestyle='--')
-                    ax[1].set_title(f"Y Profile — FWHM = {fwhm_y*1e6:.2f} μm")
-                    ax[1].set_xlabel("y [m]")
-                    ax[1].set_ylabel("Intensity")
+                    axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                    # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+                    np.savetxt(os.path.join(directory_name, 'inner_products.csv'), inner_products, delimiter=',')
+                    np.savetxt(os.path.join(directory_name, 'orders.csv'), orders, delimiter=',')
 
                     plt.tight_layout()
-                    plt.show()
+                    if option_legendre:
+                        plt.close()
+                        print('inner_products',inner_products)
+                        print('orders',orders)
+                        pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
+                        return inner_products, orders, pvs
+                    else:
+                        plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
 
-                    # plt.figure()
-                    # sample_detcenter = detcenter2.copy()
-                    # sample_DistError = DistError2.copy()
-                    # sample = np.vstack([sample_detcenter, sample_DistError])
-                    # sizeh_here = ray_num_H
-                    # sizev_here = ray_num_V
-                    # while sizeh_here > 33:
-                    #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                    # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                    # # カラーバーを追加
-                    # plt.colorbar(scatter, label='OPL error (nm)')
-                    # plt.axis('equal')
-                    # plt.show()
+                        assesorder = 5
+                        fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                        length = len(inner_products)
+                        pvs = np.zeros(length+1)
+                        fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                        for i in range(length):
+                            ny = orders[i][0]
+                            nx = orders[i][1]
+                            print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                            axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                            pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                            axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                            axes[ny, nx].axis('off')
+
+                            ### set colorbar for each subplot
+                            # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                        axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                        cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                        fit_sum = np.sum(fit_datas, axis=0)
+                        axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                        # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                        axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                        plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                        conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                        # テキストファイルに変数の値や計算条件を書き込む
+                        with open(conditions_file_path, 'w') as file:
+                            file.write("input\n")
+                            file.write("====================\n")
+                            file.write(f"params[0]: {params[0]}\n")
+                            file.write(f"params[1]: {params[1]}\n")
+                            file.write(f"params[2]: {params[2]}\n")
+                            file.write(f"params[3]: {params[3]}\n")
+                            file.write(f"params[4]: {params[4]}\n")
+                            file.write(f"params[5]: {params[5]}\n")
+                            file.write(f"params[6]: {params[6]}\n")
+                            file.write(f"params[7]: {params[7]}\n")
+                            file.write(f"params[8]: {params[8]}\n")
+                            file.write(f"params[9]: {params[9]}\n")
+                            file.write(f"params[10]: {params[10]}\n")
+                            file.write(f"params[11]: {params[11]}\n")
+                            file.write(f"params[12]: {params[12]}\n")
+                            file.write(f"params[13]: {params[13]}\n")
+                            file.write(f"params[14]: {params[14]}\n")
+                            file.write(f"params[15]: {params[15]}\n")
+                            file.write(f"params[16]: {params[16]}\n")
+                            file.write(f"params[17]: {params[17]}\n")
+                            file.write(f"params[18]: {params[18]}\n")
+                            file.write(f"params[19]: {params[19]}\n")
+                            file.write(f"params[20]: {params[20]}\n")
+                            file.write(f"params[21]: {params[21]}\n")
+                            file.write(f"params[22]: {params[22]}\n")
+                            file.write(f"params[23]: {params[23]}\n")
+                            file.write(f"params[24]: {params[24]}\n")
+                            file.write(f"params[25]: {params[25]}\n")
+                        # plt.show()
+
+
+
+                    if False:
+                        # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
+                        calcrange=1.e-6
+                        psf, x_out, y_out = fresnel_integral(
+                            phi=matrixWave2_Corrected*1e-9,
+                            grid_x=grid_H-np.mean(grid_H),
+                            grid_y=grid_V-np.mean(grid_V),
+                            lambda_=lambda_*1e-9,
+                            z=-defocusWave,
+                            x_out_range=(-calcrange, calcrange),
+                            y_out_range=(-calcrange, calcrange),
+                            dx_out=calcrange/65,
+                            dy_out=calcrange/65,
+                        )
+
+                        def compute_fwhm(x, intensity_1d):
+                            """1次元の強度分布から FWHM を計算"""
+                            dx = np.abs(x[1] - x[0])
+                            num_over_half_max = np.sum(intensity_1d >= 0.5 * np.max(intensity_1d))
+                            fwhm = (num_over_half_max-1) * dx
+                            return fwhm
+                        psf_x = psf[psf.shape[0] // 2, :]
+                        psf_y = psf[:, psf.shape[1] // 2]
+                        half_max = 0.5 * np.max(psf)
+                        mask = psf >= half_max
+                        dx = np.abs(x_out[1] - x_out[0])
+                        dy = np.abs(y_out[1] - y_out[0])
+                        area = np.sum(mask) * dx * dy
+                        effective_diameter = np.sqrt(area)
+                        # fwhm_x = effective_diameter
+                        # fwhm_y = effective_diameter
+                        fwhm_x = compute_fwhm(x_out, psf_x)
+                        fwhm_y = compute_fwhm(y_out, psf_y)
+
+                        print(f"FWHM_x = {fwhm_x:.3e} m")
+                        print(f"FWHM_y = {fwhm_y:.3e} m")
+                        print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
+
+                        plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
+                        plt.xlabel("x [m]")
+                        plt.ylabel("y [m]")
+                        plt.title("PSF (Fresnel Approx.)")
+                        plt.colorbar()
+                        # plt.show()
+                        fig, ax = plt.subplots(2, 1, figsize=(6, 5))
+                        ax[0].plot(x_out, psf_x)
+                        ax[0].axhline(np.max(psf_x)/2, color='gray', linestyle='--')
+                        ax[0].set_title(f"PSF (Fresnel Approx.) X Profile — FWHM = {fwhm_x*1e6:.2f} μm")
+                        ax[0].set_xlabel("x [m]")
+                        ax[0].set_ylabel("Intensity")
+
+                        ax[1].plot(y_out, psf_y)
+                        ax[1].axhline(np.max(psf_y)/2, color='gray', linestyle='--')
+                        ax[1].set_title(f"Y Profile — FWHM = {fwhm_y*1e6:.2f} μm")
+                        ax[1].set_xlabel("y [m]")
+                        ax[1].set_ylabel("Intensity")
+
+                        plt.tight_layout()
+                        plt.show()
+
+                        # plt.figure()
+                        # sample_detcenter = detcenter2.copy()
+                        # sample_DistError = DistError2.copy()
+                        # sample = np.vstack([sample_detcenter, sample_DistError])
+                        # sizeh_here = ray_num_H
+                        # sizev_here = ray_num_V
+                        # while sizeh_here > 33:
+                        #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
+                        # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
+                        # # カラーバーを追加
+                        # plt.colorbar(scatter, label='OPL error (nm)')
+                        # plt.axis('equal')
+                        # plt.show()
 
                 return np.nanstd(matrixWave2_Corrected/lambda_)*6
 
@@ -4395,8 +4435,8 @@ elif option_wolter_3_3_tandem:
             if option_axial:
                 rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
                 rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
-                rand_p0h = rand_p0h - np.mean(rand_p0h)
-                rand_p0v = rand_p0v - np.mean(rand_p0v)
+                rand_p0h = rand_p0h - np.mean([np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h)])
+                rand_p0v = rand_p0v - np.mean([np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v)])
             if not option_axial:
                 rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
                 rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
@@ -7870,7 +7910,7 @@ class KBDesignManager:
             self.Ell1, self.Ell2 = KB_design_NAbased.KB_design(self.l_i1, self.l_o1, self.theta_g1, self.na_o_sin_v, self.na_o_sin_h, self.target_l_o2, self.target_gap, self.ast)
         return self.Ell1, self.Ell2
 kb_manager = KBDesignManager()
-def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
+def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_shift=[0.,0.,0.],option_save=True):
     defocus, astigH, \
     pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
     pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -8076,8 +8116,10 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
             # ### acceptance 大きめ
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
-            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
+            ### SPIE用v1
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.02), np.float64(0.21), np.float64(0.022)]
             ### woltter と揃えて
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.10811916636581032),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
@@ -8424,16 +8466,17 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
     # astig_v = 0.5
     # print(astig_v_)
     # Input parameters
-    ray_num_H = 33
-    ray_num_V = 33
-    ray_num = 33
+    ray_num_H = 53
+    ray_num_V = 53
+    ray_num = 53
     if option == 'ray':
-        ray_num_H = 33
-        ray_num_V = 33
+        ray_num_H = 53
+        ray_num_V = 53
         # ray_num = 1
     if option == 'wave' or option == 'ray_wave':
         ray_num_H = wave_num_H
         ray_num_V = wave_num_V
+        ray_num = wave_num_H
 
     bool_draw = True
     bool_point_source = True
@@ -8894,14 +8937,26 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
         coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterZ_hyp_h)
 
     if bool_point_source:
+        source_edge_origin = np.zeros((3, 4))
+        phai0_edge_origin = np.zeros((3, 4))
+        rand_p0h_origin = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), 2)
+        rand_p0v_origin = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), 2)
+        rand_p0h_origin = rand_p0h_origin - np.mean(rand_p0h_origin)
+        rand_p0v_origin = rand_p0v_origin - np.mean(rand_p0v_origin)
+        for i in range(2):
+            rand_p0v_origin_here = rand_p0v_origin[i]
+            phai0_edge_origin[1, 2*i : 2*i+2] = np.tan(rand_p0h_origin)
+            phai0_edge_origin[2, 2*i : 2*i+2] = np.tan(rand_p0v_origin_here)
+            phai0_edge_origin[0, 2*i : 2*i+2] = 1.
         source = np.zeros((3, ray_num_H * ray_num_V))
+        source[0, :] += source_shift[0]
+        source[1, :] += source_shift[1]
+        source[2, :] += source_shift[2]
         if option_axial:
-            rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num_H)
-            rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num_V)
-            rand_p0h = rand_p0h - np.mean(rand_p0h)
-            rand_p0v = rand_p0v - np.mean(rand_p0v)
-            rand_p0h = rand_p0h*na_ratio_h
-            rand_p0v = rand_p0v*na_ratio_v
+            rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
+            rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
+            rand_p0h = rand_p0h - np.mean([np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h)])
+            rand_p0v = rand_p0v - np.mean([np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v)])
         if not option_axial:
             rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num_H)
             rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num_V)
@@ -9001,7 +9056,12 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
             coeffs_det[9] = -(s2f_middle + defocus)
             detcenter = plane_ray_intersection(coeffs_det, reflect2, hmirr_hyp)
 
+            vmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_v, phai0_edge_origin, source_edge_origin)
+            reflect1_edge_origin = reflect_ray(phai0_edge_origin, norm_vector(coeffs_hyp_v, vmirr_hyp_edge_origin))
+            hmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_h, reflect1_edge_origin, vmirr_hyp_edge_origin)
+            
             if option == 'ray':
+                if option_save:
                     from scipy.spatial import cKDTree
                     def mindist(A,B):
                         tree = cKDTree(B.T)
@@ -9021,7 +9081,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
                     print('1st W lower',np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num]))
                     print('2nd W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
                     print('2nd W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
-
+                    
                     conditions_file_path = os.path.join(directory_name, 'kb_configuration.txt')
 
                     # テキストファイルに変数の値や計算条件を書き込む
@@ -9042,17 +9102,40 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
                     axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
                     axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
                     axs[0].plot(detcenter[0,:],detcenter[1,:])
+                    axs[0].plot(vmirr_hyp_edge_origin[0,:],vmirr_hyp_edge_origin[1,:], 'o')
+                    axs[0].plot(hmirr_hyp_edge_origin[0,:],hmirr_hyp_edge_origin[1,:], 'o')
                     axs[0].set_ylabel('Horizontal')
 
                     axs[1].plot(vmirr_hyp[0,:],vmirr_hyp[2,:])
                     axs[1].plot(hmirr_hyp[0,:],hmirr_hyp[2,:])
                     axs[1].plot(detcenter[0,:],detcenter[2,:])
+                    axs[1].plot(vmirr_hyp_edge_origin[0,:],vmirr_hyp_edge_origin[2,:], 'o')
+                    axs[1].plot(hmirr_hyp_edge_origin[0,:],hmirr_hyp_edge_origin[2,:], 'o')
                     axs[1].set_ylabel('Vertical')
                     axs[0].axis('equal')
                     axs[1].axis('equal')
                     plt.savefig(os.path.join(directory_name,'raytrace_mirror_configuration.png'))
                     # plt.show()
+                
+                vec0to1 = normalize_vector(vmirr_hyp - source)
+                vec1to2 = normalize_vector(hmirr_hyp - vmirr_hyp)
+                vec2to3 = normalize_vector(detcenter - hmirr_hyp)
 
+                grazing_angle_1 = np.arccos(np.nansum(vec0to1 * vec1to2, axis=0)) / 2
+                grazing_angle_2 = np.arccos(np.nansum(vec1to2 * vec2to3, axis=0)) / 2
+                ### imshow colorbar
+                if option_save:
+                    fig, axs = plt.subplots(2, 1, figsize=(10, 10))
+                    im0 = axs[0].imshow(grazing_angle_1.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                    im1 = axs[1].imshow(grazing_angle_2.reshape(ray_num, ray_num), cmap='jet', aspect='auto')
+                    fig.colorbar(im0, ax=axs[0])
+                    fig.colorbar(im1, ax=axs[1])
+                    ### title
+                    axs[0].set_title(f'Grazing Angle 1\n{1e3*grazing_angle_1.min():.2f}-{1e3*grazing_angle_1.max():.2f} mrad')
+                    axs[1].set_title(f'Grazing Angle 2\n{1e3*grazing_angle_2.min():.2f}-{1e3*grazing_angle_2.max():.2f} mrad')
+                    plt.tight_layout()
+                    plt.savefig(os.path.join(directory_name,'grazing_angle.png'))
+                # plt.show()
 
             angle1to2 = reflect1.copy()
             angle = reflect2.copy()
@@ -9221,132 +9304,33 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
             matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
 
             print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
+            if option_save:
+                plt.figure()
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+                plt.colorbar(label='\u03BB')
+                # plt.colorbar(label='wavefront error (nm)')
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
 
-            plt.figure()
-            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
-            plt.colorbar(label='\u03BB')
-            # plt.colorbar(label='wavefront error (nm)')
-            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-            plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
+                plt.figure()
+                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
+                plt.colorbar(label='\u03BB')
+                # plt.colorbar(label='wavefront error (nm)')
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
 
-            plt.figure()
-            plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
-            plt.colorbar(label='\u03BB')
-            # plt.colorbar(label='wavefront error (nm)')
-            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-            plt.savefig(os.path.join(directory_name,'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
-
-            np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
+                np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
             # plt.show()
             pv = np.nanstd(matrixWave2_Corrected/lambda_)*6
 
             rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
+            if option_save:
+                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
 
-            np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
-
-            plt.figure()
-            plt.imshow(rectified_img, cmap='jet',vmin = -1/512,vmax = 1/512)
-            plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-            plt.savefig(os.path.join(directory_name,'rectified_img.png'), transparent=True, dpi=300)
-
-            assesorder = 5
-            fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
-            length = len(inner_products)
-            pvs = np.zeros(length+1)
-            fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
-            for i in range(length):
-                ny = orders[i][0]
-                nx = orders[i][1]
-                print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
-                pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
-                axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
-                axes[ny, nx].axis('off')
-
-                ### set colorbar for each subplot
-                # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-            axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
-            cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
-            fit_sum = np.sum(fit_datas, axis=0)
-            axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-            # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-            axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-            # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
-            np.savetxt(os.path.join(directory_name, 'inner_products.txt'), inner_products)
-            np.savetxt(os.path.join(directory_name, 'orders.txt'), orders)
-            np.savetxt(os.path.join(directory_name, 'pvs.txt'), pvs)
-            np.savetxt(os.path.join(directory_name, 'fit_sum.txt'), fit_sum)
-            np.savetxt(os.path.join(directory_name, 'pv.txt'), np.array([pv]))
-            plt.tight_layout()
-
-            plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
-    
-            # assesorder = 5
-            # fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
-            # length = len(inner_products)
-            # pvs = np.zeros(length+1)
-            # fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
-            # for i in range(length):
-            #     ny = orders[i][0]
-            #     nx = orders[i][1]
-            #     print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-            #     axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
-            #     pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
-            #     axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
-            #     axes[ny, nx].axis('off')
-
-            #     ### set colorbar for each subplot
-            #     # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-            # axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
-            # cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
-            # fit_sum = np.sum(fit_datas, axis=0)
-            # axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-            # # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-            # axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-            # plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
-
-            # conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
-
-            # # テキストファイルに変数の値や計算条件を書き込む
-            # with open(conditions_file_path, 'w') as file:
-            #     file.write("input\n")
-            #     file.write("====================\n")
-            #     file.write(f"params[0]: {params[0]}\n")
-            #     file.write(f"params[1]: {params[1]}\n")
-            #     file.write(f"params[2]: {params[2]}\n")
-            #     file.write(f"params[3]: {params[3]}\n")
-            #     file.write(f"params[4]: {params[4]}\n")
-            #     file.write(f"params[5]: {params[5]}\n")
-            #     file.write(f"params[6]: {params[6]}\n")
-            #     file.write(f"params[7]: {params[7]}\n")
-            #     file.write(f"params[8]: {params[8]}\n")
-            #     file.write(f"params[9]: {params[9]}\n")
-            #     file.write(f"params[10]: {params[10]}\n")
-            #     file.write(f"params[11]: {params[11]}\n")
-            #     file.write(f"params[12]: {params[12]}\n")
-            #     file.write(f"params[13]: {params[13]}\n")
-            #     file.write(f"params[14]: {params[14]}\n")
-            #     file.write(f"params[15]: {params[15]}\n")
-            #     file.write(f"params[16]: {params[16]}\n")
-            #     file.write(f"params[17]: {params[17]}\n")
-            #     file.write(f"params[18]: {params[18]}\n")
-            #     file.write(f"params[19]: {params[19]}\n")
-            #     file.write(f"params[20]: {params[20]}\n")
-            #     file.write(f"params[21]: {params[21]}\n")
-            #     file.write(f"params[22]: {params[22]}\n")
-            #     file.write(f"params[23]: {params[23]}\n")
-            #     file.write(f"params[24]: {params[24]}\n")
-            #     file.write(f"params[25]: {params[25]}\n")
-            # # plt.close()
-
-            if option_legendre:
-                plt.close()
-                print('inner_products',inner_products)
-                print('orders',orders)
-                pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
-                return inner_products, orders, pvs
-            else:
-                plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+                plt.figure()
+                plt.imshow(rectified_img, cmap='jet',vmin = -1/512,vmax = 1/512)
+                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                plt.savefig(os.path.join(directory_name,'rectified_img.png'), transparent=True, dpi=300)
 
                 assesorder = 5
                 fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
@@ -9357,54 +9341,96 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False):
                     ny = orders[i][0]
                     nx = orders[i][1]
                     print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
                     pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
                     axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
                     axes[ny, nx].axis('off')
 
                     ### set colorbar for each subplot
                     # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
                 cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
                 fit_sum = np.sum(fit_datas, axis=0)
-                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
                 # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
-                plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+                np.savetxt(os.path.join(directory_name, 'inner_products.txt'), inner_products)
+                np.savetxt(os.path.join(directory_name, 'orders.txt'), orders)
+                np.savetxt(os.path.join(directory_name, 'pvs.txt'), pvs)
+                np.savetxt(os.path.join(directory_name, 'fit_sum.txt'), fit_sum)
+                np.savetxt(os.path.join(directory_name, 'pv.txt'), np.array([pv]))
+                plt.tight_layout()
 
-                conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+                plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+        
 
-                # テキストファイルに変数の値や計算条件を書き込む
-                with open(conditions_file_path, 'w') as file:
-                    file.write("input\n")
-                    file.write("====================\n")
-                    file.write(f"params[0]: {params[0]}\n")
-                    file.write(f"params[1]: {params[1]}\n")
-                    file.write(f"params[2]: {params[2]}\n")
-                    file.write(f"params[3]: {params[3]}\n")
-                    file.write(f"params[4]: {params[4]}\n")
-                    file.write(f"params[5]: {params[5]}\n")
-                    file.write(f"params[6]: {params[6]}\n")
-                    file.write(f"params[7]: {params[7]}\n")
-                    file.write(f"params[8]: {params[8]}\n")
-                    file.write(f"params[9]: {params[9]}\n")
-                    file.write(f"params[10]: {params[10]}\n")
-                    file.write(f"params[11]: {params[11]}\n")
-                    file.write(f"params[12]: {params[12]}\n")
-                    file.write(f"params[13]: {params[13]}\n")
-                    file.write(f"params[14]: {params[14]}\n")
-                    file.write(f"params[15]: {params[15]}\n")
-                    file.write(f"params[16]: {params[16]}\n")
-                    file.write(f"params[17]: {params[17]}\n")
-                    file.write(f"params[18]: {params[18]}\n")
-                    file.write(f"params[19]: {params[19]}\n")
-                    file.write(f"params[20]: {params[20]}\n")
-                    file.write(f"params[21]: {params[21]}\n")
-                    file.write(f"params[22]: {params[22]}\n")
-                    file.write(f"params[23]: {params[23]}\n")
-                    file.write(f"params[24]: {params[24]}\n")
-                    file.write(f"params[25]: {params[25]}\n")
-                # plt.show()
+                if option_legendre:
+                    plt.close()
+                    print('inner_products',inner_products)
+                    print('orders',orders)
+                    pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
+                    return inner_products, orders, pvs
+                else:
+                    plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
+
+                    assesorder = 5
+                    fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                    length = len(inner_products)
+                    pvs = np.zeros(length+1)
+                    fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                    for i in range(length):
+                        ny = orders[i][0]
+                        nx = orders[i][1]
+                        print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                        axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                        pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                        axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                        axes[ny, nx].axis('off')
+
+                        ### set colorbar for each subplot
+                        # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                    axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                    cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                    fit_sum = np.sum(fit_datas, axis=0)
+                    axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                    # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                    axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                    plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                    conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                    # テキストファイルに変数の値や計算条件を書き込む
+                    with open(conditions_file_path, 'w') as file:
+                        file.write("input\n")
+                        file.write("====================\n")
+                        file.write(f"params[0]: {params[0]}\n")
+                        file.write(f"params[1]: {params[1]}\n")
+                        file.write(f"params[2]: {params[2]}\n")
+                        file.write(f"params[3]: {params[3]}\n")
+                        file.write(f"params[4]: {params[4]}\n")
+                        file.write(f"params[5]: {params[5]}\n")
+                        file.write(f"params[6]: {params[6]}\n")
+                        file.write(f"params[7]: {params[7]}\n")
+                        file.write(f"params[8]: {params[8]}\n")
+                        file.write(f"params[9]: {params[9]}\n")
+                        file.write(f"params[10]: {params[10]}\n")
+                        file.write(f"params[11]: {params[11]}\n")
+                        file.write(f"params[12]: {params[12]}\n")
+                        file.write(f"params[13]: {params[13]}\n")
+                        file.write(f"params[14]: {params[14]}\n")
+                        file.write(f"params[15]: {params[15]}\n")
+                        file.write(f"params[16]: {params[16]}\n")
+                        file.write(f"params[17]: {params[17]}\n")
+                        file.write(f"params[18]: {params[18]}\n")
+                        file.write(f"params[19]: {params[19]}\n")
+                        file.write(f"params[20]: {params[20]}\n")
+                        file.write(f"params[21]: {params[21]}\n")
+                        file.write(f"params[22]: {params[22]}\n")
+                        file.write(f"params[23]: {params[23]}\n")
+                        file.write(f"params[24]: {params[24]}\n")
+                        file.write(f"params[25]: {params[25]}\n")
+                    # plt.show()
 
 
             return pv
@@ -11567,8 +11593,8 @@ if option_AKB == True:
         print('')
         if option_wolter_3_1:
             print('set astigmatism')
-            initial_params[0] = -5.74878134e-03
-            initial_params[1] =  -2.87598218e-03
+            initial_params[0] = -5.73452261e-03
+            initial_params[1] = -2.87624436e-03
             # # # initial_params[0] = 5.
             # # # initial_params[1] = 10.09
             # # # ## Plane rotation
@@ -11806,10 +11832,10 @@ else:
         # initial_params[8] = 0.5038395891681975
         # initial_params[9] = 4.65100097e-8
         # initial_params[10] = 1.21012885e-7
-        #
-        initial_params[8] =  -1.29401839e-2
-        initial_params[9] = 1.45758524e-6
-        # initial_params[10] = 1.71175054e-7
+
+        initial_params[8] = -0.008047143353879311
+        initial_params[9] = 6.965038233443645e-07
+        initial_params[10] = 1.4269900221215333e-07
         # initial_params[12] = 1e-6
         print('KB L')
         # initial_params[0] = -0.12
@@ -11958,39 +11984,78 @@ else:
 # initial_params[14] += 1e-4
 auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 
+# KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
+
+# plot_result_debug(initial_params.copy(),'ray',  source_shift=[0.,-1e-5*146.,2e-5*146],option_save = True)
+
 # plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
 # plt.show()
 
-length_search = 10
-steps1 = np.linspace(-2e-5, 4e-5, length_search) ### h
-steps2 = np.linspace(-4e-5, 2e-5, length_search) ### v
-pvs = []
-for step2 in steps2:
-    for step1 in steps1:
-        
-        folder = f"angle_h_{step1:.0e}_v_{step2:.0e}"
-        directory_name = f"output_{timestamp}_wolter_3_1/{folder}"
-        os.makedirs(directory_name, exist_ok=True)
-        txtpath = os.path.join(directory_name, 'initial_params_here.txt')
+if option_AKB:
+    print('Angular Tolerance AKB')
+    length_search = 129
+    steps1 = np.linspace(-5e-5, 5e-5, length_search) ### h
+    steps2 = np.linspace(-1e-4, 1e-4, length_search) ### v
+    pvs = []
+    for step2 in steps2:
+        for step1 in steps1:
+            os.makedirs(directory_name, exist_ok=True)
+            y_shift = step1* 146.
+            z_shift = step2* 146.
 
-        y_shift = step1* 146.
-        z_shift = step2* 146.
+            initial_params1 = initial_params.copy()
 
-        initial_params1 = initial_params.copy()
+            pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift],option_save = False))
+            # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
+            plt.close('all')
+    pvs = np.array(pvs)
+    pvs = pvs.reshape(length_search,length_search)
 
-        pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift]))
-        # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
-        plt.close('all')
-pvs = np.array(pvs)
-pvs = pvs.reshape(length_search,length_search)
+    np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
+    plt.figure()
+    plt.pcolormesh(steps1*1e6, steps2*1e6, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+    plt.colorbar(label='\u03BB')
+    plt.xlabel('Horizontal [\u03BCrad]')
+    plt.ylabel('Vertical [\u03BCrad]')
+    plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
+    plt.axis('equal')
+    plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance2.png'), transparent=True, dpi=300)
+    plt.show()
+else:
+    print('Angular Tolerance KB')
+    length_search = 129
+    steps1 = np.linspace(-1e-5, 1e-5, length_search) ### h
+    steps2 = np.linspace(-1e-5, 1e-5, length_search) ### v
+    pvs = []
+    for step2 in steps2:
+        for step1 in steps1:
+            os.makedirs(directory_name, exist_ok=True)
+            y_shift = step1* 146.
+            z_shift = step2* 146.
 
-np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
+            initial_params1 = initial_params.copy()
 
-plt.figure()
-plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
-plt.colorbar(label='\u03BB')
-plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
-plt.show()
+            # folder = f"{step1:.0e}_{step2:.0e}"
+            # directory_name = rf"output_{timestamp}_KB\{folder}"
+            # os.makedirs(directory_name, exist_ok=True)
+            # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
+
+            pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
+            
+            plt.close('all')
+    pvs = np.array(pvs)
+    pvs = pvs.reshape(length_search,length_search)
+
+    np.savetxt(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.txt'), pvs)
+    plt.figure()
+    plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+    plt.colorbar(label='\u03BB')
+    plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
+    plt.axis('equal')
+    plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
+    
+    plt.show()
+
 sys.exit()
 
 steps1 = np.linspace(-1e-4, 1e-4, 5)
@@ -12006,7 +12071,7 @@ for step1 in steps1:
         initial_params1[22] += step2
         
         folder = f"{step1:.0e}_{step2:.0e}"
-        directory_name = f"output_{timestamp}_KB{folder}"
+        directory_name = f"output_{timestamp}_KB/{folder}"
         os.makedirs(directory_name, exist_ok=True)
         txtpath = os.path.join(directory_name, 'initial_params_here.txt')
         with open(txtpath, 'w') as f:
