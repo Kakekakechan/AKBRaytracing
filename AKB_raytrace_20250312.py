@@ -5,10 +5,12 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from psf_fft import compute_psf_fft, psf_to_db
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
+from psf_fft import compute_psf_fft, psf_to_db
 import numba
 from numba import njit, prange
 import matplotlib.cm as cm
@@ -63,12 +65,12 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 129
+unit = 1025
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = False
-option_wolter_3_1 = False
+option_AKB = True
+option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
 option_HighNA = True
 global LowNAratio
@@ -1098,6 +1100,126 @@ def extract_affine_square_region(img: np.ndarray, target_size: int = None) -> np
 
     return warped
 
+def psf_calc(matrixWave2_Corrected, grid_H, grid_V, defocusWave):
+    min_indices = []
+    for i in range(matrixWave2_Corrected.shape[1]):
+        valid_idx = np.where(~np.isnan(matrixWave2_Corrected[:, i]))[0]
+        if valid_idx.size > 0:
+            min_indices.append(valid_idx.min())
+        else:
+            min_indices.append(np.nan)  # その列が全部NaNならNaNを入れる
+    print(min_indices)
+    n_wid = matrixWave2_Corrected.shape[1]
+    rot = np.arctan((min_indices[n_wid//4] - min_indices[n_wid*3//4])/(n_wid//4 - n_wid*3//4))
+    print('rot',rot)
+    # plt.figure()
+    # plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto')
+    # plt.colorbar(label='opl')
+
+    from scipy.ndimage import rotate
+    def rotate_with_nan(data, angle, order=1):
+        # マスク（有効=1, 無効=0）
+        mask = ~np.isnan(data)
+        mask = mask.astype(float)
+
+        # NaNを0に置き換えたデータを作る
+        filled = np.nan_to_num(data, nan=0.0)
+
+        # データとマスクを同じ方法で回転
+        rotated_filled = rotate(filled, angle=angle, reshape=False, order=order, mode="constant", cval=0.0)
+        rotated_mask   = rotate(mask,  angle=angle, reshape=False, order=order, mode="constant", cval=0.0)
+
+        # 割り算して補間
+        with np.errstate(invalid="ignore", divide="ignore"):
+            rotated = rotated_filled / np.maximum(rotated_mask, 1e-12)
+
+        # マスク閾値で無効領域をNaNに戻す
+        rotated[rotated_mask < 0.5] = np.nan
+        return rotated
+
+    theta_deg = np.degrees(rot)
+    # matrixWave2_Corrected[np.isnan(matrixWave2_Corrected)] = 1e3
+    # matrixWave2_Corrected = rotate(matrixWave2_Corrected, angle=theta_deg, reshape=False, order=3)  # 3=bi-cubic
+    wavelength_m = 13.5e-9
+    matrixWave2_Corrected = rotate_with_nan(matrixWave2_Corrected, theta_deg, order=3)
+    plt.figure()
+    plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected, cmap='jet', shading='auto',vmin=-wavelength_m*1e9/4,vmax=wavelength_m*1e9/4)
+    plt.colorbar(label='opl (nm)')
+    plt.savefig(os.path.join(directory_name, 'opl.png'), transparent=True, dpi=300)
+    # plt.show()
+
+    focal_length_m = defocusWave
+    pupil_dx_m = grid_H[0, 1] - grid_H[0, 0]
+    print('pupil_dx_m',pupil_dx_m)
+
+    X, Y = grid_H, grid_V
+    # r = np.sqrt(X**2 + Y**2)
+    amp = np.ones_like(matrixWave2_Corrected)
+    nan_mask = np.isnan(matrixWave2_Corrected)  # NaNの位置
+    amp[nan_mask] = 0.0  # NaN位置は振幅0に
+    # Example OPD: defocus-like profile (~ 0.5 waves PV)
+    opd = matrixWave2_Corrected * 1e-9
+    # opd = np.zeros_like(wave_error)
+    opd[nan_mask] = 0.0
+
+    # plt.figure()
+    # plt.pcolormesh(X, Y, opd, cmap='jet', shading='auto')
+    # plt.colorbar(label='\u03BB')
+    #
+    # plt.figure()
+    # plt.pcolormesh(X, Y, amp, cmap='jet', shading='auto')
+    # plt.colorbar(label='amp')
+    #
+    # plt.show()
+
+    psf, x_im, y_im = compute_psf_fft(opd, amp, wavelength_m, pupil_dx_m, focal_length_m, pad_factor=16, window=None)
+    # 範囲指定
+    x_min, x_max = -5e-7, 5e-7
+    y_min, y_max = -5e-7, 5e-7
+
+    # インデックス取得
+    ix = np.where((x_im >= x_min) & (x_im <= x_max))[0]
+    iy = np.where((y_im >= y_min) & (y_im <= y_max))[0]
+
+    # トリミング
+    psf_trimmed = psf[np.ix_(iy, ix)]
+    x_trimmed = x_im[ix]
+    y_trimmed = y_im[iy]
+
+    # プロット
+    plt.figure()
+    plt.imshow(psf_trimmed,
+               extent=[x_trimmed[0], x_trimmed[-1],
+                       y_trimmed[0], y_trimmed[-1]],
+               origin='lower',
+               cmap='inferno')
+    plt.xlabel('x on sensor [m]')
+    plt.ylabel('y on sensor [m]')
+    plt.title('PSF (linear, trimmed)')
+    plt.colorbar()
+
+    plt.savefig(os.path.join(directory_name, 'PSF.png'), transparent=True, dpi=300)
+
+    # plt.figure()
+    # plt.imshow(psf, extent=[x_im[0], x_im[-1], y_im[0], y_im[-1]], origin='lower',cmap='inferno')
+    # plt.xlabel('x on sensor [m]')
+    # plt.ylabel('y on sensor [m]')
+    # plt.title('PSF (linear)')
+    # plt.colorbar()
+
+    plt.figure(figsize=(3.0, 6.0))
+    plt.plot(x_im*1e9,psf[psf.shape[0]//2,:])
+    plt.title('psf x')
+    plt.xlim(-500, 500)
+    plt.ylim(-0.005, 1.005)
+    plt.savefig(os.path.join(directory_name, 'PSF_x_section.png'), transparent=True, dpi=300)
+    plt.figure(figsize=(3.0, 6.0))
+    plt.plot(y_im*1e9,psf[:,psf.shape[1]//2])
+    plt.title('psf y')
+    plt.xlim(-500, 500)
+    plt.ylim(-0.005, 1.005)
+    plt.savefig(os.path.join(directory_name, 'PSF_y_section.png'), transparent=True, dpi=300)
+    plt.show()
 
 def np_to_mpmath_matrix(arr):
     """
@@ -2373,10 +2495,10 @@ if option_wolter_3_1:
                 phai0[1, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0h)
                 phai0[2, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0v_here)
                 phai0[0, ray_num * i:ray_num * (i + 1)] = 1.
-            
+
             phai0 = normalize_vector(phai0)
             phai0_edge_origin = normalize_vector(phai0_edge_origin)
-            
+
 
 
             vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source)
@@ -2395,7 +2517,7 @@ if option_wolter_3_1:
             mean_reflect4 = np.mean(reflect4,1)
             mean_reflect4 = normalize_vector(mean_reflect4)
 
-            
+
 
             vmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_v, phai0_edge_origin, source_edge_origin)
             reflect1_edge_origin = reflect_ray(phai0_edge_origin, norm_vector(coeffs_hyp_v, vmirr_hyp_edge_origin))
@@ -2512,7 +2634,7 @@ if option_wolter_3_1:
                         axs[0].plot(hmirr_ell[0,:],hmirr_ell[1,:])
                         axs[0].plot(hmirr_hyp[0,:],hmirr_hyp[1,:])
                         axs[0].plot(detcenter[0,:],detcenter[1,:])
-                        
+
                         axs[0].plot(vmirr_hyp_edge_origin[0,:],vmirr_hyp_edge_origin[1,:],'o')
                         axs[0].plot(vmirr_ell_edge_origin[0,:],vmirr_ell_edge_origin[1,:],'o')
                         axs[0].plot(hmirr_ell_edge_origin[0,:],hmirr_ell_edge_origin[1,:],'o')
@@ -2758,43 +2880,17 @@ if option_wolter_3_1:
                 matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
 
-                ### angle
-                grid_H = np.arctan((grid_H - np.mean(grid_H)) / defocusWave)
-                grid_V = np.arctan((grid_V - np.mean(grid_V)) / defocusWave)
+                # ### angle
+                # grid_H = np.arctan((grid_H - np.mean(grid_H)) / defocusWave)
+                # grid_V = np.arctan((grid_V - np.mean(grid_V)) / defocusWave)
+
+                grid_H -= np.mean(grid_H)
+                grid_V -= np.mean(grid_V)
 
                 wave_error = matrixWave2_Corrected / lambda_
                 ### PSF calculation
-                if False:
-                    phase = wave_error * 2 * np.pi
-                    input_complex = np.exp(1j * phase)
-                    offset = defocusWave * (np.sqrt(1. + np.tan(grid_H)**2 + np.tan(grid_V)**2) - 1)
-                    input_complex *= np.exp(1j * offset)
-                    output_complex = np.zeros_like(input_complex, dtype=np.complex128)
-                    x_input = defocusWave * np.tan(grid_H)
-                    y_input = defocusWave * np.tan(grid_V)
-                    calcsize = 200e-9
-                    xoutput , youtput = np.meshgrid(
-                        np.linspace(-calcsize, calcsize, output_complex.shape[1]),
-                        np.linspace(-calcsize, calcsize, output_complex.shape[0])
-                    )
-                    for i_o in range(output_complex.shape[0]):
-                        for j_o in range(output_complex.shape[1]):
-                            for i_i in range(input_complex.shape[0]):
-                                for j_i in range(input_complex.shape[1]):
-                                    if np.isnan(input_complex[i_i, j_i]) or np.isnan(output_complex[i_o, j_o]):
-                                        continue
-                                    else:
-                                        dist = defocusWave * np.sqrt(defocusWave**2 + (xoutput[i_o, j_o] - x_input[i_i, j_i])**2 + (youtput[i_o, j_o] - y_input[i_i, j_i])**2)
-                                        phase_shift =  - 2 * np.pi * dist / lambda_
-                                        output_complex[i_o, j_o] += input_complex[i_i, j_i] * np.exp(1j * phase_shift) / dist
-                    psf = np.abs(output_complex)**2
-                    psf = psf / np.max(psf)  # Normalize PSF
-                    plt.figure()
-                    plt.imshow(psf, extent=(xoutput.min()*1e9, xoutput.max()*1e9, youtput.min()*1e9, youtput.max()*1e9), cmap='jet')
-                    plt.colorbar(label='Intensity')
-                    plt.title('PSF')
-                    plt.xlabel('X (nm)')
-                    plt.ylabel('Y (nm)')
+                if True:
+                    psf_calc(matrixWave2_Corrected, grid_H, grid_V, defocusWave)
 
 
                 if option_save:
@@ -5511,7 +5607,7 @@ elif option_wolter_3_3_tandem:
         return vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle
 
 else:
-    def plot_result_debug(params,option,option_legendre=False):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_legendre=False):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -6559,6 +6655,18 @@ else:
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
 
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
+
+                # ### angle
+                # grid_H = np.arctan((grid_H - np.mean(grid_H)) / defocusWave)
+                # grid_V = np.arctan((grid_V - np.mean(grid_V)) / defocusWave)
+
+                grid_H -= np.mean(grid_H)
+                grid_V -= np.mean(grid_V)
+
+                wave_error = matrixWave2_Corrected / lambda_
+                ### PSF calculation
+                if True:
+                    psf_calc(matrixWave2_Corrected, grid_H, grid_V, defocusWave)
 
                 plt.figure()
                 plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
@@ -9059,7 +9167,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             vmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_v, phai0_edge_origin, source_edge_origin)
             reflect1_edge_origin = reflect_ray(phai0_edge_origin, norm_vector(coeffs_hyp_v, vmirr_hyp_edge_origin))
             hmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_h, reflect1_edge_origin, vmirr_hyp_edge_origin)
-            
+
             if option == 'ray':
                 if option_save:
                     from scipy.spatial import cKDTree
@@ -9081,7 +9189,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                     print('1st W lower',np.linalg.norm(vmirr_hyp[:,-1] - vmirr_hyp[:,-ray_num]))
                     print('2nd W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
                     print('2nd W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
-                    
+
                     conditions_file_path = os.path.join(directory_name, 'kb_configuration.txt')
 
                     # テキストファイルに変数の値や計算条件を書き込む
@@ -9116,7 +9224,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                     axs[1].axis('equal')
                     plt.savefig(os.path.join(directory_name,'raytrace_mirror_configuration.png'))
                     # plt.show()
-                
+
                 vec0to1 = normalize_vector(vmirr_hyp - source)
                 vec1to2 = normalize_vector(hmirr_hyp - vmirr_hyp)
                 vec2to3 = normalize_vector(detcenter - hmirr_hyp)
@@ -9363,7 +9471,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                 plt.tight_layout()
 
                 plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
-        
+
 
                 if option_legendre:
                     plt.close()
@@ -9600,7 +9708,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                     ### 真ん中 Z方向1/6
                     axs0[1, 0].scatter(matrix_detcenterY[third*5//2:third*7//2, :], matrix_detcenterZ[third*5//2:third*7//2, :])
                     std2_local = calc_rms_radius(matrix_detcenterY[third*5//2:third*7//2, :], matrix_detcenterZ[third*5//2:third*7//2, :])
-                    std2.append(std2_local)                
+                    std2.append(std2_local)
                     axs0[1, 0].set_title('Z direction 5/12-7/12, rms={:.2f}nm'.format(std2_local*1e9))
                     axs0[2, 0].scatter(matrix_detcenterY[third*5:, :], matrix_detcenterZ[third*5:, :])
                     std3_local = (calc_rms_radius(matrix_detcenterY[third*5:, :], matrix_detcenterZ[third*5:, :]))
@@ -9618,7 +9726,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                     std6_local = (calc_rms_radius(matrix_detcenterY[:, third*5:], matrix_detcenterZ[:, third*5:]))
                     std6.append(std6_local)
                     axs0[2, 1].set_title('Y direction 5/6-1, rms={:.2f}nm'.format(std6_local*1e9))
-                    
+
                     for ax in axs0.flat:
                         ax.set_xlim(min_Y, max_Y)
                         ax.set_ylim(min_Z, max_Z)
@@ -9635,7 +9743,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                 plt.plot(x_here, std6, label='Y direction 5/6-1')
                 plt.legend()
                 plt.show()
-            
+
             # for i in range(7):
             #     defocus_shift = defocussize * (i - 2)
             #     coeffs_det3 = np.zeros(10)
@@ -9671,7 +9779,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             # min_Z = np.min(detcenter[2, :]) - 2e-9
             # max_Z = np.max(detcenter[2, :]) + 2e-9
             # defocussize = 1e-8
-            
+
             # for i in range(7):
             #     defocus_shift = defocussize * (i - 2)
             #     coeffs_det3 = np.zeros(10)
@@ -9684,7 +9792,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             #     matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
             #     ### Z方向1/3ずつ
             #     third = ray_num_V // 6
-                
+
             #     axs0[0, 0].scatter(matrix_detcenterY[:third, :third], matrix_detcenterZ[:third, :third])
             #     axs0[0, 0].set_title('Z direction 0-1/6, Y direction 0-1/6')
             #     axs0[0, 1].scatter(matrix_detcenterY[third*5//2:third*7//2, :third], matrix_detcenterZ[third*5//2:third*7//2, :third])
@@ -9708,7 +9816,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             #         ax.set_ylim(min_Z, max_Z)
             #     plt.tight_layout()
             # plt.show()
-            
+
             # for i in range(7):
             #     defocus_shift = defocussize * (i - 2)
             #     coeffs_det3 = np.zeros(10)
@@ -9721,7 +9829,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             #     matrix_detcenterZ = detcenter3[2, :].reshape(ray_num_V, ray_num_H)
             #     ### Z方向1/3ずつ
             #     third = ray_num_V // 3
-                
+
             #     axs0[0, 0].scatter(matrix_detcenterY[:third, :third], matrix_detcenterZ[:third, :third])
             #     axs0[0, 0].set_title('Z direction 1/3, Y direction 1/3')
             #     axs0[0, 1].scatter(matrix_detcenterY[:third, third:2*third], matrix_detcenterZ[:third, third:2*third])
@@ -11803,6 +11911,8 @@ if option_AKB == True:
             # initial_params[22] = -0.0011852
             print('')
             # ###  Best alignment?
+            initial_params[0] = -3.85600169e-03
+            initial_params[1] = -2.72777633e-03
             initial_params[8] = 0.008
             initial_params[9] = -0.00017901
             initial_params[14] = 3.87502992e-5
@@ -11966,6 +12076,8 @@ else:
             plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
             plt.show()
             sys.exit()
+initial_params[14] += 3.46e-6
+# initial_params[21] += 19.5e-5
 
 # option_mpmath = True
 # plot_result_debug(initial_params,'ray_wave')
@@ -11982,7 +12094,7 @@ else:
 
 # initial_params[2] += 1e-4
 # initial_params[14] += 1e-4
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
 # KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
 
@@ -12041,7 +12153,7 @@ else:
             # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
 
             pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
-            
+
             plt.close('all')
     pvs = np.array(pvs)
     pvs = pvs.reshape(length_search,length_search)
@@ -12053,7 +12165,7 @@ else:
     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
     plt.axis('equal')
     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
-    
+
     plt.show()
 
 sys.exit()
@@ -12066,10 +12178,10 @@ for step1 in steps1:
         option_set = True
         initial_params1[2] += step1
         initial_params1[14] += step1
-        
+
         initial_params1[10] += step2
         initial_params1[22] += step2
-        
+
         folder = f"{step1:.0e}_{step2:.0e}"
         directory_name = f"output_{timestamp}_KB/{folder}"
         os.makedirs(directory_name, exist_ok=True)
