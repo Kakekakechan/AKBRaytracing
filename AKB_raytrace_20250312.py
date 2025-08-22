@@ -65,11 +65,11 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 1025
+unit = 129
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = True
+option_AKB = False
 option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
 option_HighNA = True
@@ -8215,7 +8215,9 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
 
     else:
         if option_HighNA == True:
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.57),  np.float64(0.212), np.float64(0.4), np.float64(0.13), np.float64(0.178), np.float64(0.18)]
+
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.43),  np.float64(0.213), np.float64(0.30), np.float64(0.1), np.float64(0.175), np.float64(0.14)]
             # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
             # ### acceptance 小さめ
@@ -8227,7 +8229,9 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             ### SPIE用v1
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
-            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.02), np.float64(0.21), np.float64(0.022)]
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.02), np.float64(0.21), np.float64(0.022)]
+
+            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214/8.2), np.float64(0.060), np.float64(0.02), np.float64(0.21/8.2), np.float64(0.022)]
             ### woltter と揃えて
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.10811916636581032),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
@@ -9410,6 +9414,14 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             # plt.show()
 
             matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
+
+            grid_H -= np.mean(grid_H)
+            grid_V -= np.mean(grid_V)
+
+            wave_error = matrixWave2_Corrected / lambda_
+            ### PSF calculation
+            if True:
+                psf_calc(matrixWave2_Corrected, grid_H, grid_V, defocusWave)
 
             print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
             if option_save:
@@ -11943,9 +11955,9 @@ else:
         # initial_params[9] = 4.65100097e-8
         # initial_params[10] = 1.21012885e-7
 
-        initial_params[8] = -0.008047143353879311
-        initial_params[9] = 6.965038233443645e-07
-        initial_params[10] = 1.4269900221215333e-07
+        # initial_params[8] = -0.008047143353879311
+        # initial_params[9] = 6.965038233443645e-07
+        # initial_params[10] = 1.4269900221215333e-07
         # initial_params[12] = 1e-6
         print('KB L')
         # initial_params[0] = -0.12
@@ -12076,7 +12088,7 @@ else:
             plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
             plt.show()
             sys.exit()
-initial_params[14] += 3.46e-6
+# initial_params[14] += 3.46e-6
 # initial_params[21] += 19.5e-5
 
 # option_mpmath = True
@@ -12094,110 +12106,112 @@ initial_params[14] += 3.46e-6
 
 # initial_params[2] += 1e-4
 # initial_params[14] += 1e-4
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+plt.show()
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
-# KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
+# # KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
 
-# plot_result_debug(initial_params.copy(),'ray',  source_shift=[0.,-1e-5*146.,2e-5*146],option_save = True)
+# # plot_result_debug(initial_params.copy(),'ray',  source_shift=[0.,-1e-5*146.,2e-5*146],option_save = True)
 
-# plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
+# # plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
 # plt.show()
 
-if option_AKB:
-    print('Angular Tolerance AKB')
-    length_search = 129
-    steps1 = np.linspace(-5e-5, 5e-5, length_search) ### h
-    steps2 = np.linspace(-1e-4, 1e-4, length_search) ### v
-    pvs = []
-    for step2 in steps2:
-        for step1 in steps1:
-            os.makedirs(directory_name, exist_ok=True)
-            y_shift = step1* 146.
-            z_shift = step2* 146.
+# if option_AKB:
+#     print('Angular Tolerance AKB')
+#     length_search = 129
+#     steps1 = np.linspace(-5e-5, 5e-5, length_search) ### h
+#     steps2 = np.linspace(-1e-4, 1e-4, length_search) ### v
+#     pvs = []
+#     for step2 in steps2:
+#         for step1 in steps1:
+#             os.makedirs(directory_name, exist_ok=True)
+#             y_shift = step1* 146.
+#             z_shift = step2* 146.
 
-            initial_params1 = initial_params.copy()
+#             initial_params1 = initial_params.copy()
 
-            pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift],option_save = False))
-            # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
-            plt.close('all')
-    pvs = np.array(pvs)
-    pvs = pvs.reshape(length_search,length_search)
+#             pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift],option_save = False))
+#             # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
+#             plt.close('all')
+#     pvs = np.array(pvs)
+#     pvs = pvs.reshape(length_search,length_search)
 
-    np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
-    plt.figure()
-    plt.pcolormesh(steps1*1e6, steps2*1e6, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
-    plt.colorbar(label='\u03BB')
-    plt.xlabel('Horizontal [\u03BCrad]')
-    plt.ylabel('Vertical [\u03BCrad]')
-    plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
-    plt.axis('equal')
-    plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance2.png'), transparent=True, dpi=300)
-    plt.show()
-else:
-    print('Angular Tolerance KB')
-    length_search = 129
-    steps1 = np.linspace(-1e-5, 1e-5, length_search) ### h
-    steps2 = np.linspace(-1e-5, 1e-5, length_search) ### v
-    pvs = []
-    for step2 in steps2:
-        for step1 in steps1:
-            os.makedirs(directory_name, exist_ok=True)
-            y_shift = step1* 146.
-            z_shift = step2* 146.
+#     np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
+#     plt.figure()
+#     plt.pcolormesh(steps1*1e6, steps2*1e6, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+#     plt.colorbar(label='\u03BB')
+#     plt.xlabel('Horizontal [\u03BCrad]')
+#     plt.ylabel('Vertical [\u03BCrad]')
+#     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
+#     plt.axis('equal')
+#     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance2.png'), transparent=True, dpi=300)
+#     plt.show()
+# else:
+#     print('Angular Tolerance KB')
+#     length_search = 129
+#     steps1 = np.linspace(-1e-5, 1e-5, length_search) ### h
+#     steps2 = np.linspace(-1e-5, 1e-5, length_search) ### v
+#     pvs = []
+#     for step2 in steps2:
+#         for step1 in steps1:
+#             os.makedirs(directory_name, exist_ok=True)
+#             y_shift = step1* 146.
+#             z_shift = step2* 146.
 
-            initial_params1 = initial_params.copy()
+#             initial_params1 = initial_params.copy()
 
-            # folder = f"{step1:.0e}_{step2:.0e}"
-            # directory_name = rf"output_{timestamp}_KB\{folder}"
-            # os.makedirs(directory_name, exist_ok=True)
-            # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
+#             # folder = f"{step1:.0e}_{step2:.0e}"
+#             # directory_name = rf"output_{timestamp}_KB\{folder}"
+#             # os.makedirs(directory_name, exist_ok=True)
+#             # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
 
-            pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
+#             pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
 
-            plt.close('all')
-    pvs = np.array(pvs)
-    pvs = pvs.reshape(length_search,length_search)
+#             plt.close('all')
+#     pvs = np.array(pvs)
+#     pvs = pvs.reshape(length_search,length_search)
 
-    np.savetxt(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.txt'), pvs)
-    plt.figure()
-    plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
-    plt.colorbar(label='\u03BB')
-    plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
-    plt.axis('equal')
-    plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
+#     np.savetxt(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.txt'), pvs)
+#     plt.figure()
+#     plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+#     plt.colorbar(label='\u03BB')
+#     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
+#     plt.axis('equal')
+#     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
 
-    plt.show()
+#     plt.show()
 
-sys.exit()
+# sys.exit()
 
-steps1 = np.linspace(-1e-4, 1e-4, 5)
-steps2 = np.linspace(-1e-4, 1e-4, 5)
-for step1 in steps1:
-    for step2 in steps2:
-        initial_params1 = initial_params.copy()
-        option_set = True
-        initial_params1[2] += step1
-        initial_params1[14] += step1
+# steps1 = np.linspace(-1e-4, 1e-4, 5)
+# steps2 = np.linspace(-1e-4, 1e-4, 5)
+# for step1 in steps1:
+#     for step2 in steps2:
+#         initial_params1 = initial_params.copy()
+#         option_set = True
+#         initial_params1[2] += step1
+#         initial_params1[14] += step1
 
-        initial_params1[10] += step2
-        initial_params1[22] += step2
+#         initial_params1[10] += step2
+#         initial_params1[22] += step2
 
-        folder = f"{step1:.0e}_{step2:.0e}"
-        directory_name = f"output_{timestamp}_KB/{folder}"
-        os.makedirs(directory_name, exist_ok=True)
-        txtpath = os.path.join(directory_name, 'initial_params_here.txt')
-        with open(txtpath, 'w') as f:
-            f.write('initial_params1\n')
-            f.write(str(initial_params1) + '\n')
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray')
-        # auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-        plt.close('all')
+#         folder = f"{step1:.0e}_{step2:.0e}"
+#         directory_name = f"output_{timestamp}_KB/{folder}"
+#         os.makedirs(directory_name, exist_ok=True)
+#         txtpath = os.path.join(directory_name, 'initial_params_here.txt')
+#         with open(txtpath, 'w') as f:
+#             f.write('initial_params1\n')
+#             f.write(str(initial_params1) + '\n')
+#         auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray')
+#         # auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+#         plt.close('all')
 
-sys.exit()
-plt.show()
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# sys.exit()
+# plt.show()
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
-plt.show()
+# plt.show()
 # print('initial_params', initial_params)
 # sys.exit()
 
@@ -12246,9 +12260,9 @@ plt.show()
 # # Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 # # Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 
-LegendrealignmentKB(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-LegendrealignmentKB(initial_params, [9], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# LegendrealignmentKB(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+# LegendrealignmentKB(initial_params, [9], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+# LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 # # Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
 # # Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
 
@@ -12259,7 +12273,7 @@ LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=Tr
 # # Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 # # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 
-sys.exit()
+# sys.exit()
 
 if option_AKB == False:
     ratio = (np.arange(1)+1)
