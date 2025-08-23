@@ -65,12 +65,12 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 129
+unit = 33
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = False
-option_wolter_3_1 = True
+option_AKB = True
+option_wolter_3_1 = False
 option_wolter_3_3_tandem = False
 option_HighNA = True
 global LowNAratio
@@ -2626,6 +2626,89 @@ if option_wolter_3_1:
                     print('3rd W lower',np.linalg.norm(hmirr_ell[:,ray_num-1] - hmirr_ell[:,-1]))
                     print('4th W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
                     print('4th W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
+
+                    if True:
+                        ### 立体表示
+                        z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.04)
+                        z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
+                        y_mean_hmirr_ell = np.full_like(hmirr_ell[0,:], np.mean(hmirr_ell[1,:]) + 0.04)
+                        y_mean_hmirr_hyp = np.full_like(hmirr_hyp[0,:], np.mean(hmirr_hyp[1,:]) + 0.04)
+
+                        fig = plt.figure(figsize=(8, 6))
+                        ax = fig.add_subplot(111, projection='3d')
+                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],z_mean_vmirr_hyp,c='gray',alpha=0.5)
+                        # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],z_mean_vmirr_ell,c='gray',alpha=0.5)
+                        # ax.plot(hmirr_ell[0,:],y_mean_hmirr_ell,hmirr_ell[2,:],c='gray',alpha=0.5)
+                        # ax.plot(hmirr_hyp[0,:],y_mean_hmirr_hyp,hmirr_hyp[2,:],c='gray',alpha=0.5)
+                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        ax.set_xlabel('X (m)')
+                        ax.set_ylabel('Y (m)')
+                        ax.set_zlabel('Z (m)')
+
+                        def face_define(x0, y0, z0, dx, dy, dz):
+                            """面を定義する関数"""
+                            # 8つの頂点
+                            vertices = np.array([
+                                [x0,     y0,     z0],
+                                [x0+dx,  y0,     z0],
+                                [x0+dx,  y0+dy,  z0],
+                                [x0,     y0+dy,  z0],
+                                [x0,     y0,     z0+dz],
+                                [x0+dx,  y0,     z0+dz],
+                                [x0+dx,  y0+dy,  z0+dz],
+                                [x0,     y0+dy,  z0+dz]
+                            ])
+                            # 直方体の面（頂点のインデックス）
+                            faces = [
+                                [vertices[j] for j in [0,1,2,3]],  # 底面
+                                [vertices[j] for j in [4,5,6,7]],  # 上面
+                                [vertices[j] for j in [0,1,5,4]],  # 前面
+                                [vertices[j] for j in [2,3,7,6]],  # 後面
+                                [vertices[j] for j in [1,2,6,5]],  # 右面
+                                [vertices[j] for j in [0,3,7,4]]   # 左面
+                            ]
+                            return faces
+
+                        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+                        # Poly3DCollection で面を描画
+                        face_hyp_v = face_define(np.min(vmirr_hyp,axis=1)[0], np.mean(vmirr_hyp,axis=1)[1] - 0.02, np.mean(vmirr_hyp,axis=1)[2], np.ptp(vmirr_hyp,axis=1)[0], 0.04, -0.04)
+                        face_hyp_ell = face_define(np.min(vmirr_ell,axis=1)[0], np.mean(vmirr_ell,axis=1)[1] - 0.02, np.mean(vmirr_ell,axis=1)[2], np.ptp(vmirr_ell,axis=1)[0], 0.04, 0.04)
+                        face_ell_h = face_define(np.min(hmirr_ell,axis=1)[0], np.mean(hmirr_ell,axis=1)[1], np.mean(hmirr_ell,axis=1)[2] - 0.02, np.ptp(hmirr_ell,axis=1)[0], 0.04, 0.04)
+                        face_ell_hyp = face_define(np.min(hmirr_hyp,axis=1)[0], np.mean(hmirr_hyp,axis=1)[1], np.mean(hmirr_hyp,axis=1)[2] - 0.02, np.ptp(hmirr_hyp,axis=1)[0], 0.04, 0.04)
+                        ax.add_collection3d(Poly3DCollection(face_hyp_v, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
+                        ax.add_collection3d(Poly3DCollection(face_hyp_ell, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
+                        ax.add_collection3d(Poly3DCollection(face_ell_h, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
+                        ax.add_collection3d(Poly3DCollection(face_ell_hyp, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
+                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+
+                        # ### 光線1st to 2nd
+                        # for i in range(0, ray_num**2, round(ray_num**2/20)):
+                        #     ax.plot([source[0,i], vmirr_hyp[0,i]], [source[1,i], vmirr_hyp[1,i]], [source[2,i], vmirr_hyp[2,i]], color='blue', alpha=0.3)
+                        # 光線2nd to 3rd
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([vmirr_hyp[0,i], vmirr_ell[0,i]], [vmirr_hyp[1,i], vmirr_ell[1,i]], [vmirr_hyp[2,i], vmirr_ell[2,i]], color='blue', alpha=0.3)
+                        # 光線3rd to 4th
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([vmirr_ell[0,i], hmirr_ell[0,i]], [vmirr_ell[1,i], hmirr_ell[1,i]], [vmirr_ell[2,i], hmirr_ell[2,i]], color='blue', alpha=0.3)
+                        # 光線4th to fcs
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([hmirr_ell[0,i], hmirr_hyp[0,i]], [hmirr_ell[1,i], hmirr_hyp[1,i]], [hmirr_ell[2,i], hmirr_hyp[2,i]], color='blue', alpha=0.3)
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([hmirr_hyp[0,i], detcenter[0,i]], [hmirr_hyp[1,i], detcenter[1,i]], [hmirr_hyp[2,i], detcenter[2,i]], color='blue', alpha=0.3)
+
+                        ax.legend()
+                        ax.view_init(elev=20., azim=-35)
+                        # aspect変えずに表示
+                        ax.set_box_aspect([1,1,1])
+                        plt.show()
 
                     if option_save:
                         fig,axs = plt.subplots(2,1,sharex=True)
@@ -6467,6 +6550,91 @@ else:
                     print('3rd W lower',np.linalg.norm(vmirr_ell[:,-1] - vmirr_ell[:,-ray_num]))
                     print('4th W upper',np.linalg.norm(hmirr_ell[:,0] - hmirr_ell[:,-ray_num]))
                     print('4th W lower',np.linalg.norm(hmirr_ell[:,ray_num-1] - hmirr_ell[:,-1]))
+
+                    if True:
+                        ### 立体表示
+                        z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.04)
+                        z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
+                        y_mean_hmirr_ell = np.full_like(hmirr_ell[0,:], np.mean(hmirr_ell[1,:]) + 0.04)
+                        y_mean_hmirr_hyp = np.full_like(hmirr_hyp[0,:], np.mean(hmirr_hyp[1,:]) - 0.04)
+
+                        fig = plt.figure(figsize=(8, 6))
+                        ax = fig.add_subplot(111, projection='3d')
+                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],z_mean_vmirr_hyp,c='gray',alpha=0.5)
+                        # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],z_mean_vmirr_ell,c='gray',alpha=0.5)
+                        # ax.plot(hmirr_ell[0,:],y_mean_hmirr_ell,hmirr_ell[2,:],c='gray',alpha=0.5)
+                        # ax.plot(hmirr_hyp[0,:],y_mean_hmirr_hyp,hmirr_hyp[2,:],c='gray',alpha=0.5)
+                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        ax.set_xlabel('X (m)')
+                        ax.set_ylabel('Y (m)')
+                        ax.set_zlabel('Z (m)')
+
+                        def face_define(x0, y0, z0, dx, dy, dz):
+                            """面を定義する関数"""
+                            # 8つの頂点
+                            vertices = np.array([
+                                [x0,     y0,     z0],
+                                [x0+dx,  y0,     z0],
+                                [x0+dx,  y0+dy,  z0],
+                                [x0,     y0+dy,  z0],
+                                [x0,     y0,     z0+dz],
+                                [x0+dx,  y0,     z0+dz],
+                                [x0+dx,  y0+dy,  z0+dz],
+                                [x0,     y0+dy,  z0+dz]
+                            ])
+                            # 直方体の面（頂点のインデックス）
+                            faces = [
+                                [vertices[j] for j in [0,1,2,3]],  # 底面
+                                [vertices[j] for j in [4,5,6,7]],  # 上面
+                                [vertices[j] for j in [0,1,5,4]],  # 前面
+                                [vertices[j] for j in [2,3,7,6]],  # 後面
+                                [vertices[j] for j in [1,2,6,5]],  # 右面
+                                [vertices[j] for j in [0,3,7,4]]   # 左面
+                            ]
+                            return faces
+
+                        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+                        # Poly3DCollection で面を描画
+                        face_hyp_v = face_define(np.min(vmirr_hyp,axis=1)[0], np.mean(vmirr_hyp,axis=1)[1] - 0.02, np.mean(vmirr_hyp,axis=1)[2], np.ptp(vmirr_hyp,axis=1)[0], 0.04, -0.04)
+                        face_hyp_ell = face_define(np.min(vmirr_ell,axis=1)[0], np.mean(vmirr_ell,axis=1)[1] - 0.02, np.mean(vmirr_ell,axis=1)[2], np.ptp(vmirr_ell,axis=1)[0], 0.04, 0.04)
+                        face_ell_h = face_define(np.min(hmirr_ell,axis=1)[0], np.mean(hmirr_ell,axis=1)[1], np.mean(hmirr_ell,axis=1)[2] - 0.02, np.ptp(hmirr_ell,axis=1)[0], 0.04, 0.04)
+                        face_ell_hyp = face_define(np.min(hmirr_hyp,axis=1)[0], np.mean(hmirr_hyp,axis=1)[1], np.mean(hmirr_hyp,axis=1)[2] + 0.02, np.ptp(hmirr_hyp,axis=1)[0], -0.04, -0.04)
+                        ax.add_collection3d(Poly3DCollection(face_hyp_v, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
+                        ax.add_collection3d(Poly3DCollection(face_hyp_ell, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
+                        ax.add_collection3d(Poly3DCollection(face_ell_h, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
+                        ax.add_collection3d(Poly3DCollection(face_ell_hyp, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
+                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+
+                        # ### 光線1st to 2nd
+                        # for i in range(0, ray_num**2, round(ray_num**2/20)):
+                        #     ax.plot([source[0,i], vmirr_hyp[0,i]], [source[1,i], vmirr_hyp[1,i]], [source[2,i], vmirr_hyp[2,i]], color='blue', alpha=0.3)
+                        # 光線2nd to 3rd
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([hmirr_hyp[0,i], vmirr_hyp[0,i]], [hmirr_hyp[1,i], vmirr_hyp[1,i]], [hmirr_hyp[2,i], vmirr_hyp[2,i]], color="#271558", alpha=0.3,linewidth=1)
+                        # 光線3rd to 4th
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([vmirr_ell[0,i], hmirr_hyp[0,i]], [vmirr_ell[1,i], hmirr_hyp[1,i]], [vmirr_ell[2,i], hmirr_hyp[2,i]], color='#271558', alpha=0.3,linewidth=1)
+                        # 光線4th to fcs
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([hmirr_ell[0,i], vmirr_ell[0,i]], [hmirr_ell[1,i], vmirr_ell[1,i]], [hmirr_ell[2,i], vmirr_ell[2,i]], color='#271558', alpha=0.3,linewidth=1)
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            ax.plot([hmirr_ell[0,i], detcenter[0,i]], [hmirr_ell[1,i], detcenter[1,i]], [hmirr_ell[2,i], detcenter[2,i]], color='#271558', alpha=0.3,linewidth=1)
+
+                        ax.legend()
+                        ax.view_init(elev=20., azim=-35)
+                        # aspect変えずに表示
+                        ax.set_box_aspect([1,1,1])
+                        # 軸・目盛り・グリッドをすべて非表示
+                        ax.set_axis_off()
+                        plt.show()
 
                     fig,axs = plt.subplots(2,1,sharex=True)
                     axs[0].plot(vmirr_hyp[0,:],vmirr_hyp[1,:])
