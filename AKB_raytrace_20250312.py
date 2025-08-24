@@ -53,7 +53,7 @@ global defocusForWave
 global option_avrgsplt
 global optKBdesign
 global directory_name
-
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 optKBdesign=False
 option_2mirror =True
 option_rotate = True
@@ -69,8 +69,8 @@ unit = 33
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = True
-option_wolter_3_1 = False
+option_AKB = False
+option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
 option_HighNA = True
 global LowNAratio
@@ -2632,19 +2632,19 @@ if option_wolter_3_1:
                         z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.04)
                         z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
                         y_mean_hmirr_ell = np.full_like(hmirr_ell[0,:], np.mean(hmirr_ell[1,:]) + 0.04)
-                        y_mean_hmirr_hyp = np.full_like(hmirr_hyp[0,:], np.mean(hmirr_hyp[1,:]) + 0.04)
+                        y_mean_hmirr_hyp = np.full_like(hmirr_hyp[0,:], np.mean(hmirr_hyp[1,:]) - 0.04)
 
-                        fig = plt.figure(figsize=(8, 6))
+                        fig = plt.figure(figsize=(18, 18))
                         ax = fig.add_subplot(111, projection='3d')
-                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
-                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
-                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
-                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        # ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        # ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
                         # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],z_mean_vmirr_hyp,c='gray',alpha=0.5)
                         # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],z_mean_vmirr_ell,c='gray',alpha=0.5)
                         # ax.plot(hmirr_ell[0,:],y_mean_hmirr_ell,hmirr_ell[2,:],c='gray',alpha=0.5)
                         # ax.plot(hmirr_hyp[0,:],y_mean_hmirr_hyp,hmirr_hyp[2,:],c='gray',alpha=0.5)
-                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        # ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
                         ax.set_xlabel('X (m)')
                         ax.set_ylabel('Y (m)')
                         ax.set_zlabel('Z (m)')
@@ -2673,41 +2673,469 @@ if option_wolter_3_1:
                             ]
                             return faces
 
-                        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-                        # Poly3DCollection で面を描画
-                        face_hyp_v = face_define(np.min(vmirr_hyp,axis=1)[0], np.mean(vmirr_hyp,axis=1)[1] - 0.02, np.mean(vmirr_hyp,axis=1)[2], np.ptp(vmirr_hyp,axis=1)[0], 0.04, -0.04)
-                        face_hyp_ell = face_define(np.min(vmirr_ell,axis=1)[0], np.mean(vmirr_ell,axis=1)[1] - 0.02, np.mean(vmirr_ell,axis=1)[2], np.ptp(vmirr_ell,axis=1)[0], 0.04, 0.04)
-                        face_ell_h = face_define(np.min(hmirr_ell,axis=1)[0], np.mean(hmirr_ell,axis=1)[1], np.mean(hmirr_ell,axis=1)[2] - 0.02, np.ptp(hmirr_ell,axis=1)[0], 0.04, 0.04)
-                        face_ell_hyp = face_define(np.min(hmirr_hyp,axis=1)[0], np.mean(hmirr_hyp,axis=1)[1], np.mean(hmirr_hyp,axis=1)[2] - 0.02, np.ptp(hmirr_hyp,axis=1)[0], 0.04, 0.04)
-                        ax.add_collection3d(Poly3DCollection(face_hyp_v, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
-                        ax.add_collection3d(Poly3DCollection(face_hyp_ell, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
-                        ax.add_collection3d(Poly3DCollection(face_ell_h, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
-                        ax.add_collection3d(Poly3DCollection(face_ell_hyp, facecolors='gray', linewidths=1, edgecolors='r', alpha=0.3))
-                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
-                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
-                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
-                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
-                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        def face_define2(vmirr_hyp, direction="V", positive=False,angle=0):
+                            # fig = plt.figure(figsize=(8,6))
+                            # ax = fig.add_subplot(111, projection='3d')
 
+                            if direction =="V":
+                                n = vmirr_hyp.shape[1]
+                                nx, ny = int(np.sqrt(n)), int(np.sqrt(n))
+                                X = vmirr_hyp[0,:].reshape(ny, nx)
+                                Y = vmirr_hyp[1,:].reshape(ny, nx)
+                                y = np.linspace(-0.02, 0.02, ny) + np.mean(Y)
+
+                                X=X.T
+                                # Y=Y.T
+                                _, Y = np.meshgrid(y, y)
+                                # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                                Z_top = vmirr_hyp[2,:].reshape(ny, nx)
+                                Z_top = Z_top.T
+
+                                x = X[ny//2,:]
+                                y = Y[:,nx//2]
+
+
+
+                                # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                                Z_bottom = np.zeros_like(Z_top)                 # 底面 z=0
+                                if positive:
+                                    Z_bottom += np.max(Z_top) + 40e-3
+                                else:
+                                    Z_bottom += np.min(Z_top) - 40e-3
+
+                                # ===== 回転関数 =====
+                                def rotate_center_all(X, Y, Z, R, center):
+                                    cx, cy, cz = center
+                                    Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                    coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                    rotated = R @ coords
+                                    Xr = rotated[0,:].reshape(X.shape) + cx
+                                    Yr = rotated[1,:].reshape(Y.shape) + cy
+                                    Zr = rotated[2,:].reshape(Z.shape) + cz
+                                    return Xr, Yr, Zr
+
+                                # ===== 上面・底面 =====
+                                X_top = X.copy()
+                                Y_top = Y.copy()
+                                X_bottom = X.copy()
+                                Y_bottom = Y.copy()
+                                # ===== 側面（4枚）=====
+                                # X 最小側（左側の壁）: 形状 (ny, 2)
+                                X_left  = np.full((ny, 2), x[0])
+                                Y_left  = np.column_stack([y, y])
+                                Z_left  = np.column_stack([Z_bottom[:, 0], Z_top[:, 0]])
+                                # X 最大側（右側の壁）
+                                X_right = np.full((ny, 2), x[-1])
+                                Y_right = np.column_stack([y, y])
+                                Z_right = np.column_stack([Z_bottom[:, -1], Z_top[:, -1]])
+                                # Y 最小側（手前の壁）: 形状 (2, nx)
+                                y_front = Y[0,:]
+
+                                X_front = np.row_stack([x, x])
+                                Y_front = np.row_stack([y_front, y_front])
+                                Z_front = np.row_stack([Z_bottom[0, :], Z_top[0, :]])
+                                # Y 最大側（奥の壁)
+                                y_back = Y[-1,:]
+                                X_back = np.row_stack([x, x])
+                                Y_back = np.row_stack([y_back, y_back])
+                                Z_back = np.row_stack([Z_bottom[-1, :], Z_top[-1, :]])
+
+                                ### 回転用のコード
+                                X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                                Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                                Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                                cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                                # ===== 回転行列例（Z軸30度） =====
+                                theta = angle
+                                Ry = np.array([
+                                    [ np.cos(theta), np.sin(theta), 0],
+                                    [ -np.sin(theta),             np.cos(theta), 0           ],
+                                    [0, 0, 1]
+                                ])
+
+                                # ===== 上下面＋側面すべて回転 =====
+                                X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                                X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                                X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                                X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                                X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                                X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                                ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.5)
+                                ax.plot_surface(X_top, Y_top, Z_bottom, color='gray', alpha=0.5)
+
+
+                                ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.5)
+
+
+                                ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.5)
+
+
+                                ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.5)
+
+
+                                ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.5)
+
+                                # ===== 表示調整 =====
+                                ax.set_box_aspect([1, 1, 1])  # アスペクト
+                                ax.set_axis_off()  # 軸・グリッド全非表示
+                                ax.view_init(elev=20, azim=-35)
+                            else:
+                                n = vmirr_hyp.shape[1]
+                                nx, nz = int(np.sqrt(n)), int(np.sqrt(n))
+                                X = vmirr_hyp[0,:].reshape(nz, nx)
+                                Z = vmirr_hyp[2,:].reshape(nz, nx)
+
+                                z = np.linspace(-0.02, 0.02, nz) + np.mean(Z)
+
+                                X=X.T
+                                # Y=Y.T
+                                _, Z = np.meshgrid(z, z)
+                                Z = Z.T
+                                # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                                Y_top = vmirr_hyp[1,:].reshape(nz, nx)
+                                Y_top = Y_top.T
+
+                                x = X[nz//2,:]
+                                z = Z[:,nx//2]
+
+                                x = X[:,nz//2]
+                                z = Z[nx//2,]
+
+                                # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                                Y_bottom = np.zeros_like(Y_top)                 # 底面 z=0
+                                if positive:
+                                    Y_bottom += np.max(Y_top) + 40e-3
+                                else:
+                                    Y_bottom += np.min(Y_top) - 40e-3
+
+                                # ===== 回転関数 =====
+                                def rotate_center_all(X, Y, Z, R, center):
+                                    cx, cy, cz = center
+                                    Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                    coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                    rotated = R @ coords
+                                    Xr = rotated[0,:].reshape(X.shape) + cx
+                                    Yr = rotated[1,:].reshape(Y.shape) + cy
+                                    Zr = rotated[2,:].reshape(Z.shape) + cz
+                                    return Xr, Yr, Zr
+
+                                z_front = Z[0,:]
+                                z_back = Z[-1,:]
+                                # ===== 上面・底面 =====
+                                X_top = X.copy()
+                                Z_top = Z.copy()
+                                X_bottom = X.copy()
+                                Z_bottom = Z.copy()
+                                # ===== 側面（4枚）=====
+                                # X 最小側（左側の壁）: 形状 (ny, 2)
+                                X_left  = np.full((nz, 2), x[0])
+                                Z_left  = np.column_stack([z_front, z_front])
+                                Y_left  = np.column_stack([Y_bottom[0, :], Y_top[0, :]])
+                                # X 最大側（右側の壁）
+                                X_right = np.full((nz, 2), x[-1])
+                                Z_right = np.column_stack([z_back, z_back])
+                                Y_right = np.column_stack([Y_bottom[-1, :], Y_top[-1, :]])
+                                # Y 最小側（手前の壁）: 形状 (2, nx)
+                                # z_front = Z[0,:]
+                                X_front = np.row_stack([x, x])
+                                Z_front = np.full((2, nz), z[-1])
+                                Y_front = np.row_stack([Y_bottom[:, 0], Y_top[:, 0]])
+                                # Y 最大側（奥の壁)
+                                # z_back = Z[-1,:]
+                                X_back = np.row_stack([x, x])
+                                Z_back = np.full((2, nz), z[0])
+                                Y_back = np.row_stack([Y_bottom[:, -1], Y_top[:, -1]])
+
+                                ### 回転用のコード
+                                X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                                Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                                Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                                cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                                # ===== 回転行列例（Z軸30度） =====
+                                theta = angle
+                                Ry = np.array([
+                                    [ np.cos(theta), 0, np.sin(theta)],
+                                    [ 0,             1, 0           ],
+                                    [-np.sin(theta), 0, np.cos(theta)]
+                                ])
+
+                                # ===== 上下面＋側面すべて回転 =====
+                                X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                                X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                                X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                                X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                                X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                                X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                                ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.9)
+                                ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.9)
+                                ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+                                ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+                                ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+                                ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+
+                                # ===== 表示調整 =====
+                                ax.set_box_aspect([1, 1, 1])  # アスペクト
+                                ax.set_axis_off()  # 軸・グリッド全非表示
+                                ax.view_init(elev=20, azim=-35)
+                            return
+                        def face_define_wolter1(hmirr_ell,hmirr_hyp,positive=False,angle=0):
+                            def normal_vector_here(v1,v2,v3):
+                                # 辺ベクトル
+                                e1 = v2 - v1
+                                e2 = v3 - v1
+
+                                # 法線ベクトル（外積）
+                                n = np.cross(e1, e2)              # 向きは v1->v2, v1->v3 の右手系
+                                norm_n = np.linalg.norm(n)
+
+                                # 単位法線
+                                n_unit = n / norm_n
+                                return n_unit
+
+                            def rect(v1,v2,v3,v4):
+                                X_rect = np.array([[v1[0], v2[0]],
+                                                     [v3[0], v4[0]]])
+                                Y_rect = np.array([[v1[1], v2[1]],
+                                                     [v3[1], v4[1]]])
+                                Z_rect = np.array([[v1[2], v2[2]],
+                                                     [v3[2], v4[2]]])
+                                return X_rect, Y_rect, Z_rect
+
+                            def make_surface_from_curve(curve_xyz, p3, p4, num_v=30):
+                                """
+                                曲線 (N×3) と2点 (p3, p4) を与えて、曲線と直線を対辺に持つ曲面を生成する
+                                curve_xyz : shape=(N,3) 曲線の点列
+                                p3, p4    : shape=(3,) 直線の両端点
+                                num_v     : 曲線から直線方向への分割数
+                                return    : X,Y,Z (N,num_v)
+                                """
+
+                                curve_xyz = np.asarray(curve_xyz)
+                                p3, p4 = np.asarray(p3), np.asarray(p4)
+                                N = len(curve_xyz)
+
+                                # ==== 直線側の点列を補間 ====
+                                line_xyz = np.linspace(p3, p4, N)  # 曲線と同じ分割数に揃える
+
+                                # ==== 格子生成 ====
+                                X = np.zeros((N, num_v))
+                                Y = np.zeros((N, num_v))
+                                Z = np.zeros((N, num_v))
+
+                                for i in range(N):
+                                    X[i, :] = np.linspace(curve_xyz[i, 0], line_xyz[i, 0], num_v)
+                                    Y[i, :] = np.linspace(curve_xyz[i, 1], line_xyz[i, 1], num_v)
+                                    Z[i, :] = np.linspace(curve_xyz[i, 2], line_xyz[i, 2], num_v)
+
+                                return X, Y, Z
+                            # ===== 回転関数 =====
+                            def rotate_center_all(X, Y, Z, R, center):
+                                cx, cy, cz = center
+                                Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                rotated = R @ coords
+                                Xr = rotated[0,:].reshape(X.shape) + cx
+                                Yr = rotated[1,:].reshape(Y.shape) + cy
+                                Zr = rotated[2,:].reshape(Z.shape) + cz
+                                return Xr, Yr, Zr
+                            def mirrorplot(hmirr_ell,positive=positive):
+                                n = hmirr_ell.shape[1]
+                                nx, nz = int(np.sqrt(n)), int(np.sqrt(n))
+                                X = hmirr_ell[0,:].reshape(nz, nx)
+                                Z = hmirr_ell[2,:].reshape(nz, nx)
+                                Y_top = hmirr_ell[1,:].reshape(nz, nx)
+                                # ===== 上面・底面 =====
+                                X_top = X.copy()
+                                Z_top = Z.copy()
+
+                                x_centerline = X_top[nz//2,:]
+                                y_centerline = Y_top[nz//2,:]
+                                z_centerline = Z_top[nz//2,:]
+
+
+
+                                vertice1 = np.array([X_top[0,0],Y_top[0,0],Z_top[0,0]])
+                                vertice2 = np.array([X_top[0,-1],Y_top[0,-1],Z_top[0,-1]])
+                                vertice3 = np.array([X_top[-1,0],Y_top[-1,0],Z_top[-1,0]])
+                                vertice4 = np.array([X_top[-1,-1],Y_top[-1,-1],Z_top[-1,-1]])
+
+                                wid_vector = (vertice3 - vertice1)/np.linalg.norm(vertice3 - vertice1)
+                                if positive:
+                                    factor = -0.04
+                                else:
+                                    factor = 0.04
+                                factor_array = np.linspace(-factor/2,factor/2,nz)
+                                for i in range(nz):
+                                    X_top[i,:] = x_centerline + wid_vector[0]*-factor_array[i]
+                                    Y_top[i,:] = y_centerline + wid_vector[1]*-factor_array[i]
+                                    Z_top[i,:] = z_centerline + wid_vector[2]*-factor_array[i]
+
+                                vertice1 = np.array([X_top[0,0],Y_top[0,0],Z_top[0,0]])
+                                vertice2 = np.array([X_top[0,-1],Y_top[0,-1],Z_top[0,-1]])
+                                vertice3 = np.array([X_top[-1,0],Y_top[-1,0],Z_top[-1,0]])
+                                vertice4 = np.array([X_top[-1,-1],Y_top[-1,-1],Z_top[-1,-1]])
+
+                                n_vector = normal_vector_here(vertice1,vertice4,vertice3)
+
+                                print("n_vector",n_vector)
+
+                                factor = -0.04
+                                vertice5=vertice1+n_vector*factor
+                                vertice6=vertice2+n_vector*factor
+                                vertice7=vertice3+n_vector*factor
+                                vertice8=vertice4+n_vector*factor
+
+                                x_frontline = X_top[-1,:]
+                                y_frontline = Y_top[-1,:]
+                                z_frontline = Z_top[-1,:]
+                                frontline = np.column_stack((x_frontline,y_frontline,z_frontline))
+
+                                x_backline = X_top[0,:]
+                                y_backline = Y_top[0,:]
+                                z_backline = Z_top[0,:]
+                                backline = np.column_stack((x_backline,y_backline,z_backline))
+
+
+                                X_bottom, Y_bottom, Z_bottom = rect(vertice5,vertice6,vertice7,vertice8)
+                                X_left, Y_left, Z_left = rect(vertice1,vertice3,vertice5,vertice7)
+                                X_right, Y_right, Z_right = rect(vertice2,vertice4,vertice6,vertice8)
+
+                                X_front, Y_front, Z_front= make_surface_from_curve(frontline, vertice7, vertice8,num_v=len(frontline))
+                                X_back, Y_back, Z_back= make_surface_from_curve(frontline, vertice5, vertice6,num_v=len(backline))
+
+                                ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.5)
+                                # ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.9)
+                                # ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+                                # ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+                                # ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+                                # ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+                                # ax.scatter(*vertice1,label='vertice1_')
+                                # ax.scatter(*vertice2,label='vertice2_')
+                                # ax.scatter(*vertice3,label='vertice3_')
+                                # ax.scatter(*vertice4,label='vertice4_')
+
+                                vertices = np.vstack((vertice1,vertice2,vertice3,vertice4,vertice5,vertice6,vertice7,vertice8))
+                                return vertices
+                            vertices_ell = mirrorplot(hmirr_ell,positive=True)
+                            vertices_hyp = mirrorplot(hmirr_hyp,positive=False)
+                            print(vertices_ell.shape)
+                            # ===== 表示調整 =====
+                            ax.set_box_aspect([1, 1, 1])  # アスペクト
+                            ax.set_axis_off()  # 軸・グリッド全非表示
+                            vertice1 = vertices_ell[0,:]
+                            vertice2 = vertices_hyp[2,:]
+                            vertice3 = vertices_ell[2,:]
+                            vertice4 = vertices_hyp[0,:]
+
+                            n_vector = normal_vector_here(vertice1,vertice4,vertice3)
+                            print("n_vector",n_vector)
+                            factor = -0.04
+                            vertice5=vertice1+n_vector*factor
+                            vertice6=vertice2+n_vector*factor
+                            vertice7=vertice3+n_vector*factor
+                            vertice8=vertice4+n_vector*factor
+                            X_bottom, Y_bottom, Z_bottom = rect(vertice5,vertice6,vertice7,vertice8)
+                            X_left, Y_left, Z_left = rect(vertice1,vertice3,vertice5,vertice7)
+                            X_right, Y_right, Z_right = rect(vertice2,vertice4,vertice6,vertice8)
+                            X_middle, Y_middle, Z_middle = rect(vertices_ell[1,:],vertices_ell[3,:],vertices_hyp[3,:],vertices_hyp[1,:])
+                            ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.5)
+                            ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.5)
+                            ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.5)
+                            ax.plot_surface(X_middle, Y_middle, Z_middle, color='gray', alpha=0.5)
+
+                            # ax.scatter(*vertice5,label='vertice5')
+                            # ax.scatter(*vertice6,label='vertice6')
+                            # ax.scatter(*vertice7,label='vertice7')
+                            # ax.scatter(*vertice8,label='vertice8')
+                            # ax.legend()
+                            vertices_wolter = np.vstack((vertices_ell[2,:],vertice7,vertice8,vertices_hyp[0,:],vertices_hyp[1,:],vertices_ell[3,:]))
+                            poly = Poly3DCollection([vertices_wolter], alpha=0.5, facecolor="gray")
+                            ax.add_collection3d(poly)
+                            vertices_wolter = np.vstack((vertices_ell[0,:],vertice5,vertice6,vertices_hyp[2,:],vertices_hyp[3,:],vertices_ell[1,:]))
+                            poly = Poly3DCollection([vertices_wolter], alpha=0.5, facecolor="gray")
+                            ax.add_collection3d(poly)
+
+                            return
+
+
+                        face_define2(vmirr_hyp, direction="V", positive=False)
+                        face_define2(vmirr_ell, direction="V", positive=True)
+                        face_define_wolter1(hmirr_ell,hmirr_hyp,positive=True,angle=0)
+                        # face_define_wolter1(hmirr_hyp,hmirr_ell,positive=False,angle=0)
+                        # ax.view_init(elev=90, azim=-90)
+                        # xlim = ax.get_xlim()
+                        # ylim = ax.get_ylim()
+                        # zlim = ax.get_zlim()
+                        # width=xlim[1]-xlim[0]
+                        # ylim_new = [(ylim[0] + ylim[1])/2-width/2,(ylim[0] + ylim[1])/2+width/2]
+                        # zlim_new = [(zlim[0] + zlim[1])/2-width/2,(zlim[0] + zlim[1])/2+width/2]
+                        # # ax.set_ylim(xlim_new[0],xlim_new[1])
+                        # ax.set_ylim(ylim_new[0],ylim_new[1])
+                        # ax.set_zlim(zlim_new[0],zlim_new[1])
+                        # plt.show()
+                        # face_define2(vmirr_hyp, direction="V", positive=False)
+                        # face_define2(vmirr_ell, direction="V", positive=True)
+                        # face_define2(hmirr_hyp, direction="H", positive=True,angle=omega_v)
+                        # face_define2(hmirr_ell, direction="H", positive=True,angle=omega_v)
+                        # plt.show()
                         # ### 光線1st to 2nd
-                        # for i in range(0, ray_num**2, round(ray_num**2/20)):
-                        #     ax.plot([source[0,i], vmirr_hyp[0,i]], [source[1,i], vmirr_hyp[1,i]], [source[2,i], vmirr_hyp[2,i]], color='blue', alpha=0.3)
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            source_edge = vmirr_hyp - (vmirr_hyp - source)/(vmirr_hyp[0,0] - source[0,0]) *50e-3
+                            ax.plot([source_edge[0,i], vmirr_hyp[0,i]], [source_edge[1,i], vmirr_hyp[1,i]], [source_edge[2,i], vmirr_hyp[2,i]], color='#271558', alpha=1,linewidth=1)
                         # 光線2nd to 3rd
                         for i in range(0, ray_num**2, round(ray_num**2/20)):
-                            ax.plot([vmirr_hyp[0,i], vmirr_ell[0,i]], [vmirr_hyp[1,i], vmirr_ell[1,i]], [vmirr_hyp[2,i], vmirr_ell[2,i]], color='blue', alpha=0.3)
+                            ax.plot([vmirr_ell[0,i], vmirr_hyp[0,i]], [vmirr_ell[1,i], vmirr_hyp[1,i]], [vmirr_ell[2,i], vmirr_hyp[2,i]], color="#271558", alpha=1,linewidth=1)
                         # 光線3rd to 4th
                         for i in range(0, ray_num**2, round(ray_num**2/20)):
-                            ax.plot([vmirr_ell[0,i], hmirr_ell[0,i]], [vmirr_ell[1,i], hmirr_ell[1,i]], [vmirr_ell[2,i], hmirr_ell[2,i]], color='blue', alpha=0.3)
+                            ax.plot([vmirr_ell[0,i], hmirr_ell[0,i]], [vmirr_ell[1,i], hmirr_ell[1,i]], [vmirr_ell[2,i], hmirr_ell[2,i]], color='#271558', alpha=1,linewidth=1)
                         # 光線4th to fcs
                         for i in range(0, ray_num**2, round(ray_num**2/20)):
-                            ax.plot([hmirr_ell[0,i], hmirr_hyp[0,i]], [hmirr_ell[1,i], hmirr_hyp[1,i]], [hmirr_ell[2,i], hmirr_hyp[2,i]], color='blue', alpha=0.3)
+                            ax.plot([hmirr_ell[0,i], hmirr_hyp[0,i]], [hmirr_ell[1,i], hmirr_hyp[1,i]], [hmirr_ell[2,i], hmirr_hyp[2,i]], color='#271558', alpha=1,linewidth=1)
                         for i in range(0, ray_num**2, round(ray_num**2/20)):
-                            ax.plot([hmirr_hyp[0,i], detcenter[0,i]], [hmirr_hyp[1,i], detcenter[1,i]], [hmirr_hyp[2,i], detcenter[2,i]], color='blue', alpha=0.3)
+                            detcenter_edge=detcenter + (hmirr_hyp - detcenter)/(hmirr_hyp[0,0] - detcenter[0,0]) *50e-3
+                            detcenter_edge=detcenter.copy()
+                            ax.plot([hmirr_hyp[0,i], detcenter_edge[0,i]], [hmirr_hyp[1,i], detcenter_edge[1,i]], [hmirr_hyp[2,i], detcenter_edge[2,i]], color='#271558', alpha=1,linewidth=1)
 
                         ax.legend()
                         ax.view_init(elev=20., azim=-35)
                         # aspect変えずに表示
                         ax.set_box_aspect([1,1,1])
+                        # 軸・目盛り・グリッドをすべて非表示
+                        ax.set_axis_off()
+                        # 軸範囲の取得
+                        xlim = ax.get_xlim()
+                        ylim = ax.get_ylim()
+                        zlim = ax.get_zlim()
+                        # xlim_new = [np.min(vmirr_hyp[0,:]), np.max(detcenter[0,:])]
+                        width=(xlim[1]-xlim[0])
+                        # xlim_new = [(xlim[0] + xlim[1])/2-width/2,(xlim[0] + xlim[1])/2+width/2]
+                        ylim_new = [(ylim[0] + ylim[1])/2-width/2,(ylim[0] + ylim[1])/2+width/2]
+                        zlim_new = [(zlim[0] + zlim[1])/2-width/2,(zlim[0] + zlim[1])/2+width/2]
+                        # ax.set_xlim(-2, 2)
+
+                        ax.set_ylim(xlim_new[0],xlim_new[1])
+                        ax.set_ylim(ylim_new[0],ylim_new[1])
+                        ax.set_zlim(zlim_new[0],zlim_new[1])
+                        # ax.view_init(elev=90-np.rad2deg(omega_v), azim=0)
+                        # plt.show()
+                        ax.view_init(elev=90, azim=-90)  # 真上から見る
+                        fig.savefig(os.path.join(directory_name,'topview.png'), transparent=True, dpi=1200)
+
+                        ax.view_init(elev=180, azim=-90)  #
+                        fig.savefig(os.path.join(directory_name,'sideview.png'), transparent=True, dpi=1200)
+
+                        ax.view_init(elev=90-np.rad2deg(omega_v), azim=0)
+                        fig.savefig(os.path.join(directory_name,'sideview2.png'), transparent=True, dpi=1200)
+
+                        ax.view_init(elev=90, azim=-90,roll=+np.rad2deg(omega_v))  #
+                        fig.savefig(os.path.join(directory_name,'sideview3.png'), transparent=True, dpi=1200)
+
                         plt.show()
 
                     if option_save:
@@ -6560,15 +6988,15 @@ else:
 
                         fig = plt.figure(figsize=(8, 6))
                         ax = fig.add_subplot(111, projection='3d')
-                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
-                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
-                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
-                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
+                        # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
+                        # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
+                        # ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
+                        # ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
                         # ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],z_mean_vmirr_hyp,c='gray',alpha=0.5)
                         # ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],z_mean_vmirr_ell,c='gray',alpha=0.5)
                         # ax.plot(hmirr_ell[0,:],y_mean_hmirr_ell,hmirr_ell[2,:],c='gray',alpha=0.5)
                         # ax.plot(hmirr_hyp[0,:],y_mean_hmirr_hyp,hmirr_hyp[2,:],c='gray',alpha=0.5)
-                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        # ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
                         ax.set_xlabel('X (m)')
                         ax.set_ylabel('Y (m)')
                         ax.set_zlabel('Z (m)')
@@ -6597,25 +7025,228 @@ else:
                             ]
                             return faces
 
-                        from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-                        # Poly3DCollection で面を描画
-                        face_hyp_v = face_define(np.min(vmirr_hyp,axis=1)[0], np.mean(vmirr_hyp,axis=1)[1] - 0.02, np.mean(vmirr_hyp,axis=1)[2], np.ptp(vmirr_hyp,axis=1)[0], 0.04, -0.04)
-                        face_hyp_ell = face_define(np.min(vmirr_ell,axis=1)[0], np.mean(vmirr_ell,axis=1)[1] - 0.02, np.mean(vmirr_ell,axis=1)[2], np.ptp(vmirr_ell,axis=1)[0], 0.04, 0.04)
-                        face_ell_h = face_define(np.min(hmirr_ell,axis=1)[0], np.mean(hmirr_ell,axis=1)[1], np.mean(hmirr_ell,axis=1)[2] - 0.02, np.ptp(hmirr_ell,axis=1)[0], 0.04, 0.04)
-                        face_ell_hyp = face_define(np.min(hmirr_hyp,axis=1)[0], np.mean(hmirr_hyp,axis=1)[1], np.mean(hmirr_hyp,axis=1)[2] + 0.02, np.ptp(hmirr_hyp,axis=1)[0], -0.04, -0.04)
-                        ax.add_collection3d(Poly3DCollection(face_hyp_v, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
-                        ax.add_collection3d(Poly3DCollection(face_hyp_ell, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
-                        ax.add_collection3d(Poly3DCollection(face_ell_h, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
-                        ax.add_collection3d(Poly3DCollection(face_ell_hyp, facecolors='gray', linewidths=1, edgecolors='k', alpha=1))
-                        ax.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],vmirr_hyp[2,:],label='1st Mirror')
-                        ax.plot(vmirr_ell[0,:],vmirr_ell[1,:],vmirr_ell[2,:],label='2nd Mirror')
-                        ax.plot(hmirr_ell[0,:],hmirr_ell[1,:],hmirr_ell[2,:],label='3rd Mirror')
-                        ax.plot(hmirr_hyp[0,:],hmirr_hyp[1,:],hmirr_hyp[2,:],label='4th Mirror')
-                        ax.plot(detcenter[0,:],detcenter[1,:],detcenter[2,:],label='Focal Plane')
+                        def face_define2(vmirr_hyp, direction="V", positive=False,angle=0):
+                            # fig = plt.figure(figsize=(8,6))
+                            # ax = fig.add_subplot(111, projection='3d')
 
+                            if direction =="V":
+                                n = vmirr_hyp.shape[1]
+                                nx, ny = int(np.sqrt(n)), int(np.sqrt(n))
+                                X = vmirr_hyp[0,:].reshape(ny, nx)
+                                Y = vmirr_hyp[1,:].reshape(ny, nx)
+                                y = np.linspace(-0.025, 0.025, ny) + np.mean(Y)
+
+                                X=X.T
+                                # Y=Y.T
+                                _, Y = np.meshgrid(y, y)
+                                # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                                Z_top = vmirr_hyp[2,:].reshape(ny, nx)
+                                Z_top = Z_top.T
+
+                                x = X[ny//2,:]
+                                y = Y[:,nx//2]
+
+
+
+                                # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                                Z_bottom = np.zeros_like(Z_top)                 # 底面 z=0
+                                if positive:
+                                    Z_bottom += np.max(Z_top) + 50e-3
+                                else:
+                                    Z_bottom += np.min(Z_top) - 50e-3
+
+                                # ===== 回転関数 =====
+                                def rotate_center_all(X, Y, Z, R, center):
+                                    cx, cy, cz = center
+                                    Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                    coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                    rotated = R @ coords
+                                    Xr = rotated[0,:].reshape(X.shape) + cx
+                                    Yr = rotated[1,:].reshape(Y.shape) + cy
+                                    Zr = rotated[2,:].reshape(Z.shape) + cz
+                                    return Xr, Yr, Zr
+
+                                # ===== 上面・底面 =====
+                                X_top = X.copy()
+                                Y_top = Y.copy()
+                                X_bottom = X.copy()
+                                Y_bottom = Y.copy()
+                                # ===== 側面（4枚）=====
+                                # X 最小側（左側の壁）: 形状 (ny, 2)
+                                X_left  = np.full((ny, 2), x[0])
+                                Y_left  = np.column_stack([y, y])
+                                Z_left  = np.column_stack([Z_bottom[:, 0], Z_top[:, 0]])
+                                # X 最大側（右側の壁）
+                                X_right = np.full((ny, 2), x[-1])
+                                Y_right = np.column_stack([y, y])
+                                Z_right = np.column_stack([Z_bottom[:, -1], Z_top[:, -1]])
+                                # Y 最小側（手前の壁）: 形状 (2, nx)
+                                y_front = Y[0,:]
+
+                                X_front = np.row_stack([x, x])
+                                Y_front = np.row_stack([y_front, y_front])
+                                Z_front = np.row_stack([Z_bottom[0, :], Z_top[0, :]])
+                                # Y 最大側（奥の壁)
+                                y_back = Y[-1,:]
+                                X_back = np.row_stack([x, x])
+                                Y_back = np.row_stack([y_back, y_back])
+                                Z_back = np.row_stack([Z_bottom[-1, :], Z_top[-1, :]])
+
+                                ### 回転用のコード
+                                X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                                Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                                Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                                cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                                # ===== 回転行列例（Z軸30度） =====
+                                theta = angle
+                                Ry = np.array([
+                                    [ np.cos(theta), np.sin(theta), 0],
+                                    [ -np.sin(theta),             np.cos(theta), 0           ],
+                                    [0, 0, 1]
+                                ])
+
+                                # ===== 上下面＋側面すべて回転 =====
+                                X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                                X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                                X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                                X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                                X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                                X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                                ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.9)
+                                ax.plot_surface(X_top, Y_top, Z_bottom, color='gray', alpha=0.9)
+
+
+                                ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+
+
+                                ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+
+
+                                ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+
+
+                                ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+
+                                # ===== 表示調整 =====
+                                ax.set_box_aspect([1, 1, 1])  # アスペクト
+                                ax.set_axis_off()  # 軸・グリッド全非表示
+                                ax.view_init(elev=20, azim=-35)
+                            else:
+                                n = vmirr_hyp.shape[1]
+                                nx, nz = int(np.sqrt(n)), int(np.sqrt(n))
+                                X = vmirr_hyp[0,:].reshape(nz, nx)
+                                Z = vmirr_hyp[2,:].reshape(nz, nx)
+
+                                z = np.linspace(-0.025, 0.025, nz) + np.mean(Z)
+
+                                X=X.T
+                                # Y=Y.T
+                                _, Z = np.meshgrid(z, z)
+                                Z = Z.T
+                                # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                                Y_top = vmirr_hyp[1,:].reshape(nz, nx)
+                                Y_top = Y_top.T
+
+                                x = X[nz//2,:]
+                                z = Z[:,nx//2]
+
+                                x = X[:,nz//2]
+                                z = Z[nx//2,]
+
+                                # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                                Y_bottom = np.zeros_like(Y_top)                 # 底面 z=0
+                                if positive:
+                                    Y_bottom += np.max(Y_top) + 40e-3
+                                else:
+                                    Y_bottom += np.min(Y_top) - 40e-3
+
+                                # ===== 回転関数 =====
+                                def rotate_center_all(X, Y, Z, R, center):
+                                    cx, cy, cz = center
+                                    Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                    coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                    rotated = R @ coords
+                                    Xr = rotated[0,:].reshape(X.shape) + cx
+                                    Yr = rotated[1,:].reshape(Y.shape) + cy
+                                    Zr = rotated[2,:].reshape(Z.shape) + cz
+                                    return Xr, Yr, Zr
+
+                                z_front = Z[0,:]
+                                z_back = Z[-1,:]
+                                # ===== 上面・底面 =====
+                                X_top = X.copy()
+                                Z_top = Z.copy()
+                                X_bottom = X.copy()
+                                Z_bottom = Z.copy()
+                                # ===== 側面（4枚）=====
+                                # X 最小側（左側の壁）: 形状 (ny, 2)
+                                X_left  = np.full((nz, 2), x[0])
+                                Z_left  = np.column_stack([z_front, z_front])
+                                Y_left  = np.column_stack([Y_bottom[0, :], Y_top[0, :]])
+                                # X 最大側（右側の壁）
+                                X_right = np.full((nz, 2), x[-1])
+                                Z_right = np.column_stack([z_back, z_back])
+                                Y_right = np.column_stack([Y_bottom[-1, :], Y_top[-1, :]])
+                                # Y 最小側（手前の壁）: 形状 (2, nx)
+                                # z_front = Z[0,:]
+                                X_front = np.row_stack([x, x])
+                                Z_front = np.full((2, nz), z[-1])
+                                Y_front = np.row_stack([Y_bottom[:, 0], Y_top[:, 0]])
+                                # Y 最大側（奥の壁)
+                                # z_back = Z[-1,:]
+                                X_back = np.row_stack([x, x])
+                                Z_back = np.full((2, nz), z[0])
+                                Y_back = np.row_stack([Y_bottom[:, -1], Y_top[:, -1]])
+
+                                ### 回転用のコード
+                                X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                                Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                                Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                                cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                                # ===== 回転行列例（Z軸30度） =====
+                                theta = angle
+                                Ry = np.array([
+                                    [ np.cos(theta), 0, np.sin(theta)],
+                                    [ 0,             1, 0           ],
+                                    [-np.sin(theta), 0, np.cos(theta)]
+                                ])
+
+                                # ===== 上下面＋側面すべて回転 =====
+                                X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                                X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                                X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                                X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                                X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                                X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                                ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.9)
+                                ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.9)
+                                ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+                                ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+                                ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+                                ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+
+                                # ===== 表示調整 =====
+                                ax.set_box_aspect([1, 1, 1])  # アスペクト
+                                ax.set_axis_off()  # 軸・グリッド全非表示
+                                ax.view_init(elev=20, azim=-35)
+                            return
+
+
+                        face_define2(vmirr_hyp, direction="V", positive=False)
+                        face_define2(vmirr_ell, direction="V", positive=True,angle=-omegah1)
+                        face_define2(hmirr_hyp, direction="H", positive=False,angle=-omegav1)
+                        face_define2(hmirr_ell, direction="H", positive=True,angle=omegav2)
+                        # plt.show()
                         # ### 光線1st to 2nd
-                        # for i in range(0, ray_num**2, round(ray_num**2/20)):
-                        #     ax.plot([source[0,i], vmirr_hyp[0,i]], [source[1,i], vmirr_hyp[1,i]], [source[2,i], vmirr_hyp[2,i]], color='blue', alpha=0.3)
+                        for i in range(0, ray_num**2, round(ray_num**2/20)):
+                            source_edge = vmirr_hyp - (vmirr_hyp - source)/(vmirr_hyp[0,0] - source[0,0]) *50e-3
+                            ax.plot([source_edge[0,i], vmirr_hyp[0,i]], [source_edge[1,i], vmirr_hyp[1,i]], [source_edge[2,i], vmirr_hyp[2,i]], color='#271558', alpha=0.3,linewidth=1)
                         # 光線2nd to 3rd
                         for i in range(0, ray_num**2, round(ray_num**2/20)):
                             ax.plot([hmirr_hyp[0,i], vmirr_hyp[0,i]], [hmirr_hyp[1,i], vmirr_hyp[1,i]], [hmirr_hyp[2,i], vmirr_hyp[2,i]], color="#271558", alpha=0.3,linewidth=1)
@@ -6634,6 +7265,24 @@ else:
                         ax.set_box_aspect([1,1,1])
                         # 軸・目盛り・グリッドをすべて非表示
                         ax.set_axis_off()
+                        # 軸範囲の取得
+                        xlim = ax.get_xlim()
+                        ylim = ax.get_ylim()
+                        zlim = ax.get_zlim()
+                        xlim_new = [np.min(vmirr_hyp[0,:]), np.max(detcenter[0,:])]
+                        width=xlim_new[1]-xlim_new[0]
+                        ylim_new = [(ylim[0] + ylim[1])/2-width/2,(ylim[0] + ylim[1])/2+width/2]
+                        zlim_new = [(zlim[0] + zlim[1])/2-width/2,(zlim[0] + zlim[1])/2+width/2]
+                        # ax.set_xlim(-2, 2)
+
+                        ax.set_ylim(xlim_new[0],xlim_new[1])
+                        ax.set_ylim(ylim_new[0],ylim_new[1])
+                        ax.set_zlim(zlim_new[0],zlim_new[1])
+                        ax.view_init(elev=90, azim=-90)  # 真上から見る
+                        fig.savefig(os.path.join(directory_name,'topview.png'), transparent=True, dpi=1200)
+
+                        ax.view_init(elev=0, azim=-90)  #
+                        fig.savefig(os.path.join(directory_name,'sideview.png'), transparent=True, dpi=1200)
                         plt.show()
 
                     fig,axs = plt.subplots(2,1,sharex=True)
@@ -8392,12 +9041,12 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.185),  np.float64(0.2571791717574601), np.float64(0.110), np.float64(0.030), np.float64(0.22647110067476411), np.float64(0.03)]
 
             # ### acceptance 大きめ
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
             ### SPIE用v1
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
-            # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.02), np.float64(0.21), np.float64(0.022)]
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.0211), np.float64(0.21), np.float64(0.0232)]
 
             # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214/8.2), np.float64(0.060), np.float64(0.02), np.float64(0.21/8.2), np.float64(0.022)]
             ### woltter と揃えて
@@ -9341,6 +9990,491 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             hmirr_hyp_edge_origin = mirr_ray_intersection(coeffs_hyp_h, reflect1_edge_origin, vmirr_hyp_edge_origin)
 
             if option == 'ray':
+                if True:
+                    ### 立体表示
+                    z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.05)
+                    # z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
+                    # y_mean_hmirr_ell = np.full_like(hmirr_ell[0,:], np.mean(hmirr_ell[1,:]) + 0.04)
+                    y_mean_hmirr_hyp = np.full_like(hmirr_hyp[0,:], np.mean(hmirr_hyp[1,:]) - 0.05)
+
+                    fig = plt.figure(figsize=(8, 6))
+                    ax = fig.add_subplot(111, projection='3d')
+                    ax.set_xlabel('X (m)')
+                    ax.set_ylabel('Y (m)')
+                    ax.set_zlabel('Z (m)')
+
+                    def face_define(x0, y0, z0, dx, dy, dz):
+                        """面を定義する関数"""
+                        # 8つの頂点
+                        vertices = np.array([
+                            [x0,     y0,     z0],
+                            [x0+dx,  y0,     z0],
+                            [x0+dx,  y0+dy,  z0],
+                            [x0,     y0+dy,  z0],
+                            [x0,     y0,     z0+dz],
+                            [x0+dx,  y0,     z0+dz],
+                            [x0+dx,  y0+dy,  z0+dz],
+                            [x0,     y0+dy,  z0+dz]
+                        ])
+                        # 直方体の面（頂点のインデックス）
+                        faces = [
+                            [vertices[j] for j in [0,1,2,3]],  # 底面
+                            [vertices[j] for j in [4,5,6,7]],  # 上面
+                            [vertices[j] for j in [0,1,5,4]],  # 前面
+                            [vertices[j] for j in [2,3,7,6]],  # 後面
+                            [vertices[j] for j in [1,2,6,5]],  # 右面
+                            [vertices[j] for j in [0,3,7,4]]   # 左面
+                        ]
+                        return faces
+
+                    def face_define2(vmirr_hyp, direction="V", positive=False,angle=0):
+                        # fig = plt.figure(figsize=(8,6))
+                        # ax = fig.add_subplot(111, projection='3d')
+
+                        if direction =="V":
+                            n = vmirr_hyp.shape[1]
+                            nx, ny = int(np.sqrt(n)), int(np.sqrt(n))
+                            X = vmirr_hyp[0,:].reshape(ny, nx)
+                            Y = vmirr_hyp[1,:].reshape(ny, nx)
+                            y = np.linspace(-0.02, 0.02, ny) + np.mean(Y)
+
+                            X=X.T
+                            # Y=Y.T
+                            _, Y = np.meshgrid(y, y)
+                            # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                            Z_top = vmirr_hyp[2,:].reshape(ny, nx)
+                            Z_top = Z_top.T
+
+                            x = X[ny//2,:]
+                            y = Y[:,nx//2]
+
+
+
+                            # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                            Z_bottom = np.zeros_like(Z_top)                 # 底面 z=0
+                            if positive:
+                                Z_bottom += np.max(Z_top) + 40e-3
+                            else:
+                                Z_bottom += np.min(Z_top) - 40e-3
+
+                            # ===== 回転関数 =====
+                            def rotate_center_all(X, Y, Z, R, center):
+                                cx, cy, cz = center
+                                Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                rotated = R @ coords
+                                Xr = rotated[0,:].reshape(X.shape) + cx
+                                Yr = rotated[1,:].reshape(Y.shape) + cy
+                                Zr = rotated[2,:].reshape(Z.shape) + cz
+                                return Xr, Yr, Zr
+
+                            # ===== 上面・底面 =====
+                            X_top = X.copy()
+                            Y_top = Y.copy()
+                            X_bottom = X.copy()
+                            Y_bottom = Y.copy()
+                            # ===== 側面（4枚）=====
+                            # X 最小側（左側の壁）: 形状 (ny, 2)
+                            X_left  = np.full((ny, 2), x[0])
+                            Y_left  = np.column_stack([y, y])
+                            Z_left  = np.column_stack([Z_bottom[:, 0], Z_top[:, 0]])
+                            # X 最大側（右側の壁）
+                            X_right = np.full((ny, 2), x[-1])
+                            Y_right = np.column_stack([y, y])
+                            Z_right = np.column_stack([Z_bottom[:, -1], Z_top[:, -1]])
+                            # Y 最小側（手前の壁）: 形状 (2, nx)
+                            y_front = Y[0,:]
+
+                            X_front = np.row_stack([x, x])
+                            Y_front = np.row_stack([y_front, y_front])
+                            Z_front = np.row_stack([Z_bottom[0, :], Z_top[0, :]])
+                            # Y 最大側（奥の壁)
+                            y_back = Y[-1,:]
+                            X_back = np.row_stack([x, x])
+                            Y_back = np.row_stack([y_back, y_back])
+                            Z_back = np.row_stack([Z_bottom[-1, :], Z_top[-1, :]])
+
+                            ### 回転用のコード
+                            X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                            Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                            Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                            cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                            # ===== 回転行列例（Z軸30度） =====
+                            theta = angle
+                            Ry = np.array([
+                                [ np.cos(theta), np.sin(theta), 0],
+                                [ -np.sin(theta),             np.cos(theta), 0           ],
+                                [0, 0, 1]
+                            ])
+
+                            # ===== 上下面＋側面すべて回転 =====
+                            X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                            X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                            X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                            X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                            X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                            X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                            ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.9)
+                            ax.plot_surface(X_top, Y_top, Z_bottom, color='gray', alpha=0.9)
+
+
+                            ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+
+
+                            ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+
+
+                            ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+
+
+                            ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+
+                            # ===== 表示調整 =====
+                            ax.set_box_aspect([1, 1, 1])  # アスペクト
+                            ax.set_axis_off()  # 軸・グリッド全非表示
+                            ax.view_init(elev=20, azim=-35)
+                        else:
+                            n = vmirr_hyp.shape[1]
+                            nx, nz = int(np.sqrt(n)), int(np.sqrt(n))
+                            X = vmirr_hyp[0,:].reshape(nz, nx)
+                            Z = vmirr_hyp[2,:].reshape(nz, nx)
+
+                            z = np.linspace(-0.025, 0.025, nz) + np.mean(Z)
+
+                            X=X.T
+                            # Y=Y.T
+                            _, Z = np.meshgrid(z, z)
+                            Z = Z.T
+                            # Y = np.mean(Y) + (Y - np.mean(Y))/np.ptp(Y)*0.08
+                            Y_top = vmirr_hyp[1,:].reshape(nz, nx)
+                            Y_top = Y_top.T
+
+                            # x = X[nz//2,:]
+                            # z = Z[:,nx//2]
+
+                            x = X[:,nz//2]
+                            _, X = np.meshgrid(x, x)
+                            z = Z[nx//2,]
+
+                            # Z_top = 1.0 + 0.25 * np.exp(- (X**2 + Y**2))   # 凸の上面
+                            Y_bottom = np.zeros_like(Y_top)                 # 底面 z=0
+                            if positive:
+                                Y_bottom += np.max(Y_top) + 50e-3
+                            else:
+                                Y_bottom += np.min(Y_top) - 50e-3
+
+                            # ===== 回転関数 =====
+                            def rotate_center_all(X, Y, Z, R, center):
+                                cx, cy, cz = center
+                                Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                                coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                                rotated = R @ coords
+                                Xr = rotated[0,:].reshape(X.shape) + cx
+                                Yr = rotated[1,:].reshape(Y.shape) + cy
+                                Zr = rotated[2,:].reshape(Z.shape) + cz
+                                return Xr, Yr, Zr
+
+                            z_front = Z[0,:]
+                            z_back = Z[-1,:]
+                            # ===== 上面・底面 =====
+                            X_top = X.copy()
+                            Z_top = Z.copy()
+                            X_bottom = X.copy()
+                            Z_bottom = Z.copy()
+                            # ===== 側面（4枚）=====
+                            # X 最小側（左側の壁）: 形状 (ny, 2)
+                            X_left  = np.full((nz, 2), x[0])
+                            Z_left  = np.column_stack([z_front, z_front])
+                            Y_left  = np.column_stack([Y_bottom[0, :], Y_top[0, :]])
+                            # X 最大側（右側の壁）
+                            X_right = np.full((nz, 2), x[-1])
+                            Z_right = np.column_stack([z_back, z_back])
+                            Y_right = np.column_stack([Y_bottom[-1, :], Y_top[-1, :]])
+
+                            # Y 最小側（手前の壁）: 形状 (2, nx)
+                            # z_front = Z[0,:]
+                            X_front = np.row_stack([x, x])
+                            Z_front = np.full((2, nz), z[-1])
+                            Y_front = np.row_stack([Y_bottom[:, 0], Y_top[:, 0]])
+                            # Y 最大側（奥の壁)
+                            # z_back = Z[-1,:]
+                            X_back = np.row_stack([x, x])
+                            Z_back = np.full((2, nz), z[0])
+                            Y_back = np.row_stack([Y_bottom[:, -1], Y_top[:, -1]])
+
+                            ### 回転用のコード
+                            X_all = np.concatenate([X_top.ravel(), X_bottom.ravel(), X_left.ravel(), X_right.ravel(), X_front.ravel(), X_back.ravel()])
+                            Y_all = np.concatenate([Y_top.ravel(), Y_bottom.ravel(), Y_left.ravel(), Y_right.ravel(), Y_front.ravel(), Y_back.ravel()])
+                            Z_all = np.concatenate([Z_top.ravel(), Z_bottom.ravel(), Z_left.ravel(), Z_right.ravel(), Z_front.ravel(), Z_back.ravel()])
+
+                            cx, cy, cz = np.mean(X_all), np.mean(Y_all), np.mean(Z_all)
+
+                            # ===== 回転行列例（Z軸30度） =====
+                            theta = angle
+                            Ry = np.array([
+                                [ np.cos(theta), 0, np.sin(theta)],
+                                [ 0,             1, 0           ],
+                                [-np.sin(theta), 0, np.cos(theta)]
+                            ])
+
+                            # ===== 上下面＋側面すべて回転 =====
+                            X_top, Y_top, Z_top = rotate_center_all(X_top, Y_top, Z_top, Ry, (cx, cy, cz))
+                            X_bottom, Y_bottom, Z_bottom = rotate_center_all(X_bottom, Y_bottom, Z_bottom, Ry, (cx, cy, cz))
+                            X_left, Y_left, Z_left = rotate_center_all(X_left, Y_left, Z_left, Ry, (cx, cy, cz))
+                            X_right, Y_right, Z_right = rotate_center_all(X_right, Y_right, Z_right, Ry, (cx, cy, cz))
+                            X_front, Y_front, Z_front = rotate_center_all(X_front, Y_front, Z_front, Ry, (cx, cy, cz))
+                            X_back, Y_back, Z_back = rotate_center_all(X_back, Y_back, Z_back, Ry, (cx, cy, cz))
+
+                            ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.9)
+                            ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.9)
+                            ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+                            ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+                            ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+                            ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+
+                            # ===== 表示調整 =====
+                            ax.set_box_aspect([1, 1, 1])  # アスペクト
+                            ax.set_axis_off()  # 軸・グリッド全非表示
+                            ax.view_init(elev=20, azim=-35)
+                        return
+
+                    def face_define_wolter1(hmirr_ell,hmirr_hyp,positive=False,angle=0):
+                        def normal_vector_here(v1,v2,v3):
+                            # 辺ベクトル
+                            e1 = v2 - v1
+                            e2 = v3 - v1
+
+                            # 法線ベクトル（外積）
+                            n = np.cross(e1, e2)              # 向きは v1->v2, v1->v3 の右手系
+                            norm_n = np.linalg.norm(n)
+
+                            # 単位法線
+                            n_unit = n / norm_n
+                            return n_unit
+
+                        def rect(v1,v2,v3,v4):
+                            X_rect = np.array([[v1[0], v2[0]],
+                                                 [v3[0], v4[0]]])
+                            Y_rect = np.array([[v1[1], v2[1]],
+                                                 [v3[1], v4[1]]])
+                            Z_rect = np.array([[v1[2], v2[2]],
+                                                 [v3[2], v4[2]]])
+                            return X_rect, Y_rect, Z_rect
+
+                        def make_surface_from_curve(curve_xyz, p3, p4, num_v=30):
+                            """
+                            曲線 (N×3) と2点 (p3, p4) を与えて、曲線と直線を対辺に持つ曲面を生成する
+                            curve_xyz : shape=(N,3) 曲線の点列
+                            p3, p4    : shape=(3,) 直線の両端点
+                            num_v     : 曲線から直線方向への分割数
+                            return    : X,Y,Z (N,num_v)
+                            """
+
+                            curve_xyz = np.asarray(curve_xyz)
+                            p3, p4 = np.asarray(p3), np.asarray(p4)
+                            N = len(curve_xyz)
+
+                            # ==== 直線側の点列を補間 ====
+                            line_xyz = np.linspace(p3, p4, N)  # 曲線と同じ分割数に揃える
+
+                            # ==== 格子生成 ====
+                            X = np.zeros((N, num_v))
+                            Y = np.zeros((N, num_v))
+                            Z = np.zeros((N, num_v))
+
+                            for i in range(N):
+                                X[i, :] = np.linspace(curve_xyz[i, 0], line_xyz[i, 0], num_v)
+                                Y[i, :] = np.linspace(curve_xyz[i, 1], line_xyz[i, 1], num_v)
+                                Z[i, :] = np.linspace(curve_xyz[i, 2], line_xyz[i, 2], num_v)
+
+                            return X, Y, Z
+                        # ===== 回転関数 =====
+                        def rotate_center_all(X, Y, Z, R, center):
+                            cx, cy, cz = center
+                            Xc, Yc, Zc = X - cx, Y - cy, Z - cz
+                            coords = np.vstack([Xc.ravel(), Yc.ravel(), Zc.ravel()])
+                            rotated = R @ coords
+                            Xr = rotated[0,:].reshape(X.shape) + cx
+                            Yr = rotated[1,:].reshape(Y.shape) + cy
+                            Zr = rotated[2,:].reshape(Z.shape) + cz
+                            return Xr, Yr, Zr
+                        def mirrorplot(hmirr_ell,positive=positive):
+                            n = hmirr_ell.shape[1]
+                            nx, nz = int(np.sqrt(n)), int(np.sqrt(n))
+                            X = hmirr_ell[0,:].reshape(nz, nx)
+                            Z = hmirr_ell[2,:].reshape(nz, nx)
+                            Y_top = hmirr_ell[1,:].reshape(nz, nx)
+                            # ===== 上面・底面 =====
+                            X_top = X.copy()
+                            Z_top = Z.copy()
+
+                            x_centerline = X_top[nz//2,:]
+                            y_centerline = Y_top[nz//2,:]
+                            z_centerline = Z_top[nz//2,:]
+
+                            vertice1 = np.array([X_top[0,0],Y_top[0,0],Z_top[0,0]])
+                            vertice2 = np.array([X_top[0,-1],Y_top[0,-1],Z_top[0,-1]])
+                            vertice3 = np.array([X_top[-1,0],Y_top[-1,0],Z_top[-1,0]])
+                            vertice4 = np.array([X_top[-1,-1],Y_top[-1,-1],Z_top[-1,-1]])
+
+                            wid_vector = (vertice3 - vertice1)/np.linalg.norm(vertice3 - vertice1)
+                            if positive:
+                                factor = -0.04
+                            else:
+                                factor = 0.04
+                            factor_array = np.linspace(-factor/2,factor/2,nz)
+                            for i in range(nz):
+                                X_top[i,:] = x_centerline + wid_vector[0]*-factor_array[i]
+                                Y_top[i,:] = y_centerline + wid_vector[1]*-factor_array[i]
+                                Z_top[i,:] = z_centerline + wid_vector[2]*-factor_array[i]
+
+                            vertice1 = np.array([X_top[0,0],Y_top[0,0],Z_top[0,0]])
+                            vertice2 = np.array([X_top[0,-1],Y_top[0,-1],Z_top[0,-1]])
+                            vertice3 = np.array([X_top[-1,0],Y_top[-1,0],Z_top[-1,0]])
+                            vertice4 = np.array([X_top[-1,-1],Y_top[-1,-1],Z_top[-1,-1]])
+
+                            n_vector = normal_vector_here(vertice1,vertice4,vertice3)
+
+                            print("n_vector",n_vector)
+
+                            factor = -0.04
+                            vertice5=vertice1+n_vector*factor
+                            vertice6=vertice2+n_vector*factor
+                            vertice7=vertice3+n_vector*factor
+                            vertice8=vertice4+n_vector*factor
+
+                            x_frontline = X_top[-1,:]
+                            y_frontline = Y_top[-1,:]
+                            z_frontline = Z_top[-1,:]
+                            frontline = np.column_stack((x_frontline,y_frontline,z_frontline))
+
+                            x_backline = X_top[0,:]
+                            y_backline = Y_top[0,:]
+                            z_backline = Z_top[0,:]
+                            backline = np.column_stack((x_backline,y_backline,z_backline))
+
+
+                            X_bottom, Y_bottom, Z_bottom = rect(vertice5,vertice6,vertice7,vertice8)
+                            X_left, Y_left, Z_left = rect(vertice1,vertice3,vertice5,vertice7)
+                            X_right, Y_right, Z_right = rect(vertice2,vertice4,vertice6,vertice8)
+
+                            X_front, Y_front, Z_front= make_surface_from_curve(frontline, vertice7, vertice8,num_v=len(frontline))
+                            X_back, Y_back, Z_back= make_surface_from_curve(backline, vertice5, vertice6,num_v=len(backline))
+
+                            ax.plot_surface(X_top, Y_top, Z_top,    color='gray', alpha=0.5)
+                            ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.9)
+                            ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.9)
+                            ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.9)
+                            ax.plot_surface(X_front, Y_front, Z_front, color='gray', alpha=0.9)
+                            ax.plot_surface(X_back, Y_back, Z_back, color='gray', alpha=0.9)
+                            # ax.scatter(*vertice1,label='vertice1_')
+                            # ax.scatter(*vertice2,label='vertice2_')
+                            # ax.scatter(*vertice3,label='vertice3_')
+                            # ax.scatter(*vertice4,label='vertice4_')
+                            # ax.scatter(*vertice5,label='vertice5')
+                            # ax.scatter(*vertice6,label='vertice6')
+                            # ax.scatter(*vertice7,label='vertice7')
+                            # ax.scatter(*vertice8,label='vertice8')
+                            ax.legend()
+
+                            vertices = np.vstack((vertice1,vertice2,vertice3,vertice4,vertice5,vertice6,vertice7,vertice8))
+                            return vertices
+                        vertices_ell = mirrorplot(hmirr_ell,positive=True)
+                        # vertices_hyp = mirrorplot(hmirr_hyp,positive=False)
+                        # print(vertices_ell.shape)
+                        # # ===== 表示調整 =====
+                        # ax.set_box_aspect([1, 1, 1])  # アスペクト
+                        # ax.set_axis_off()  # 軸・グリッド全非表示
+                        # vertice1 = vertices_ell[0,:]
+                        # vertice2 = vertices_hyp[2,:]
+                        # vertice3 = vertices_ell[2,:]
+                        # vertice4 = vertices_hyp[0,:]
+                        #
+                        # n_vector = normal_vector_here(vertice1,vertice4,vertice3)
+                        # print("n_vector",n_vector)
+                        # factor = -0.04
+                        # vertice5=vertice1+n_vector*factor
+                        # vertice6=vertice2+n_vector*factor
+                        # vertice7=vertice3+n_vector*factor
+                        # vertice8=vertice4+n_vector*factor
+                        # X_bottom, Y_bottom, Z_bottom = rect(vertice5,vertice6,vertice7,vertice8)
+                        # X_left, Y_left, Z_left = rect(vertice1,vertice3,vertice5,vertice7)
+                        # X_right, Y_right, Z_right = rect(vertice2,vertice4,vertice6,vertice8)
+                        # X_middle, Y_middle, Z_middle = rect(vertices_ell[1,:],vertices_ell[3,:],vertices_hyp[3,:],vertices_hyp[1,:])
+                        # ax.plot_surface(X_bottom, Y_bottom, Z_bottom, color='gray', alpha=0.5)
+                        # ax.plot_surface(X_left, Y_left, Z_left, color='gray', alpha=0.5)
+                        # ax.plot_surface(X_right, Y_right, Z_right, color='gray', alpha=0.5)
+                        # ax.plot_surface(X_middle, Y_middle, Z_middle, color='gray', alpha=0.5)
+                        #
+                        # # ax.scatter(*vertice5,label='vertice5')
+                        # # ax.scatter(*vertice6,label='vertice6')
+                        # # ax.scatter(*vertice7,label='vertice7')
+                        # # ax.scatter(*vertice8,label='vertice8')
+                        # # ax.legend()
+                        # vertices_wolter = np.vstack((vertices_ell[2,:],vertice7,vertice8,vertices_hyp[0,:],vertices_hyp[1,:],vertices_ell[3,:]))
+                        # poly = Poly3DCollection([vertices_wolter], alpha=0.5, facecolor="gray")
+                        # ax.add_collection3d(poly)
+                        # vertices_wolter = np.vstack((vertices_ell[0,:],vertice5,vertice6,vertices_hyp[2,:],vertices_hyp[3,:],vertices_ell[1,:]))
+                        # poly = Poly3DCollection([vertices_wolter], alpha=0.5, facecolor="gray")
+                        # ax.add_collection3d(poly)
+
+                        return
+
+                    face_define2(vmirr_hyp, direction="V", positive=True)
+                    # face_define2(vmirr_ell, direction="V", positive=True,angle=-omegah1)
+                    # face_define2(hmirr_hyp, direction="H", positive=True,angle=omega_V) #
+
+                    face_define_wolter1(hmirr_hyp,hmirr_hyp,positive=False)
+
+                    # face_define2(hmirr_ell, direction="H", positive=True,angle=omegav2)
+                    # plt.show()
+                    # ### 光線1st to 2nd
+                    for i in range(0, ray_num**2, round(ray_num**2/40)):
+                        source_edge = vmirr_hyp - (vmirr_hyp - source)/(vmirr_hyp[0,0] - source[0,0]) *90e-3
+                        ax.plot([source_edge[0,i], vmirr_hyp[0,i]], [source_edge[1,i], vmirr_hyp[1,i]], [source_edge[2,i], vmirr_hyp[2,i]], color='#271558', alpha=0.3,linewidth=1)
+                    # 光線2nd to 3rd
+                    for i in range(0, ray_num**2, round(ray_num**2/40)):
+                        ax.plot([hmirr_hyp[0,i], vmirr_hyp[0,i]], [hmirr_hyp[1,i], vmirr_hyp[1,i]], [hmirr_hyp[2,i], vmirr_hyp[2,i]], color="#271558", alpha=0.3,linewidth=1)
+                    # 光線3rd to 4th
+                    # for i in range(0, ray_num**2, round(ray_num**2/20)):
+                    #     ax.plot([vmirr_ell[0,i], hmirr_hyp[0,i]], [vmirr_ell[1,i], hmirr_hyp[1,i]], [vmirr_ell[2,i], hmirr_hyp[2,i]], color='#271558', alpha=0.3,linewidth=1)
+                    # # 光線4th to fcs
+                    # for i in range(0, ray_num**2, round(ray_num**2/20)):
+                    #     ax.plot([hmirr_ell[0,i], vmirr_ell[0,i]], [hmirr_ell[1,i], vmirr_ell[1,i]], [hmirr_ell[2,i], vmirr_ell[2,i]], color='#271558', alpha=0.3,linewidth=1)
+                    for i in range(0, ray_num**2, round(ray_num**2/40)):
+                        ax.plot([hmirr_hyp[0,i], detcenter[0,i]], [hmirr_hyp[1,i], detcenter[1,i]], [hmirr_hyp[2,i], detcenter[2,i]], color='#271558', alpha=0.3,linewidth=1)
+
+                    ax.legend()
+                    ax.view_init(elev=20., azim=-35)
+                    # aspect変えずに表示
+                    ax.set_box_aspect([1,1,1])
+                    # 軸・目盛り・グリッドをすべて非表示
+                    ax.set_axis_off()
+                    # 軸範囲の取得
+                    xlim = ax.get_xlim()
+                    ylim = ax.get_ylim()
+                    zlim = ax.get_zlim()
+                    # xlim_new = [np.min(vmirr_hyp[0,:]), np.max(detcenter[0,:])]
+                    width=xlim[1]-xlim[0]
+                    ylim_new = [(ylim[0] + ylim[1])/2-width/2,(ylim[0] + ylim[1])/2+width/2]
+                    zlim_new = [(zlim[0] + zlim[1])/2-width/2,(zlim[0] + zlim[1])/2+width/2]
+                    # ax.set_xlim(-2, 2)
+
+                    # ax.set_ylim(xlim_new[0],xlim_new[1])
+                    ax.set_ylim(ylim_new[0],ylim_new[1])
+                    ax.set_zlim(zlim_new[0],zlim_new[1])
+                    ax.view_init(elev=90, azim=-90)  # 真上から見る
+                    fig.savefig(os.path.join(directory_name,'topview.png'), transparent=True, dpi=1200)
+
+                    ax.view_init(elev=90-np.rad2deg(omega_V), azim=0)
+                    fig.savefig(os.path.join(directory_name,'sideview2.png'), transparent=True, dpi=1200)
+                    #
+                    ax.view_init(elev=0, azim=-90)  #
+                    fig.savefig(os.path.join(directory_name,'sideview.png'), transparent=True, dpi=1200)
+                    plt.show()
                 if option_save:
                     from scipy.spatial import cKDTree
                     def mindist(A,B):
@@ -12260,7 +13394,15 @@ else:
 # initial_params[21] += 19.5e-5
 
 # option_mpmath = True
-# plot_result_debug(initial_params,'ray_wave')
+initial_params[0] = -2.57300721e-03
+initial_params[1] = -7.29941730e-04
+initial_params[8] = -8.02054799e-03
+initial_params[9] = 7.32282173e-07
+initial_params[10] =  1.50704730e-07
+if option_AKB:
+    plot_result_debug(initial_params,'ray')
+else:
+    KB_debug(initial_params.copy(),1,1,'ray')
 
 # calc_FoC(initial_params)
 # initial_params[2] += 1e-5
@@ -12274,9 +13416,9 @@ else:
 
 # initial_params[2] += 1e-4
 # initial_params[14] += 1e-4
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-plt.show()
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+# plt.show()
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
 # # KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
 
