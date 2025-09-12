@@ -35,6 +35,7 @@ def compute_psf_fft(
     pad_factor=2,
     window=None,
     return_efield=False,
+    pupil_dy_m=None
 ):
     '''
     Fraunhofer PSF from pupil plane OPD and amplitude via FFT.
@@ -103,11 +104,15 @@ def compute_psf_fft(
     # Fraunhofer constant factor (1/(i λ f)) does not affect intensity except global scale;
     # we normalize PSF peak afterwards.
     dx = pupil_dx_m
-    dA = dx*dx
+    if pupil_dy_m is None:
+        dy = dx
+    else:
+        dy = pupil_dy_m
+    dA = dx*dy
     U_im = np.fft.fftshift(np.fft.fft2(np.fft.ifftshift(U_pad))) * dA
     # Coordinates in image plane
     fx = np.fft.fftshift(np.fft.fftfreq(px, d=dx))  # cycles/m
-    fy = np.fft.fftshift(np.fft.fftfreq(py, d=dx))
+    fy = np.fft.fftshift(np.fft.fftfreq(py, d=dy))
     x_im = wavelength_m * focal_length_m * fx  # meters
     y_im = wavelength_m * focal_length_m * fy  # meters
     # Intensity and normalization (peak = 1)
