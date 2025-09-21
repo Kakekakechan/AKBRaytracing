@@ -146,7 +146,7 @@ def crop(start,end,mabiki):
     # 範囲内の値を間引く
     thinned_array = original_array[start:end:skip_rate]
     return thinned_array
-def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num):
+def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num,subpoint1=0.,subpoint2=0.):
     coeffs_det = np.zeros(10)
     coeffs_det[6] = 1.
     coeffs_det[7] = 0.
@@ -188,16 +188,19 @@ def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num):
     #     if i % mabiki == 0:
     #         plt.plot([detcenter1[0,i],detcenter2[0,i]],[detcenter1[1,i],detcenter2[1,i]])
 
-    # axs[0].plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
-    # axs[0].plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
-    # axs[0].plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
-
-    axs[0].plot([detcenter1[0,:],detcenter2[0,:]],[detcenter1[1,:],detcenter2[1,:]],'k')
+    axs[0].plot([detcenter1[0,thinned_array1],detcenter2[0,thinned_array1]],[detcenter1[1,thinned_array1],detcenter2[1,thinned_array1]],'r')
+    axs[0].plot([detcenter1[0,thinned_array3],detcenter2[0,thinned_array3]],[detcenter1[1,thinned_array3],detcenter2[1,thinned_array3]],'g')
+    axs[0].plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
+    axs[0].scatter(subpoint1,0)
+    axs[0].scatter(subpoint2,0)
+    # axs[0].plot([detcenter1[0,:],detcenter2[0,:]],[detcenter1[1,:],detcenter2[1,:]],'k')
 
 
     axs[1].plot([detcenter1[0,thinned_array1_v],detcenter2[0,thinned_array1_v]],[detcenter1[2,thinned_array1_v],detcenter2[2,thinned_array1_v]],'r')
     axs[1].plot([detcenter1[0,thinned_array3_v],detcenter2[0,thinned_array3_v]],[detcenter1[2,thinned_array3_v],detcenter2[2,thinned_array3_v]],'g')
     axs[1].plot([detcenter1[0,thinned_array2_v],detcenter2[0,thinned_array2_v]],[detcenter1[2,thinned_array2_v],detcenter2[2,thinned_array2_v]],'y')
+    axs[1].scatter(subpoint1,0)
+    axs[1].scatter(subpoint2,0)
     # plt.plot([detcenter1[0,thinned_array2],detcenter2[0,thinned_array2]],[detcenter1[1,thinned_array2],detcenter2[1,thinned_array2]],'y')
     # plt.plot([np.mean(detcenter[0,:]),np.mean(detcenter[0,:])],[np.min(detcenter2[1,:]),np.max(detcenter1[1,:])],color='k')
     axs[0].set_title('Virtual focus of 2nd mirror')
@@ -207,7 +210,7 @@ def plot_ray_sideview(place,defocussize,mabiki,ray,point,ray_num):
     axs[1].set_xlabel('Axial (m)')
     axs[1].set_ylabel('Vertical Position (m)')
     plt.savefig('virtualSource.png', dpi=300)
-    plt.show()
+    # plt.show()
 
     # plt.figure()
     # for i in range(detcenter1.shape[1]):
@@ -1769,7 +1772,7 @@ if option_wolter_3_1:
             plot_hyperbola(a_hyp_v, b_hyp_v, h = org_hyp_v, orientation='horizontal',tmax=0.2, linewidth=0.5, ax=ax, label='Hyperbola', linestyle='--',color='k')
             plt.savefig('hyp.png', dpi=300,transparent=True)
             plt.show()
-            
+
             ax.scatter([org_hyp_v*2,org_hyp_v*2+org_ell_v*2], [0,0], color='red',s=0.2)  # 焦点
             ax.set_xlim([145.95, 146.25])
             ax.set_ylim([-0.15, 0.15])
@@ -6591,7 +6594,7 @@ else:
             length_ell_h = np.float64(0.0663194129478278)
             theta1_h = np.float64(7.15704945387313E-06)
 
-        
+
 
         org_hyp_v = np.sqrt(a_hyp_v**2 + b_hyp_v**2)
         org_hyp_h = np.sqrt(a_hyp_h**2 + b_hyp_h**2)
@@ -9529,12 +9532,12 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
 
                 # ### acceptance 大きめ
                 # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(1000.*var_input), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
-                
+
                 # ### SPIE用v1
                 # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(1000.*var_input), np.float64(0.43),  np.float64(0.213), np.float64(0.30), np.float64(0.1), np.float64(0.175), np.float64(0.14)]
                 # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.128), np.float64(0.090), np.float64(0.023), np.float64(0.27), np.float64(0.018)]
 
-                l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(2000.*var_input), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.0211), np.float64(0.21), np.float64(0.0232)] ### 最適化の例
+                l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214), np.float64(0.060), np.float64(0.0211), np.float64(0.21), np.float64(0.0232)] ### 最適化の例
 
                 # # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.086),  np.float64(0.214/8.2), np.float64(0.060), np.float64(0.02), np.float64(0.21/8.2), np.float64(0.022)]
                 # ### woltter と揃えて
@@ -9546,6 +9549,33 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                 l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = designparams
             a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
 
+
+            def calc_virtual_s(l1,l2,inc,mirr_length):
+                # l1 = 146.0  # Distance from source to mirror 1
+                # l2 = 0.1  # Distance from mirror 1 to mirror 2
+                # inc = 0.2  # Grazing incidence angle in radians
+                # mirr_length = 0.1  # Mirror length
+                a_ell, b_ell, sita1, sita3 = Ell_define(l1, inc, l2)
+
+                f_ell = sqrt(a_ell**2 - b_ell**2)
+                x_center = l1* cos(sita1)
+                y_center = l1* sin(sita1)
+                x1 = x_center - mirr_length/2
+                x2 = x_center + mirr_length/2
+                y1 = calcEll_Yvalue(a_ell, b_ell, x1)
+                y2 = calcEll_Yvalue(a_ell, b_ell, x2)
+                p1 = sqrt(x1**2+y1**2)
+                p2 = sqrt(x2**2+y2**2)
+                sita1_1 = arctan(y1/x1)
+                sita1_2 = arctan(y2/x2)
+                sita3_1 = arctan(y1/(2*f_ell-x1))
+                sita3_2 = arctan(y2/(2*f_ell-x2))
+
+                s0_prime_x1 = p1*(cos(sita1_1)-cos(sita3_1))
+                s0_prime_x2 = p2*(cos(sita1_2)-cos(sita3_2))
+                return s0_prime_x1, s0_prime_x2
+
+            s0_prime_x1_v, s0_prime_x2_v = calc_virtual_s(l1h, l2h, inc_h, mlen_h)
             # print('NA_h', NA_h)
             # print('NA_v', NA_v)
             # print('accept_h', accept_h)
@@ -10268,7 +10298,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
         ax.set_ylim([-0.25, 0.25])
         plt.savefig('fig_ellipse_V.png', dpi=300,transparent=True)
         plt.show()
-        
+
         fig, ax = plt.subplots(figsize=(6,6))
         plot_ellipse(a_hyp_h, b_hyp_h, h = org_hyp_h , ax=ax, label='Ellipse', linewidth=0.5, linestyle='--',color='y')
         # plot_hyperbola(a_hyp_v, b_hyp_v, h = org_hyp_v, orientation='horizontal',tmax=0.2, linewidth=0.5, ax=ax, label='Hyperbola', linestyle='--',color='y')
@@ -11420,6 +11450,10 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             return pv
 
         if option == 'ray':
+            plot_ray_sideview(0,s0_prime_x2_v,5,reflect1,vmirr_hyp,ray_num,subpoint1=s0_prime_x1_v,subpoint2=s0_prime_x2_v)
+            # axs[0].scatter(s0_prime_x1_v,0)
+            # axs[0].scatter(s0_prime_x2_v,0)
+            plt.show()
             # print('WD_design',s2f_middle + defocus)
             print('ID',np.min(hmirr_hyp[0,:]) - np.max(vmirr_hyp[0,:]))
             print('WD',np.min(detcenter[0,:]) - np.max(hmirr_hyp[0,:]))
@@ -14237,6 +14271,7 @@ initial_params = np.array([0., 0.,
 # # # # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
 
 # # # sys.exit()
+auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
 
 if option_AKB == False:
     # ratio = (np.arange(1)+1)
