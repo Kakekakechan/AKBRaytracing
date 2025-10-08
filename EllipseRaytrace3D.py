@@ -265,9 +265,9 @@ def plot_3_view(points,title):
     fig, axs = plt.subplots(2,2)
     plt.suptitle(title)
     axs = axs.ravel()
-    axs[0].plot(points[1, :, :], points[2, :, :], marker='o', linestyle='', color='b')
-    axs[0].set_xlabel('Y (m)')
-    axs[0].set_ylabel('Z (m)')
+    axs[0].plot(points[2, :, :], points[1, :, :], marker='o', linestyle='', color='b')
+    axs[0].set_xlabel('Z (m)')
+    axs[0].set_ylabel('Y (m)')
 
     ### side view
     axs[1].plot(points[0, :, :], points[2, :, :], marker='o', linestyle='', color='b')
@@ -300,7 +300,7 @@ def plot_side_topview(list):
     plt.axis('equal')
     return
 if __name__ == "__main__":
-    num_points = 20
+    num_points = 100
     source = np.zeros((3, num_points*num_points))
     div_s = 0.01 # Divergence angle in radians
     angle_z = np.linspace(-div_s, div_s, num_points)
@@ -330,6 +330,7 @@ if __name__ == "__main__":
     ### v
     angle_y = np.linspace(ell_v.sita1_1, ell_v.sita1_2, num_points)
     angle_z = np.linspace(ell_h.sita1_1, ell_h.sita1_2, num_points)
+    angle_z = np.linspace(-np.pi/2+1e-9, np.pi/2-1e-9, num_points)
     mean_angle_z = np.mean(angle_z)
     angle_z -= mean_angle_z
     angle_YY, angle_ZZ = np.meshgrid(angle_y, angle_z)
@@ -357,26 +358,28 @@ if __name__ == "__main__":
     ell_h.coeffs, r_matrix = rotate_general_axis(ell_h.coeffs, axis_y, mean_angle_z, [0, 0, 0])
     ell_h.coeffs, r_matrix = rotate_general_axis(ell_h.coeffs, axis_z, -theta, [ell_v.dist_s_f, 0, 0])
 
-    ell_h.calc_reflect(ell_v.reflect,ell_v.points)
+    # ell_h.calc_reflect(ell_v.reflect,ell_v.points)
 
-    # ell_h.calc_reflect(vector,source)
-    # focus_h_solo = PlanePoints(ell_h.dist_s_f*np.cos(mean_angle_z),1e-8,ell_h.reflect,ell_h.points)
-    # focus_h_solo.points0 = focus_h_solo.points0.reshape(3, num_points, num_points)
-    # ell_h_matrix = ell_h.points.reshape(3, num_points, num_points)
-    # plot_3_view(focus_h_solo.points0,'focus_h_solo')
-    # plt.figure()
-    # plt.plot(focus_h_solo.points0[0, :, :], focus_h_solo.points0[2, :, :], marker='o', linestyle='', color='b')
-    # plt.plot(ell_h_matrix[0, :, :], ell_h_matrix[2, :, :], marker='o', linestyle='', color='r')
-    # plt.xlabel('X (m)')
-    # plt.ylabel('Z (m)')
-    # plt.figure()
-    # plt.plot(focus_h_solo.points0[0, :, :], focus_h_solo.points0[1, :, :], marker='o', linestyle='', color='b')
-    # plt.plot(ell_h_matrix[0, :, :], ell_h_matrix[1, :, :], marker='o', linestyle='', color='r')
-    # plt.xlabel('X (m)')
-    # plt.ylabel('Y (m)')
-    # plt.show()
+    ell_h.calc_reflect(vector,source)
+    focus_h_solo = PlanePoints(ell_h.dist_s_f*np.cos(mean_angle_z),1e-8,ell_h.reflect,ell_h.points)
+    focus_h_solo.points0 = focus_h_solo.points0.reshape(3, num_points, num_points)
+    ell_h_matrix = ell_h.points.reshape(3, num_points, num_points)
+    plot_3_view(focus_h_solo.points0,'focus_h_solo')
+    plt.figure()
+    plt.plot(focus_h_solo.points0[0, :, :], focus_h_solo.points0[2, :, :], marker='o', linestyle='', color='b')
+    plt.plot(ell_h_matrix[0, :, :], ell_h_matrix[2, :, :], marker='o', linestyle='', color='r')
+    plt.xlabel('X (m)')
+    plt.ylabel('Z (m)')
+    plt.figure()
+    plt.plot(focus_h_solo.points0[0, :, :], focus_h_solo.points0[1, :, :], marker='o', linestyle='', color='b')
+    plt.plot(ell_h_matrix[0, :, :], ell_h_matrix[1, :, :], marker='o', linestyle='', color='r')
+    plt.xlabel('X (m)')
+    plt.ylabel('Y (m)')
+    plt.show()
 
-    focus = PlanePoints(ell_v.dist_s_f,1e-4,ell_h.reflect,ell_h.points)
+    # focus = PlanePoints(ell_v.dist_s_f,1e-4,ell_h.reflect,ell_h.points)
+
+    focus = PlanePoints(ell_v.dist_s_f,1e-9,ell_v.reflect,ell_v.points)
 
     # ell_v.calc_points_plane(ell_v.dist_s_f,1e-8)
     focus_v_solo = PlanePoints(ell_v.dist_s_f,1e-8,ell_v.reflect,ell_v.points)
@@ -394,7 +397,7 @@ if __name__ == "__main__":
     # plt.show()
 
     plt.figure(figsize=(6, 6))
-    plt.quiver(virtual_source_h.points1[0, :, 0], virtual_source_h.points1[2, :, 0], virtual_source_h.points2[0, :, 0] - virtual_source_h.points1[0, :, 0], virtual_source_h.points2[2, :, 0] - virtual_source_h.points1[2, :, 0], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
+    plt.quiver(virtual_source_h.points1[0, :, 0], virtual_source_h.points1[2, :, 0], virtual_source_h.points2[0, :, 0] - virtual_source_h.points1[0, :, 0], virtual_source_h.points2[2, :, 0] - virtual_source_h.points1[2, :, 0], angles='xy', scale_units='xy', scale=1, color='purple', width=0.002)
     plt.quiver(virtual_source_h.points1[0, :, -1], virtual_source_h.points1[2, :, -1], virtual_source_h.points2[0, :, -1] - virtual_source_h.points1[0, :, -1], virtual_source_h.points2[2, :, -1] - virtual_source_h.points1[2, :, -1], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
     plt.scatter(ell_v.s0_prime_x1,0)
     plt.scatter(ell_v.s0_prime_x2,0)
@@ -417,9 +420,10 @@ if __name__ == "__main__":
     # plt.quiver(focus.points1[0, :, 0], focus.points1[1, :, 0], focus.points2[0, :, 0] - focus.points1[0, :, 0], focus.points2[1, :, 0] - focus.points1[1, :, 0], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
     # plt.quiver(focus.points1[0, :, num_points//2], focus.points1[1, :, num_points//2], focus.points2[0, :, num_points//2] - focus.points1[0, :, num_points//2], focus.points2[1, :, num_points//2] - focus.points1[1, :, num_points//2], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
     # plt.quiver(focus.points1[0, :, -1], focus.points1[1, :, -1], focus.points2[0, :, -1] - focus.points1[0, :, -1], focus.points2[1, :, -1] - focus.points1[1, :, -1], angles='xy', scale_units='xy', scale=1, color='r', width=0.002)
-    plt.quiver(focus.points1[0, 0, :], focus.points1[1, 0, :], focus.points2[0, 0, :] - focus.points1[0, 0, :], focus.points2[1, 0, :] - focus.points1[1, 0, :], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
-    plt.quiver(focus.points1[0, num_points//2, :], focus.points1[1, num_points//2, :], focus.points2[0, num_points//2, :] - focus.points1[0, num_points//2, :], focus.points2[1, num_points//2, :] - focus.points1[1, num_points//2, :], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
-    plt.quiver(focus.points1[0, -1, :], focus.points1[1, -1, :], focus.points2[0, -1, :] - focus.points1[0, -1, :], focus.points2[1, -1, :] - focus.points1[1, -1, :], angles='xy', scale_units='xy', scale=1, color='r', width=0.002)
+    # plt.quiver(focus.points1[0, 0, :], focus.points1[1, 0, :], focus.points2[0, 0, :] - focus.points1[0, 0, :], focus.points2[1, 0, :] - focus.points1[1, 0, :], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
+    # plt.quiver(focus.points1[0, num_points//2, :], focus.points1[1, num_points//2, :], focus.points2[0, num_points//2, :] - focus.points1[0, num_points//2, :], focus.points2[1, num_points//2, :] - focus.points1[1, num_points//2, :], angles='xy', scale_units='xy', scale=1, color='g', width=0.002)
+    # plt.quiver(focus.points1[0, -1, :], focus.points1[1, -1, :], focus.points2[0, -1, :] - focus.points1[0, -1, :], focus.points2[1, -1, :] - focus.points1[1, -1, :], angles='xy', scale_units='xy', scale=1, color='r', width=0.002)
+    plt.quiver(focus.points1[0, :, :], focus.points1[1, :, :], focus.points2[0, :, :] - focus.points1[0, :, :], focus.points2[1, :, :] - focus.points1[1, :, :], angles='xy', scale_units='xy', scale=1, color='b', width=0.002)
     plt.xlabel('X (m)')
     plt.ylabel('Y (m)')
     plt.xlim([focus.points1[0, :].min(),focus.points2[0, :].max()])
