@@ -6,12 +6,13 @@ import numpy as np
 import pandas as pd
 
 import matplotlib
-matplotlib.use('Agg')  # 画面に表示しないバックエンド
+# matplotlib.use('Agg')  # 画面に表示しないバックエンド
 import matplotlib.pyplot as plt
 
 from psf_fft import compute_psf_fft, psf_to_db
 from scipy.optimize import minimize
 from scipy.optimize import Bounds
+from scipy.optimize import fsolve
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import ProcessPoolExecutor
 from psf_fft import compute_psf_fft, psf_to_db
@@ -76,12 +77,12 @@ unit = 129
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
-option_AKB = False
-option_wolter_3_1 = False
+option_AKB = True
+option_wolter_3_1 = True
 option_wolter_3_3_tandem = False
 option_HighNA = True
 global option_energy
-option_energy = 'softXray'  # 'EUV' or 'hardXray' or 'softXray'
+option_energy = 'EUV'  # 'EUV' or 'hardXray' or 'softXray'
 
 global LowNAratio
 LowNAratio = 1.
@@ -95,6 +96,8 @@ global var_input
 var_input = 1
 global widesearch
 widesearch = False
+global KBdesign_7params
+KBdesign_7params = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
 
 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 if option_AKB:
@@ -888,7 +891,7 @@ def point_rotate_x(point, theta, center):
     Cos, Sin = np.cos(theta), np.sin(theta)
     x1, y1, z1 = x, y * Cos + z * Sin, z * Cos - y * Sin
 
-    x1, y1, z1 = x1 + center[0], y1 + center[1], z1 + center[3]
+    x1, y1, z1 = x1 + center[0], y1 + center[1], z1 + center[2]
     return np.array([x1, y1, z1])
 
 def point_rotate_y(point, theta, center):
@@ -1680,25 +1683,25 @@ if option_wolter_3_1:
             length_ell_h = ell_length_h
 
         if True:  # 初期設定 2025/06/12
-            ### 3型 Setting11
-            a_hyp_v  =   np.float64(72.981)
-            b_hyp_v  =   np.float64(0.274955741326603)
-            a_ell_v  =   np.float64(0.107)
-            b_ell_v  =   np.float64(0.0270059974473355)
-            hyp_length_v  =   np.float64(0.043)
-            ell_length_v  =   np.float64(0.0668954744537463)
-            theta1_v  =   np.float64(6.03651016038744E-05)
-            theta2_v  =   np.float64(0.117)
-            theta3_v  =   np.float64(0.234060365101604)
-            theta4_v  =   np.float64(0.256079738847749)
-            theta5_v  =   np.float64(-0.278099112593894)
-            phai_hyp_v  =   np.float64(-0.117060365101604)
-            phai_ell_v  =   np.float64(0.0024924654464218)
-            F_eff_v  =   np.float64(0.0308994364264663)
-            Mag_v  =   np.float64(4729.51047311538)
-            NA_v  =   np.float64(0.0818997791446706)
-            Aperture_v  =   np.float64(0.0169439604135074)
-            F0_F2_v  =   np.float64(146.170107628762)
+            # ### 3型 Setting11
+            # a_hyp_v  =   np.float64(72.981)
+            # b_hyp_v  =   np.float64(0.274955741326603)
+            # a_ell_v  =   np.float64(0.107)
+            # b_ell_v  =   np.float64(0.0270059974473355)
+            # hyp_length_v  =   np.float64(0.043)
+            # ell_length_v  =   np.float64(0.0668954744537463)
+            # theta1_v  =   np.float64(6.03651016038744E-05)
+            # theta2_v  =   np.float64(0.117)
+            # theta3_v  =   np.float64(0.234060365101604)
+            # theta4_v  =   np.float64(0.256079738847749)
+            # theta5_v  =   np.float64(-0.278099112593894)
+            # phai_hyp_v  =   np.float64(-0.117060365101604)
+            # phai_ell_v  =   np.float64(0.0024924654464218)
+            # F_eff_v  =   np.float64(0.0308994364264663)
+            # Mag_v  =   np.float64(4729.51047311538)
+            # NA_v  =   np.float64(0.0818997791446706)
+            # Aperture_v  =   np.float64(0.0169439604135074)
+            # F0_F2_v  =   np.float64(146.170107628762)
 
             ### 3型 Setting12
             a_hyp_v  =   np.float64(72.9825)
@@ -1775,7 +1778,7 @@ if option_wolter_3_1:
         org_ell_v = np.sqrt(a_ell_v**2 - b_ell_v**2)
         org_ell_h = np.sqrt(a_ell_h**2 - b_ell_h**2)
 
-        if True:
+        if False:
             def plot_ellipse(a, b, h=0.0, k=0.0, n=1000, ax=None, **plot_kwargs):
                 t = np.linspace(0, 2*np.pi, n)
                 x = h + a * np.cos(t)
@@ -1904,6 +1907,8 @@ if option_wolter_3_1:
         c_v = shift_x(c_v, org_v)
 
         center_v = mirr_ray_intersection(c_v, np.array([[np.cos(theta1_v)], [0.], [np.sin(theta1_v)]]), np.array([[0.], [0.], [0.]]))
+        if option == 'ray':
+            print('center_v',center_v)
         if not np.isreal(center_v).all():
             return np.inf
         x1_v = center_v[0, 0] - length_hyp_v / 2
@@ -1962,6 +1967,9 @@ if option_wolter_3_1:
             print('y1_h',y1_h)
             print('x2_h',x2_h)
             print('y2_h',y2_h)
+            div_angle_v_ray = np.arctan(y2_v/x2_v) - np.arctan(y1_v/x1_v)
+            print('div_angle_v_ray',div_angle_v_ray)
+            # div_angle_h_ray = np.arctan(y2_h/x2_h) - np.arctan(y1_h/x1_h)
 
         # Raytrace (X = x-ray direction)
 
@@ -1974,6 +1982,7 @@ if option_wolter_3_1:
         coeffs_hyp_v[2] = -1 / b_hyp_v**2
         coeffs_hyp_v[9] = -1.
         coeffs_hyp_v = shift_x(coeffs_hyp_v, org_hyp_v)
+        
         if option_axial:
             # coeffs_hyp_v = rotate_y(coeffs_hyp_v, theta1_v, [0, 0, 0])
             coeffs_hyp_v, rotation_matrix = rotate_general_axis(coeffs_hyp_v, axis_y, theta1_v, [0, 0, 0])
@@ -2018,6 +2027,7 @@ if option_wolter_3_1:
             theta2_v, theta3_v, theta4_v, theta5_v, l1_v, l2_v, l3_v, l4_v = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,theta1_v)
             theta2_v1, theta3_v1, theta4_v1, theta5_v1, l1_v1, l2_v1, l3_v1, l4_v1 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y1_v / x1_v))
             theta2_v2, theta3_v2, theta4_v2, theta5_v2, l1_v2, l2_v2, l3_v2, l4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
+            theta2_vcnt, theta3_vcnt, theta4_vcnt, theta5_vcnt, l1_vcnt, l2_vcnt, l3_vcnt, l4_vcnt = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,(np.arctan(y1_v / x1_v)+np.arctan(y2_v / x2_v))/2.)
             omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
             # omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
             # omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
@@ -2041,18 +2051,23 @@ if option_wolter_3_1:
                 print('theta1_v',theta1_v)
                 print('theta1_v1',np.arctan(y1_v / x1_v))
                 print('theta1_v2',np.arctan(y2_v / x2_v))
+                print('theta1_vcnt',(np.arctan(y1_v / x1_v)+np.arctan(y2_v / x2_v))/2.)
                 print('theta2_v',theta2_v)
                 print('theta2_v1',theta2_v1)
                 print('theta2_v2',theta2_v2)
+                print('theta2_vcnt',theta2_vcnt)
                 print('theta3_v',theta3_v)
                 print('theta3_v1',theta3_v1)
                 print('theta3_v2',theta3_v2)
+                print('theta3_vcnt',theta3_vcnt)
                 print('theta4_v',theta4_v)
                 print('theta4_v1',theta4_v1)
                 print('theta4_v2',theta4_v2)
+                print('theta4_vcnt',theta4_vcnt)
                 print('theta5_v',theta5_v)
                 print('theta5_v1',theta5_v1)
                 print('theta5_v2',theta5_v2)
+                print('theta5_vcnt',theta5_vcnt)
                 print('omega_v',omega_v)
                 # print('na_h',np.sin((theta5_h1 - theta5_h2))/2.)
                 print('na_v',np.sin((theta5_v1 - theta5_v2))/2.)
@@ -2378,7 +2393,7 @@ if option_wolter_3_1:
         #     coeffs_hyp_h = rotate_x(coeffs_hyp_h, roll_hyp_h, center_hyp_h[:, 0])
         # if yaw_hyp_h != 0:
         #     coeffs_hyp_h = rotate_z(coeffs_hyp_h, yaw_hyp_h, center_hyp_h[:, 0])
-        if option_rotateLocal:
+        if option_rotateLocal: ## active
             if option_set:
                 center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
                 if pitch_ell_h != 0:
@@ -2396,18 +2411,35 @@ if option_wolter_3_1:
 
                 if True: #option_rotateLocal:
                     center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
-                    if yaw_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
-                    if pitch_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, center_wolter_v)
-                    if roll_ell_v != 0:
-                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, center_wolter_v)
+                    
+                    ### hyp基準
                     if yaw_hyp_v != 0:
                         coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_hyp_v, center_wolter_v) #
                     if pitch_hyp_v != 0:
                         coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_hyp_v, center_wolter_v) #
                     if roll_hyp_v != 0:
                         coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, center_wolter_v)
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_hyp_v, center_wolter_v) #
+                    
+                    relative_yaw = yaw_ell_v - yaw_hyp_v
+                    relative_pitch = pitch_ell_v - pitch_hyp_v
+                    relative_roll = roll_ell_v - roll_hyp_v
+                    if relative_yaw != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, relative_yaw, np.mean(center_ell_v[:, 1:],axis=1))
+                    if relative_pitch != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, relative_pitch, np.mean(center_ell_v[:, 1:],axis=1))
+                    if relative_roll != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, relative_roll, np.mean(center_ell_v[:, 1:],axis=1))
+
+                    # if yaw_ell_v != 0:
+                    #     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
+                    # if pitch_ell_v != 0:
+                    #     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, center_wolter_v)
+                    # if roll_ell_v != 0:
+                    #     coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, center_wolter_v)
+                    
                 else:
                     if yaw_ell_v != 0:
                         coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
@@ -2583,8 +2615,8 @@ if option_wolter_3_1:
             phai0_edge_origin = np.zeros((3, 4))
             rand_p0h_origin = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), 2)
             rand_p0v_origin = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), 2)
-            rand_p0h_origin = rand_p0h_origin - np.mean(rand_p0h_origin)
-            rand_p0v_origin = rand_p0v_origin - np.mean(rand_p0v_origin)
+            rand_p0h_origin = rand_p0h_origin - theta1_h
+            rand_p0v_origin = rand_p0v_origin - theta1_v
             for i in range(2):
                 rand_p0v_origin_here = rand_p0v_origin[i]
                 phai0_edge_origin[1, 2*i : 2*i+2] = np.tan(rand_p0h_origin)
@@ -2600,11 +2632,14 @@ if option_wolter_3_1:
             if option_axial:
                 rand_p0h = np.linspace(np.arctan((y1_h-source_shift[1]) / (x1_h-source_shift[0])), np.arctan((y2_h-source_shift[1]) / (x2_h-source_shift[0])), ray_num)
                 rand_p0v = np.linspace(np.arctan((y1_v-source_shift[2]) / (x1_v-source_shift[0])), np.arctan((y2_v-source_shift[2]) / (x2_v-source_shift[0])), ray_num)
-                rand_p0h = rand_p0h - np.mean([np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h)])
-                rand_p0v = rand_p0v - np.mean([np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v)])
+                # rand_p0h = rand_p0h - np.mean([np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h)])
+                # rand_p0v = rand_p0v - np.mean([np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v)])
+                rand_p0h = rand_p0h - theta1_h
+                rand_p0v = rand_p0v - theta1_v
             if not option_axial:
                 rand_p0h = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
                 rand_p0v = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
+            print('div_angle_v_ray',rand_p0v[-1]-rand_p0v[0])
             # rand_p0h = create_non_uniform_distribution(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
             # rand_p0v = create_non_uniform_distribution(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
             # rand_p0h = rand_p0h*0.1
@@ -2620,14 +2655,102 @@ if option_wolter_3_1:
             phai0 = normalize_vector(phai0)
             phai0_edge_origin = normalize_vector(phai0_edge_origin)
 
+            if False:
+                from AKB_calc_rotate import rotation_2D
+                def rotate_basedon_edge(matrix):
+                    rot_angle = np.arctan((np.max(matrix[2,:])-np.min(matrix[2,:]))/(np.max(matrix[0,:])-np.min(matrix[0,:])))
+                    axis_values, sideview_values = rotation_2D(matrix[0,:], matrix[2,:], -rot_angle)
+                    axis_values -= np.min(axis_values)
+                    sideview_values -= np.min(sideview_values)
+                    return axis_values, sideview_values
+                    
+                rand_p0h_dummy = np.linspace(np.arctan(y1_h / x1_h), np.arctan(y2_h / x2_h), ray_num)
+                rand_p0v_dummy = np.linspace(np.arctan(y1_v / x1_v), np.arctan(y2_v / x2_v), ray_num)
+                rand_p0h_dummy -= (np.arctan(y1_h / x1_h) + np.arctan(y2_h / x2_h))/2
+                phai0_dummy = np.zeros((3, ray_num * ray_num))
+                for i in range(ray_num):
+                    rand_p0v_here = rand_p0v_dummy[i]
+                    phai0_dummy[1, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0h_dummy)
+                    phai0_dummy[2, ray_num * i:ray_num * (i + 1)] = np.tan(rand_p0v_here)
+                    phai0_dummy[0, ray_num * i:ray_num * (i + 1)] = 1.
+
+                phai0_dummy = normalize_vector(phai0_dummy)
+                
+                # V hyp mirror set (1st)
+                axis_x_dummy = np.array([1., 0., 0.])
+                axis_y_dummy = np.array([0., 1., 0.])
+                axis_z_dummy = np.array([0., 0., 1.])
+                coeffs_hyp_v_dummy = np.zeros(10)
+                coeffs_hyp_v_dummy[0] = 1 / a_hyp_v**2
+                coeffs_hyp_v_dummy[2] = -1 / b_hyp_v**2
+                coeffs_hyp_v_dummy[9] = -1.
+                coeffs_hyp_v_dummy = shift_x(coeffs_hyp_v_dummy, org_hyp_v)
+                # V ell mirror set (2nd)
+                axis2_x_dummy = np.array([1., 0., 0.])
+                axis2_y_dummy = np.array([0., 1., 0.])
+                axis2_z_dummy = np.array([0., 0., 1.])
+                coeffs_ell_v_dummy = np.zeros(10)
+                coeffs_ell_v_dummy[0] = 1 / a_ell_v**2
+                coeffs_ell_v_dummy[2] = 1 / b_ell_v**2
+                coeffs_ell_v_dummy[9] = -1.
+                org_ell_v1 = org_ell_v
+                if option == 'ray':
+                    print('phai0_dummy',phai0_dummy)
+                    print('coeffs_ell_v_dummy',coeffs_ell_v_dummy)
+                coeffs_ell_v_dummy = shift_x(coeffs_ell_v_dummy, 2 * org_hyp_v + org_ell_v)
+                vmirr_hyp_dummy = mirr_ray_intersection(coeffs_hyp_v_dummy, phai0_dummy, source)
+                reflect1_dummy = reflect_ray(phai0_dummy, norm_vector(coeffs_hyp_v_dummy, vmirr_hyp_dummy))
+                vmirr_ell_dummy = mirr_ray_intersection(coeffs_ell_v_dummy, reflect1_dummy, vmirr_hyp_dummy)
+                reflect2_dummy = reflect_ray(reflect1_dummy, norm_vector(coeffs_ell_v_dummy, vmirr_ell_dummy))
+                
 
 
             vmirr_hyp = mirr_ray_intersection(coeffs_hyp_v, phai0, source)
             reflect1 = reflect_ray(phai0, norm_vector(coeffs_hyp_v, vmirr_hyp))
-
-
             vmirr_ell = mirr_ray_intersection(coeffs_ell_v, reflect1, vmirr_hyp)
             reflect2 = reflect_ray(reflect1, norm_vector(coeffs_ell_v, vmirr_ell))
+
+            # ### vmirrorの距離分布
+            # print("vmirror_hyp distance:",np.min(np.linalg.norm(vmirr_hyp,axis=0)),np.max(np.linalg.norm(vmirr_hyp,axis=0)))
+            # print("vmirror_hyp_dummy distance:",np.min(np.linalg.norm(vmirr_hyp_dummy,axis=0)),np.max(np.linalg.norm(vmirr_hyp_dummy,axis=0)))
+
+            
+            # vmirr_hyp_axis, vmirr_hyp_side = rotate_basedon_edge(vmirr_hyp)
+            # vmirr_hyp_dummy_axis, vmirr_hyp_dummy_side = rotate_basedon_edge(vmirr_hyp_dummy)
+
+            # plt.figure()
+            # plt.plot(vmirr_hyp_axis,vmirr_hyp_side,'r',label='Hyp Mirror')
+            # plt.plot(vmirr_hyp_dummy_axis,vmirr_hyp_dummy_side,'b',label='Hyp Mirror Dummy')
+            # plt.legend()
+            # plt.show()
+
+            # plt.figure()
+            # plt.plot(vmirr_hyp[0,:],vmirr_hyp[1,:],'r')
+            # plt.plot(vmirr_ell[0,:],vmirr_ell[1,:],'b')
+            # plt.plot(vmirr_hyp_dummy[0,:],vmirr_hyp_dummy[1,:],'r--')
+            # plt.plot(vmirr_ell_dummy[0,:],vmirr_ell_dummy[1,:],'b--')
+            # plt.axis('equal')
+            # plt.figure()
+            # plt.plot(vmirr_hyp[0,:],vmirr_hyp[2,:],'r')
+            # plt.plot(vmirr_ell[0,:],vmirr_ell[2,:],'b')
+            # plt.plot(vmirr_hyp_dummy[0,:],vmirr_hyp_dummy[2,:],'r--')
+            # plt.plot(vmirr_ell_dummy[0,:],vmirr_ell_dummy[2,:],'b--')
+            # plt.axis('equal')
+            # plt.show()
+
+            # if not option_axial:
+            #     # np.save('vmirr_hyp_optaxis.npy',vmirr_hyp)
+            #     # np.save('vmirr_ell_optaxis.npy',vmirr_ell)
+            #     plt.figure()
+            #     plt.plot(vmirr_hyp[0,:],vmirr_hyp[2,:],'r')
+            #     plt.plot(vmirr_ell[0,:],vmirr_ell[2,:],'b')
+            #     plt.axis('equal')
+            #     plt.title('Mirror Shapes in Vertical Plane')
+            #     plt.xlabel('X [m]')
+            #     plt.ylabel('Z [m]')
+            #     plt.show()
+
+
 
             hmirr_ell = mirr_ray_intersection(coeffs_ell_h, reflect2, vmirr_ell)
             reflect3 = reflect_ray(reflect2, norm_vector(coeffs_ell_h, hmirr_ell))
@@ -2748,7 +2871,7 @@ if option_wolter_3_1:
                     print('4th W lower',np.linalg.norm(hmirr_hyp[:,0] - hmirr_hyp[:,-ray_num]))
                     print('4th W upper',np.linalg.norm(hmirr_hyp[:,ray_num-1] - hmirr_hyp[:,-1]))
 
-                    if True:
+                    if False:
                         ### 立体表示
                         z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.04)
                         z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
@@ -3985,6 +4108,7 @@ if option_wolter_3_1:
                     coeffs_det[6] = 1
                     coeffs_det[9] = -(s2f_middle + defocus)
                     detcenter = plane_ray_intersection(coeffs_det, reflect4_rotated, hmirr_hyp_points_rotated)
+                    hmirr_hyp_original = hmirr_hyp.copy()
                     hmirr_hyp = hmirr_hyp_points_rotated
                     reflect4 = reflect4_rotated
                     angle = reflect4
@@ -4307,9 +4431,9 @@ if option_wolter_3_1:
 
 
     # 焦点面での標準偏差を計算
-        return vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle
+        return vmirr_hyp, hmirr_hyp0, vmirr_ell, hmirr_ell, detcenter, angle
 elif option_wolter_3_3_tandem:
-    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False):
+    def plot_result_debug(params,option,source_shift=[0.,0.,0.],option_tilt = True,option_legendre=False,option_save=True):
         defocus, astigH, \
         pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
         pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
@@ -4333,7 +4457,7 @@ elif option_wolter_3_3_tandem:
         # length_ell_h = np.float64(0.0653872838592807)
         # theta1_h = np.float64(5.6880350884129E-05)
 
-        if True:  # 初期設定 2025/06/30
+        if option_HighNA:  # 初期設定 2025/06/30
             ### 3型V Setting2
             # a_hyp_v  =   np.float64(72.9845)
             # b_hyp_v  =   np.float64(0.21238958153899)
@@ -4442,41 +4566,85 @@ elif option_wolter_3_3_tandem:
             length_ell_v = ell_length_v
             length_hyp_h = hyp_length_h
             length_ell_h = ell_length_h
+        else:
+            a_hyp_v  =   np.float64(72.9845)
+            b_hyp_v  =   np.float64(0.0255286645911544)
+            a_ell_v  =   np.float64(0.2595)
+            b_ell_v  =   np.float64(0.00600472506941387)
+            hyp_length_v  =   np.float64(0.05)
+            ell_length_v  =   np.float64(0.246130937026124)
+            theta1_v  =   np.float64(5.09648303784588E-06)
+            theta2_v  =   np.float64(0.012)
+            theta3_v  =   np.float64(0.0240050964830378)
+            theta4_v  =   np.float64(0.0231571868306898)
+            theta5_v  =   np.float64(-0.0223092771783418)
+            phai_hyp_v  =   np.float64(-0.0120050964830378)
+            phai_ell_v  =   np.float64(0.00524083911497271)
+            F_eff_v  =   np.float64(0.0334514928637759)
+            Mag_v  =   np.float64(4378.11308055797)
+            NA_v  =   np.float64(0.0100827480770483)
+            Aperture_v  =   np.float64(0.00569919069145297)
+            F0_F2_v  =   np.float64(146.487869963953)
 
-        ## toyota
+            ### 3型H setting2
+            a_hyp_h  =   np.float64(73.1542405517745)
+            b_hyp_h  =   np.float64(0.0215357408476403)
+            a_ell_h  =   np.float64(0.08525)
+            b_ell_h  =   np.float64(0.00211593425412322)
+            hyp_length_h  =   np.float64(0.04)
+            ell_length_h  =   np.float64(0.05679972117974)
+            theta1_h  =   np.float64(4.42051312026366E-06)
+            theta2_h  =   np.float64(0.0098)
+            theta3_h  =   np.float64(0.0196044205131203)
+            theta4_h  =   np.float64(0.0255172577907454)
+            theta5_h  =   np.float64(-0.0314300950683705)
+            phai_hyp_h  =   np.float64(-0.00980442051312026)
+            phai_ell_h  =   np.float64(-0.00268057640766204)
+            F_eff_h  =   np.float64(0.0205919780372028)
+            Mag_h  =   np.float64(7112.39797723521)
+            NA_h  =   np.float64(0.010046223497915)
+            Aperture_h  =   np.float64(0.00144921584441159)
+            F0_F2_h  =   np.float64(146.47893491711)
 
-        # a_hyp_v = np.float64(41.4825)
-        # b_hyp_v = np.float64(0.000681762752409158)
-        # a_ell_v = np.float64(0.524)
-        # b_ell_v = np.float64(0.000282429890045243)
-        # length_hyp_v = np.float64(0.05)
-        # length_ell_v = np.float64(0.33807210041195)
-        # theta1_v = np.float64(3.37491677328421E-07)
 
-        a_hyp_v = np.float64(40.9625)
-        b_hyp_v = np.float64(0.00148795146117209)
-        a_ell_v = np.float64(0.633)
-        b_ell_v = np.float64(0.000492306595581802)
-        length_hyp_v = np.float64(0.1)
-        length_ell_v = np.float64(0.365259367103054)
-        theta1_v = np.float64(1.09856549698679E-06)
+            length_hyp_v = hyp_length_v
+            length_ell_v = ell_length_v
+            length_hyp_h = hyp_length_h
+            length_ell_h = ell_length_h
+        # ## toyota
+
+        # # a_hyp_v = np.float64(41.4825)
+        # # b_hyp_v = np.float64(0.000681762752409158)
+        # # a_ell_v = np.float64(0.524)
+        # # b_ell_v = np.float64(0.000282429890045243)
+        # # length_hyp_v = np.float64(0.05)
+        # # length_ell_v = np.float64(0.33807210041195)
+        # # theta1_v = np.float64(3.37491677328421E-07)
+
+        # a_hyp_v = np.float64(40.9625)
+        # b_hyp_v = np.float64(0.00148795146117209)
+        # a_ell_v = np.float64(0.633)
+        # b_ell_v = np.float64(0.000492306595581802)
+        # length_hyp_v = np.float64(0.1)
+        # length_ell_v = np.float64(0.365259367103054)
+        # theta1_v = np.float64(1.09856549698679E-06)
 
 
-        # a_hyp_h = np.float64(41.72095)
-        # b_hyp_h = np.float64(0.00095105347522028)
-        # a_ell_h = np.float64(0.28555)
-        # b_ell_h = np.float64(0.00021023129936754)
-        # length_hyp_h = np.float64(0.035)
-        # length_ell_h = np.float64(0.135273812782247)
-        # theta1_h = np.float64(4.32875945080554E-07)
+        # # a_hyp_h = np.float64(41.72095)
+        # # b_hyp_h = np.float64(0.00095105347522028)
+        # # a_ell_h = np.float64(0.28555)
+        # # b_ell_h = np.float64(0.00021023129936754)
+        # # length_hyp_h = np.float64(0.035)
+        # # length_ell_h = np.float64(0.135273812782247)
+        # # theta1_h = np.float64(4.32875945080554E-07)
 
-        a_hyp_h = np.float64(41.2139499727615)
-        b_hyp_h = np.float64(0.00170718717486098)
-        a_ell_h = np.float64(0.38155)
-        b_ell_h = np.float64(0.000363003039207826)
-        length_hyp_h = np.float64(0.1)
-        length_ell_h = np.float64(0.191450540591103)
-        theta1_h = np.float64(1.42815687072035E-06)
+        # a_hyp_h = np.float64(41.2139499727615)
+        # b_hyp_h = np.float64(0.00170718717486098)
+        # a_ell_h = np.float64(0.38155)
+        # b_ell_h = np.float64(0.000363003039207826)
+        # length_hyp_h = np.float64(0.1)
+        # length_ell_h = np.float64(0.191450540591103)
+        # theta1_h = np.float64(1.42815687072035E-06)
 
 
         omega_v = theta1_v - theta5_v
@@ -5046,49 +5214,65 @@ elif option_wolter_3_3_tandem:
             print('axis4_y',axis4_y)
             print('axis4_z',axis4_z)
         if option_rotateLocal:
-            if True:
-                center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
-
-                if yaw_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
-                if pitch_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, center_wolter_v)
-                if roll_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, center_wolter_v)
-                if yaw_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, center_wolter_v)
-                if pitch_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, center_wolter_v)
-                if roll_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, center_wolter_v)
-
+            if option_set:
                 center_wolter_h = (np.mean(center_ell_h[:, 1:],axis=1) + np.mean(center_hyp_h[:, 1:],axis=1)) / 2
                 if pitch_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_y, pitch_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, center_wolter_h)
                 if yaw_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_z, yaw_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_z, yaw_ell_h, center_wolter_h)
                 if roll_ell_h != 0:
-                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis4_x, roll_ell_h, center_wolter_h)
+                    coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_x, roll_ell_h, center_wolter_h)
                 if pitch_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_y, pitch_hyp_h, center_wolter_h)
                 if yaw_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, center_wolter_h)
                 if roll_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, center_wolter_h)
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, center_wolter_h)
+
+                if True: #option_rotateLocal:
+                    center_wolter_v = (np.mean(center_ell_v[:, 1:],axis=1) + np.mean(center_hyp_v[:, 1:],axis=1)) / 2
+                    if yaw_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, center_wolter_v)
+                    if pitch_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, center_wolter_v)
+                    if roll_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, center_wolter_v)
+                    if yaw_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, center_wolter_v)
+                    if pitch_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, center_wolter_v)
+                    if roll_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, center_wolter_v)
+                else:
+                    if yaw_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+                    if pitch_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+                    if roll_ell_v != 0:
+                        coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+
+                    if yaw_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                    if pitch_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                    if roll_hyp_v != 0:
+                        coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+
+
             else:
                 if yaw_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_z, yaw_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
                 if pitch_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_y, pitch_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
                 if roll_ell_v != 0:
-                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis3_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
+                    coeffs_ell_v, _ = rotate_general_axis(coeffs_ell_v, axis2_x, roll_ell_v, np.mean(center_ell_v[:, 1:],axis=1))
 
                 if yaw_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_z, yaw_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
                 if pitch_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_y, pitch_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_y, pitch_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
                 if roll_hyp_v != 0:
-                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis2_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
+                    coeffs_hyp_v, _ = rotate_general_axis(coeffs_hyp_v, axis_x, roll_hyp_v, np.mean(center_hyp_v[:, 1:],axis=1))
 
                 if pitch_ell_h != 0:
                     coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_y, pitch_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
@@ -5097,39 +5281,80 @@ elif option_wolter_3_3_tandem:
                 if roll_ell_h != 0:
                     coeffs_ell_h, _ = rotate_general_axis(coeffs_ell_h, axis3_x, roll_ell_h, np.mean(center_ell_h[:, 1:],axis=1))
                 if pitch_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_y, pitch_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if yaw_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_z, yaw_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
                 if roll_hyp_h != 0:
-                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis3_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+                    coeffs_hyp_h, _ = rotate_general_axis(coeffs_hyp_h, axis4_x, roll_hyp_h, np.mean(center_hyp_h[:, 1:],axis=1))
+
+            if option == 'ray':
+                print('axis_x',axis_x)
+                print('axis_y',axis_y)
+                print('axis_z',axis_z)
+                print('axis2_x',axis2_x)
+                print('axis2_y',axis2_y)
+                print('axis2_z',axis2_z)
+                print('axis3_x',axis3_x)
+                print('axis3_y',axis3_y)
+                print('axis3_z',axis3_z)
+                print('axis4_x',axis4_x)
+                print('axis4_y',axis4_y)
+                print('axis4_z',axis4_z)
+
+
 
             if decenterX_hyp_v != 0:
-                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterX_hyp_v*axis_x[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterX_hyp_v*axis_x[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterX_hyp_v*axis_x[2])
+
             if decenterY_hyp_v != 0:
-                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterY_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterY_hyp_v*axis_y[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterY_hyp_v*axis_y[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterY_hyp_v*axis_y[2])
             if decenterZ_hyp_v != 0:
-                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterZ_hyp_v)
+                coeffs_hyp_v = shift_x(coeffs_hyp_v, decenterZ_hyp_v*axis_z[0])
+                coeffs_hyp_v = shift_y(coeffs_hyp_v, decenterZ_hyp_v*axis_z[1])
+                coeffs_hyp_v = shift_z(coeffs_hyp_v, decenterZ_hyp_v*axis_z[2])
 
             if decenterX_hyp_h != 0:
-                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterX_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterX_hyp_h*axis4_x[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterX_hyp_h*axis4_x[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterX_hyp_h*axis4_x[2])
             if decenterY_hyp_h != 0:
-                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterY_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterY_hyp_h*axis4_y[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterY_hyp_h*axis4_y[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterY_hyp_h*axis4_y[2])
             if decenterZ_hyp_h != 0:
-                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterZ_hyp_h)
+                coeffs_hyp_h = shift_x(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[0])
+                coeffs_hyp_h = shift_y(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[1])
+                coeffs_hyp_h = shift_z(coeffs_hyp_h, decenterZ_hyp_h*axis4_z[2])
 
             if decenterX_ell_v != 0:
-                coeffs_ell_v = shift_x(coeffs_ell_v, decenterX_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterX_ell_v*axis2_x[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterX_ell_v*axis2_x[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterX_ell_v*axis2_x[2])
             if decenterY_ell_v != 0:
-                coeffs_ell_v = shift_y(coeffs_ell_v, decenterY_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterY_ell_v*axis2_y[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterY_ell_v*axis2_y[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterY_ell_v*axis2_y[2])
             if decenterZ_ell_v != 0:
-                coeffs_ell_v = shift_z(coeffs_ell_v, decenterZ_ell_v)
+                coeffs_ell_v = shift_x(coeffs_ell_v, decenterZ_ell_v*axis2_z[0])
+                coeffs_ell_v = shift_y(coeffs_ell_v, decenterZ_ell_v*axis2_z[1])
+                coeffs_ell_v = shift_z(coeffs_ell_v, decenterZ_ell_v*axis2_z[2])
 
             if decenterX_ell_h != 0:
-                coeffs_ell_h = shift_x(coeffs_ell_h, decenterX_ell_h)
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterX_ell_h*axis3_x[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterX_ell_h*axis3_x[1])
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterX_ell_h*axis3_x[2])
             if decenterY_ell_h != 0:
-                coeffs_ell_h = shift_y(coeffs_ell_h, decenterY_ell_h)
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterY_ell_h*axis3_y[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterY_ell_h*axis3_y[1])
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterY_ell_h*axis3_y[2])
             if decenterZ_ell_h != 0:
-                coeffs_ell_h = shift_z(coeffs_ell_h, decenterZ_ell_h)
+                coeffs_ell_h = shift_z(coeffs_ell_h, decenterZ_ell_h*axis3_z[0])
+                coeffs_ell_h = shift_y(coeffs_ell_h, decenterZ_ell_h*axis3_z[1])
+                coeffs_ell_h = shift_x(coeffs_ell_h, decenterZ_ell_h*axis3_z[2])
         else:
             if yaw_ell_v != 0:
                 coeffs_ell_v = rotate_z(coeffs_ell_v, yaw_ell_v, center_ell_v[:, 0])
@@ -5318,7 +5543,7 @@ elif option_wolter_3_3_tandem:
                 detcenter = plane_ray_intersection(coeffs_det, reflect4, hmirr_ell)
 
                 if option == 'ray':
-                    if True:
+                    if False:
                         ### 立体表示
                         z_mean_vmirr_hyp = np.full_like(vmirr_hyp[0,:], np.mean(vmirr_hyp[2,:]) - 0.04)
                         z_mean_vmirr_ell = np.full_like(vmirr_ell[0,:], np.mean(vmirr_ell[2,:]) + 0.04)
@@ -5825,7 +6050,7 @@ elif option_wolter_3_3_tandem:
                 # グリッド上にデータを補間 (method: 'linear', 'nearest', 'cubic' から選択)
                 if False:
                     matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
-                    meanFocus = np.mean(detcenter,axis=1)
+                    meanFocus = np.nanmean(detcenter,axis=1)
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
                     matrixSph2 = griddata((detcenter2[1, :], detcenter2[2, :]), Sph, (grid_H, grid_V), method='cubic')
 
@@ -5836,17 +6061,17 @@ elif option_wolter_3_3_tandem:
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
                 else:
                     matrixDistError2 = griddata((detcenter2[1, :], detcenter2[2, :]), DistError2, (grid_H, grid_V), method='cubic')
-                    meanFocus = np.mean(detcenter,axis=1)
+                    meanFocus = np.nanmean(detcenter,axis=1)
                     Sph = np.linalg.norm(detcenter2 - meanFocus[:, np.newaxis], axis=0) * 1e9
 
                     Wave2 = DistError2 - Sph
                     print('meanFocus',meanFocus)
-                    print('np.mean(DistError2)',np.mean(DistError2))
-                    print('np.std(DistError2)',np.std(DistError2))
-                    print('np.mean(Sph)',np.mean(Sph))
-                    print('np.std(Sph)',np.std(Sph))
-                    print('np.mean(Wave2)',np.mean(Wave2))
-                    print('np.std(Wave2)',np.std(Wave2))
+                    print('np.mean(DistError2)',np.nanmean(DistError2))
+                    print('np.std(DistError2)',np.nanstd(DistError2))
+                    print('np.mean(Sph)',np.nanmean(Sph))
+                    print('np.std(Sph)',np.nanstd(Sph))
+                    print('np.mean(Wave2)',np.nanmean(Wave2))
+                    print('np.std(Wave2)',np.nanstd(Wave2))
                     print('grid_H.shape',grid_H.shape)
                     print('Wave2.shape',Wave2.shape)
                     print('detcenter2.shape',detcenter2.shape)
@@ -5854,146 +6079,228 @@ elif option_wolter_3_3_tandem:
                     matrixWave2 = griddata((detcenter2[1, :], detcenter2[2, :]), Wave2, (grid_H, grid_V), method='cubic')
                     matrixWave2 = matrixWave2 - np.nanmean(matrixWave2)
 
-                np.savetxt('matrixWave2(nm).txt',matrixWave2)
-                tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
+                if option_save:
+                    np.savetxt('matrixWave2(nm).txt',matrixWave2)
+                    tifffile.imwrite('matrixWave2(nm).tiff', matrixWave2)
 
                 matrixWave2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixWave2)
                 matrixDistError2_Corrected = plane_correction_with_nan_and_outlier_filter(matrixDistError2)
                 print('PV',np.nanmax(matrixWave2_Corrected)-np.nanmin(matrixWave2_Corrected))
 
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
-                plt.colorbar(label='\u03BB')
-                # plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-                plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
+                # ### angle
+                # grid_H = np.arctan((grid_H - np.mean(grid_H)) / defocusWave)
+                # grid_V = np.arctan((grid_V - np.mean(grid_V)) / defocusWave)
 
-                plt.figure()
-                plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
-                plt.colorbar(label='\u03BB')
-                # plt.colorbar(label='wavefront error (nm)')
-                plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
-                plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
+                grid_H -= np.mean(grid_H)
+                grid_V -= np.mean(grid_V)
 
-                np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
+                wave_error = matrixWave2_Corrected / lambda_
+                ### PSF calculation
+                if True:
+                    psf_calc(matrixWave2_Corrected, grid_H, grid_V, defocusWave)
+
+
+                if option_save:
+                    plt.figure()
+                    plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/4,vmax = 1/4)
+                    plt.colorbar(label='\u03BB')
+                    # plt.colorbar(label='wavefront error (nm)')
+                    plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                    plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected.png'), transparent=True, dpi=300)
+
+                    plt.figure()
+                    plt.pcolormesh(grid_H, grid_V, matrixWave2_Corrected/lambda_, cmap='jet', shading='auto',vmin = -1/128,vmax = 1/128)
+                    plt.colorbar(label='\u03BB')
+                    # plt.colorbar(label='wavefront error (nm)')
+                    plt.title(f'PV 6σ={np.nanstd(matrixWave2_Corrected/lambda_)*6}')
+                    plt.savefig(os.path.join(directory_name, 'waveRaytrace_Corrected_2.png'), transparent=True, dpi=300)
+                if option_save:
+                    np.savetxt(os.path.join(directory_name, 'matrixWave2_Corrected(lambda).txt'), matrixWave2_Corrected/lambda_)
                 # plt.show()
                 # rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=256)
-                rectified_img = extract_affine_square_region(matrixWave2/lambda_, target_size=256)
+                rectified_img = extract_affine_square_region(matrixWave2_Corrected/lambda_, target_size=matrixWave2.shape[0])
+                if option_save:
+                    np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
+                    plt.figure()
+                    plt.imshow(rectified_img, cmap='jet', vmin=-1/4, vmax=1/4)
+                    plt.savefig(os.path.join(directory_name, 'rectified_img.png'), transparent=True, dpi=300)
 
-                np.savetxt(os.path.join(directory_name, 'rectified_img.txt'), rectified_img)
-                # plt.figure()
-                # plt.imshow(rectified_img[1:-2, 1:-2], cmap='jet',vmin = -1/4,vmax = 1/4)
-                # plt.colorbar(label='\u03BB')
-                # plt.title("Affine-Corrected Square Cutout")
-                # # plt.show()
-
-
-                assesorder = 5
-                fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
-                length = len(inner_products)
-                fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
-                for i in range(length):
-                    ny = orders[i][0]
-                    nx = orders[i][1]
-                    print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                    axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
-                    axes[ny, nx].set_title(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
-                    ### set colorbar for each subplot
-                    # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
-                axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
-                cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
-                fit_sum = np.sum(fit_datas, axis=0)
-                axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-                # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
-                axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
-                # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
-
-                plt.tight_layout()
-                if option_legendre:
-                    plt.close()
-                    print('inner_products',inner_products)
-                    print('orders',orders)
-                    return inner_products, orders
-                else:
-                    plt.show()
+                    plt.figure()
+                    plt.imshow(rectified_img, cmap='jet', vmin=-1/128, vmax=1/128)
+                    plt.savefig(os.path.join(directory_name, 'rectified_img2.png'), transparent=True, dpi=300)
 
 
+                    assesorder = 5
+                    fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                    length = len(inner_products)
+                    pvs = np.zeros(length+1)
+                    fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                    for i in range(length):
+                        ny = orders[i][0]
+                        nx = orders[i][1]
+                        print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                        axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/4, vmax=1/4)
+                        pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                        axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                        axes[ny, nx].axis('off')
 
-                if False:
-                    # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
-                    calcrange=1.e-6
-                    psf, x_out, y_out = fresnel_integral(
-                        phi=matrixWave2_Corrected*1e-9,
-                        grid_x=grid_H-np.mean(grid_H),
-                        grid_y=grid_V-np.mean(grid_V),
-                        lambda_=lambda_*1e-9,
-                        z=-defocusWave,
-                        x_out_range=(-calcrange, calcrange),
-                        y_out_range=(-calcrange, calcrange),
-                        dx_out=calcrange/65,
-                        dy_out=calcrange/65,
-                    )
-
-                    def compute_fwhm(x, intensity_1d):
-                        """1次元の強度分布から FWHM を計算"""
-                        dx = np.abs(x[1] - x[0])
-                        num_over_half_max = np.sum(intensity_1d >= 0.5 * np.max(intensity_1d))
-                        fwhm = (num_over_half_max-1) * dx
-                        return fwhm
-                    psf_x = psf[psf.shape[0] // 2, :]
-                    psf_y = psf[:, psf.shape[1] // 2]
-                    half_max = 0.5 * np.max(psf)
-                    mask = psf >= half_max
-                    dx = np.abs(x_out[1] - x_out[0])
-                    dy = np.abs(y_out[1] - y_out[0])
-                    area = np.sum(mask) * dx * dy
-                    effective_diameter = np.sqrt(area)
-                    # fwhm_x = effective_diameter
-                    # fwhm_y = effective_diameter
-                    fwhm_x = compute_fwhm(x_out, psf_x)
-                    fwhm_y = compute_fwhm(y_out, psf_y)
-
-                    print(f"FWHM_x = {fwhm_x:.3e} m")
-                    print(f"FWHM_y = {fwhm_y:.3e} m")
-                    print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
-
-                    plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
-                    plt.xlabel("x [m]")
-                    plt.ylabel("y [m]")
-                    plt.title("PSF (Fresnel Approx.)")
-                    plt.colorbar()
-                    # plt.show()
-                    fig, ax = plt.subplots(2, 1, figsize=(6, 5))
-                    ax[0].plot(x_out, psf_x)
-                    ax[0].axhline(np.max(psf_x)/2, color='gray', linestyle='--')
-                    ax[0].set_title(f"PSF (Fresnel Approx.) X Profile — FWHM = {fwhm_x*1e6:.2f} μm")
-                    ax[0].set_xlabel("x [m]")
-                    ax[0].set_ylabel("Intensity")
-
-                    ax[1].plot(y_out, psf_y)
-                    ax[1].axhline(np.max(psf_y)/2, color='gray', linestyle='--')
-                    ax[1].set_title(f"Y Profile — FWHM = {fwhm_y*1e6:.2f} μm")
-                    ax[1].set_xlabel("y [m]")
-                    ax[1].set_ylabel("Intensity")
+                        ### set colorbar for each subplot
+                        # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                    axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/4, vmax=1/4)
+                    cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                    fit_sum = np.sum(fit_datas, axis=0)
+                    axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                    # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                    axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/4, vmax=1/4)
+                    # cbar = plt.colorbar(axes[-1, -2].images[0], ax=axes[-1, -2], fraction=0.046, pad=0.04)
+                    np.savetxt(os.path.join(directory_name, 'inner_products.csv'), inner_products, delimiter=',')
+                    np.savetxt(os.path.join(directory_name, 'orders.csv'), orders, delimiter=',')
 
                     plt.tight_layout()
-                    plt.show()
+                    if option_legendre:
+                        plt.close()
+                        print('inner_products',inner_products)
+                        print('orders',orders)
+                        pvs[-1] = np.nanstd(matrixWave2_Corrected/lambda_)*6 * np.sign(np.sum(inner_products))
+                        return inner_products, orders, pvs
+                    else:
+                        plt.savefig(os.path.join(directory_name, 'legendre_fit.png'), transparent=True, dpi=300)
 
-                    # plt.figure()
-                    # sample_detcenter = detcenter2.copy()
-                    # sample_DistError = DistError2.copy()
-                    # sample = np.vstack([sample_detcenter, sample_DistError])
-                    # sizeh_here = ray_num_H
-                    # sizev_here = ray_num_V
-                    # while sizeh_here > 33:
-                    #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
-                    # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
-                    # # カラーバーを追加
-                    # plt.colorbar(scatter, label='OPL error (nm)')
-                    # plt.axis('equal')
-                    # plt.show()
+                        assesorder = 5
+                        fit_datas, inner_products, orders = lf.match_legendre_multi(rectified_img[1:-2, 1:-2], assesorder)
+                        length = len(inner_products)
+                        pvs = np.zeros(length+1)
+                        fig, axes = plt.subplots(assesorder, assesorder, figsize=(16, 16))
+                        for i in range(length):
+                            ny = orders[i][0]
+                            nx = orders[i][1]
+                            print(f"ny: {ny}, nx: {nx}, Inner Product: {inner_products[i]:.3e}")
+                            axes[ny, nx].imshow(fit_datas[i], cmap='jet', vmin=-1/256, vmax=1/256)
+                            pvs[i] = (np.nanmax(fit_datas[i]) - np.nanmin(fit_datas[i])) * np.sign(inner_products[i])
+                            axes[ny, nx].set_title(f"ny: {ny}, nx: {nx} \n Inner Product: {inner_products[i]:.3e} \n PV: {pvs[i]:.3e}")
+                            axes[ny, nx].axis('off')
 
-                return
+                            ### set colorbar for each subplot
+                            # cbar = plt.colorbar(axes[ny, nx].images[0], ax=axes[ny, nx], fraction=0.046, pad=0.04)
+                        axes[-1, -1].imshow(rectified_img[1:-2, 1:-2], cmap='jet', vmin=-1/256, vmax=1/256)
+                        cbar = plt.colorbar(axes[-1, -1].images[0], ax=axes[-1, -1], fraction=0.046, pad=0.04)
+                        fit_sum = np.sum(fit_datas, axis=0)
+                        axes[-2, -1].imshow(fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                        # cbar = plt.colorbar(axes[-2, -1].images[0], ax=axes[-2, -1], fraction=0.046, pad=0.04)
+                        axes[-1, -2].imshow(rectified_img[1:-2, 1:-2]-fit_sum, cmap='jet', vmin=-1/256, vmax=1/256)
+                        plt.savefig(os.path.join(directory_name, 'legendre_fit2.png'), transparent=True, dpi=300)
+
+                        conditions_file_path = os.path.join(directory_name, 'optical_params.txt')
+
+                        # テキストファイルに変数の値や計算条件を書き込む
+                        with open(conditions_file_path, 'w') as file:
+                            file.write("input\n")
+                            file.write("====================\n")
+                            file.write(f"params[0]: {params[0]}\n")
+                            file.write(f"params[1]: {params[1]}\n")
+                            file.write(f"params[2]: {params[2]}\n")
+                            file.write(f"params[3]: {params[3]}\n")
+                            file.write(f"params[4]: {params[4]}\n")
+                            file.write(f"params[5]: {params[5]}\n")
+                            file.write(f"params[6]: {params[6]}\n")
+                            file.write(f"params[7]: {params[7]}\n")
+                            file.write(f"params[8]: {params[8]}\n")
+                            file.write(f"params[9]: {params[9]}\n")
+                            file.write(f"params[10]: {params[10]}\n")
+                            file.write(f"params[11]: {params[11]}\n")
+                            file.write(f"params[12]: {params[12]}\n")
+                            file.write(f"params[13]: {params[13]}\n")
+                            file.write(f"params[14]: {params[14]}\n")
+                            file.write(f"params[15]: {params[15]}\n")
+                            file.write(f"params[16]: {params[16]}\n")
+                            file.write(f"params[17]: {params[17]}\n")
+                            file.write(f"params[18]: {params[18]}\n")
+                            file.write(f"params[19]: {params[19]}\n")
+                            file.write(f"params[20]: {params[20]}\n")
+                            file.write(f"params[21]: {params[21]}\n")
+                            file.write(f"params[22]: {params[22]}\n")
+                            file.write(f"params[23]: {params[23]}\n")
+                            file.write(f"params[24]: {params[24]}\n")
+                            file.write(f"params[25]: {params[25]}\n")
+                        # plt.show()
+
+
+
+                    if False:
+                        # psf, x_out, y_out = fresnel_psf(matrixWave2_Corrected, lambda_=lambda_, z=-defocusWave, grid_x=grid_H, grid_y=grid_V)
+                        calcrange=1.e-6
+                        psf, x_out, y_out = fresnel_integral(
+                            phi=matrixWave2_Corrected*1e-9,
+                            grid_x=grid_H-np.mean(grid_H),
+                            grid_y=grid_V-np.mean(grid_V),
+                            lambda_=lambda_*1e-9,
+                            z=-defocusWave,
+                            x_out_range=(-calcrange, calcrange),
+                            y_out_range=(-calcrange, calcrange),
+                            dx_out=calcrange/65,
+                            dy_out=calcrange/65,
+                        )
+
+                        def compute_fwhm(x, intensity_1d):
+                            """1次元の強度分布から FWHM を計算"""
+                            dx = np.abs(x[1] - x[0])
+                            num_over_half_max = np.sum(intensity_1d >= 0.5 * np.max(intensity_1d))
+                            fwhm = (num_over_half_max-1) * dx
+                            return fwhm
+                        psf_x = psf[psf.shape[0] // 2, :]
+                        psf_y = psf[:, psf.shape[1] // 2]
+                        half_max = 0.5 * np.max(psf)
+                        mask = psf >= half_max
+                        dx = np.abs(x_out[1] - x_out[0])
+                        dy = np.abs(y_out[1] - y_out[0])
+                        area = np.sum(mask) * dx * dy
+                        effective_diameter = np.sqrt(area)
+                        # fwhm_x = effective_diameter
+                        # fwhm_y = effective_diameter
+                        fwhm_x = compute_fwhm(x_out, psf_x)
+                        fwhm_y = compute_fwhm(y_out, psf_y)
+
+                        print(f"FWHM_x = {fwhm_x:.3e} m")
+                        print(f"FWHM_y = {fwhm_y:.3e} m")
+                        print(f"Effective spot diameter (sqrt of half-max area) = {effective_diameter:.3e} m")
+
+                        plt.imshow(psf, extent=[x_out[0], x_out[-1], y_out[0], y_out[-1]], origin='lower', cmap='hot')
+                        plt.xlabel("x [m]")
+                        plt.ylabel("y [m]")
+                        plt.title("PSF (Fresnel Approx.)")
+                        plt.colorbar()
+                        # plt.show()
+                        fig, ax = plt.subplots(2, 1, figsize=(6, 5))
+                        ax[0].plot(x_out, psf_x)
+                        ax[0].axhline(np.max(psf_x)/2, color='gray', linestyle='--')
+                        ax[0].set_title(f"PSF (Fresnel Approx.) X Profile — FWHM = {fwhm_x*1e6:.2f} μm")
+                        ax[0].set_xlabel("x [m]")
+                        ax[0].set_ylabel("Intensity")
+
+                        ax[1].plot(y_out, psf_y)
+                        ax[1].axhline(np.max(psf_y)/2, color='gray', linestyle='--')
+                        ax[1].set_title(f"Y Profile — FWHM = {fwhm_y*1e6:.2f} μm")
+                        ax[1].set_xlabel("y [m]")
+                        ax[1].set_ylabel("Intensity")
+
+                        plt.tight_layout()
+                        plt.show()
+
+                        # plt.figure()
+                        # sample_detcenter = detcenter2.copy()
+                        # sample_DistError = DistError2.copy()
+                        # sample = np.vstack([sample_detcenter, sample_DistError])
+                        # sizeh_here = ray_num_H
+                        # sizev_here = ray_num_V
+                        # while sizeh_here > 33:
+                        #     sample, sizev_here, sizeh_here = downsample_array_any_n(sample, sizev_here, sizeh_here, 2, 2)
+                        # scatter = plt.scatter(sample[1, :], sample[2, :],c=sample[3,:], cmap='jet')
+                        # # カラーバーを追加
+                        # plt.colorbar(scatter, label='OPL error (nm)')
+                        # plt.axis('equal')
+                        # plt.show()
+
+                return np.nanstd(matrixWave2_Corrected/lambda_)*6
 
             if option == 'ray':
                 print(theta1_v)
@@ -9593,7 +9900,62 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
                 # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(1000.*var_input), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
                 
                 # var_input
-                l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525*var_input), np.float64(0.05)]
+                # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.21),  np.float64(0.16742), np.float64(0.180), np.float64(0.030), np.float64(0.15525), np.float64(0.05)]
+
+                l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = KBdesign_7params
+
+                # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                # div_h_s0 = accept_h / l1h
+                # div_v_s0 = accept_v / l1v
+                # mag_h = np.tan(sita3h) / np.tan(sita1h)
+                # mag_v = np.tan(sita3v) / np.tan(sita1v)
+                
+                # # var_input = 1.01
+                 
+                # input_params_KB = [l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v*var_input]
+                # target_params_KB = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+                # target_params_KB_original = target_params_KB.copy()
+
+                # index_input_param_KB = 4
+                # index_target_param_KB = 3
+                # target_fix = target_params_KB[index_target_param_KB]
+                # initial_input_KB = input_params_KB[index_input_param_KB]
+
+                # def objective_function_KB(input, target, index_target, index_input, inputs):
+                #     inputs[index_input] = input
+                #     l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = inputs
+                #     a_h, b_h, a_v, b_v, l1v, l2v, params = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                #     a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                #     div_h_s0 = accept_h / l1h
+                #     div_v_s0 = accept_v / l1v
+                #     mag_h = np.tan(sita3h) / np.tan(sita1h)
+                #     mag_v = np.tan(sita3v) / np.tan(sita1v)
+                #     targets = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+                #     target_value = targets[index_target]
+                #     return np.abs(target_value - target)  # 目標値との差を返す
+
+                # opt_param_KB = fsolve(objective_function_KB, initial_input_KB, args=(target_fix, index_target_param_KB, index_input_param_KB, input_params_KB))[0]
+
+                # input_params_KB[index_input_param_KB] = opt_param_KB
+                # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = input_params_KB
+
+                # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                # div_h_s0 = accept_h / l1h
+                # div_v_s0 = accept_v / l1v
+                # mag_h = np.tan(sita3h) / np.tan(sita1h)
+                # mag_v = np.tan(sita3v) / np.tan(sita1v)
+                # target_params_KB = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+
+                # if False:
+                #     print(f"調整後目標値: {target_params_KB[index_target_param_KB]}")
+                #     print('=== 最適化後 ===')
+                #     print(f"目標: {target_fix}")
+                #     print(f"調整前: {initial_input_KB}")
+                #     print(f"調整後: {opt_param_KB}")
+                #     print(f"target_params_KB_original: {target_params_KB_original}")
+                #     print(f"target_params_KB: {target_params_KB}")
+                #     print(f"initial input_params_KB: {input_params_KB}")
+                #     sys.exit()
 
                 # ### SPIE用v1
                 # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(1000.*var_input), np.float64(0.43),  np.float64(0.213), np.float64(0.30), np.float64(0.1), np.float64(0.175), np.float64(0.14)]
@@ -9647,7 +10009,7 @@ def KB_debug(params,na_ratio_h,na_ratio_v,option,option_legendre=False,source_sh
             # print('m_v', np.tan(sita3v)/ np.tan(sita1v))
             # sys.exit()
 
-            from scipy.optimize import fsolve
+            
             # # # `fsolve` を使用して `inc_h` を調整
             # def calculate_NA_h(inc_h, target_NA_h, l1h, l2h, mlen_h, wd_v, inc_v, mlen_v):
             #     # `KB_define` を呼び出して `NA_h` を計算
@@ -13617,1292 +13979,1480 @@ def Finetuning(initial_params):
     plt.close()
     return initial_params
 
-
-#####################################
-# defocus, astigH, \
-#    0        1
-# pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
-#      2           3           4           5                6                7
-# pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
-#      8           9           10          11               12               13
-# pitch_ell_v, roll_ell_v, yaw_ell_v, decenterX_ell_v, decenterY_ell_v, decenterZ_ell_v,\
-#      14          15          16          17               18               19
-# pitch_ell_h, roll_ell_h, yaw_ell_h, decenterX_ell_h, decenterY_ell_h, decenterZ_ell_h  = params
-#      20          21          22          23               24               25
-
-# l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
-# a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
-# sys.exit()
-
-plt.rcParams['xtick.direction'] = 'in'
-plt.rcParams['ytick.direction'] = 'in'
-# 初期値
-num_params = 26  # 総パラメータ数
-
-# initial_params = [0., 0.,
-#                   0., 0., 0., 0., 0., 0.,
-#                   0., 0., 0., 0., 0., 0.,
-#                   0., 0., 0., 0., 0., 0.,
-#                   0., 0., 0., 0., 0., 0.]
-initial_params = np.array([0., 0.,
-                  0., 0., 0., 0., 0., 0.,
-                  0., 0., 0., 0., 0., 0.,
-                  0., 0., 0., 0., 0., 0.,
-                  0., 0., 0., 0., 0., 0.],dtype=np.longdouble)
-
-# initial_params = np.array([0., -3.12012012e-5,
-#                   0., 0., 0., 0., 0., 0.,
-#                   -8.877777778e-3, -1.22212440e-4, -1.17e-5, 0., 0., 0.,
-#                   2.75757575e-7, 0., 2.22222222e-5, 0., 0., 0.,
-#                   2.5e-4, -1.19963131e-4, -1e-6, 0., 0., 0.],dtype=np.longdouble)
-
-# plot_result_debug(initial_params,'ray')
-
-# initial_params[10] = 0.2
-
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-# plt.show()
-
-
-# if option_AKB == True:
-
-#     if option_AKB == True:
-#         if option_HighNA == False:
-#             print('')
-#             ### AKB small
-#             ### Best alignment
-#             initial_params[9] =  -9.33896492e-07 +1.85e-6
-#             initial_params[14] = 5.84119937e-08
-#             initial_params[15] = -1.24027287e-05
-#             initial_params[16] = -8.32392236e-04
-#             initial_params[20] = 1.59650980e-03
-#             initial_params[21] = -1.37494535e-04 +1.85e-6
-#             initial_params[22] = -2.27244686e-06
-
-#             # initial_params[21] += 5e-6
-#             # initial_params[22] += 5e-6
-#             # initial_params[14] += 5e-6
-#             # # ### FiX inplane
-#             # initial_params[9] =  3.32484327e-5
-#             # initial_params[10] = 0.
-#             # initial_params[14] = 5.28700262e-9
-#             # initial_params[15] = 8.24930354e-6
-#             # initial_params[21] = -9.83732562e-5
-#             # initial_params[22] = -2.07390025e-6
-
-
-#         else:
-
-#             print('')
-#             if option_wolter_3_1:
-#                 print('set astigmatism')
-#                 initial_params[0] = -5.73452261e-03
-#                 initial_params[1] = -2.87624436e-03
-#                 # # # initial_params[0] = 5.
-#                 # # # initial_params[1] = 10.09
-#                 # # # ## Plane rotation
-#                 # # # initial_params[8] = 5e-3
-#                 # # # initial_params[20] = 5e-3
-
-#                 # ### setting1
-#                 # initial_params[9] = -27.8843108e-6
-#                 # initial_params[21] = -27.8843108e-6
-#                 # initial_params[10] = 8e-05
-#                 # initial_params[22] = 8e-05
-
-#                 # ### setting6
-#                 # initial_params[9] = -2.51723411957558e-05
-#                 # initial_params[21] = -2.51723411957558e-05
-#                 # initial_params[10] = 7e-05
-#                 # initial_params[22] = 7e-05
-
-#                 ### setting12
-#                 option_set = True
-#                 initial_params[9] = -3.593990214729709e-05
-#                 initial_params[21] = -3.593990214729709e-05
-#                 # initial_params[10] = 1.3e-04
-#                 # initial_params[22] = 1.3e-04
-
-#                 initial_params[13] = 2.3388953500083895e-06 + 5.647457627118644e-08
-#                 initial_params[25] = 2.3388953500083895e-06 + 5.647457627118644e-08
-
-#                 initial_params[8] = 10.5e-3
-#                 initial_params[20] = 10.5e-3
-
-
-#                 # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#                 # initial_params = Finetuning(initial_params)
-#                 # # initial_params[0] = 1.3e-04
-#                 # # initial_params[1] = 1.3e-04
-
-#                 # option_mpmath = True
-#                 # plot_result_debug(initial_params,'ray')
-#                 # plt.plot()
-#                 # plot_result_debug(initial_params,'ray_wave')
-
-#                 # plt.show()
-
-#                 # initial_params[12] += -2e-3
-#                 # initial_params[24] += -2e-3
-#                 # initial_params[10] += -6.029604417835369e-05
-#                 # initial_params[22] += -6.029604417835369e-05
-
-#                 # ### independent
-#                 # option_set = False
-#                 # initial_params[10] = 1.231404958677686e-05 + 3.0806451612903227e-06
-#                 # initial_params[22] = 1.231404958677686e-05 + 3.0806451612903227e-06
-
-#                 # initial_params[16] = 1e-3
-
-#                 # initial_params[9] += -493e-6-1.173202614379085e-06-4.281045751633987e-06
-#                 # initial_params[21] += -493e-6-1.173202614379085e-06-4.281045751633987e-06
-
-#                 # initial_params[15] += -106e-6
-
-#                 # factor = -10.0
-#                 # initial_params[17] = 1e-5 * factor
-#                 # initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor +4.2e-6
-#                 # initial_params[19] += (-1.68E-04)*1/4 * factor
-#                 # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
-
-#                 # factor = 10.0
-#                 # initial_params[17] = 1e-5 * factor
-#                 # # initial_params[14] = 4.5e-4-0.000025
-#                 # initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor
-#                 # initial_params[19] += (-1.68E-04)*1/4 * factor
-#                 # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
-
-
-#                 ##-1.68E-04 1.33E-03
-
-#                 # initial_params[10] +=  1e-4
-#                 # initial_params[22] +=  1e-4
-#                 # initial_params[20] +=  1e-4
-#                 # initial_params[21] +=  4e-5
-#                 # initial_params[9] +=  1e-5
-#                 # initial_params[10] +=  599.5049554e-6
-#                 # initial_params[22] +=  599.5049554e-6
-#                 # # # initial_params[10] =  -6e-5
-
-#                 # initial_params[2] +=  5e-6
-#                 # initial_params[14] +=  5e-6
-#                 # initial_params[15] +=  2e-5
-#                 # initial_params[16] +=  1e-5
-#                 # initial_params[10] += 164.1852798e-6*15
-#                 # initial_params[10] += 623.752495e-6*15 -4.6e-3
-#                 # initial_params[22] += 623.752495e-6 -4.6e-3
-#                 # initial_params[9] += +35.2e-6
-
-#                 # initial_params[9] += 7.94e-6
-#                 # initial_params[21] += 7.94e-6
-
-#                 if False:
-#                     directory_name = f"output_{timestamp}_wolter_3_1/Default"
-#                     os.makedirs(directory_name, exist_ok=True)
-#                     option_mpmath = False
-#                     # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#                     # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-#                     print('initial_params', initial_params)
-#                     # option_mpmath = True
-#                     directory_name = f"output_{timestamp}_wolter_3_1/AlignmentFit"
-#                     os.makedirs(directory_name, exist_ok=True)
-#                     initial_params1 = initial_params.copy()
-#                     abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
-#                     print('abrr',abrr)
-#                     M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-#                     print('initial_params1',initial_params1.copy())
-#                     # M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'KB')
-#                     M10 = auto_focus_sep(initial_params1.copy(),13,25,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-#                     print('initial_params1',initial_params1.copy())
-#                     M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
-#                     # M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
-#                     # M = M.astype(np.float64)  # 明示的に float64 に変換
-
-#                     M = np.array(np.vstack([M9[:2], M10[:2]]),dtype=np.float64)
-#                     M = M.astype(np.float64)  # 明示的に float64 に変換
-
-#                     np.savetxt(os.path.join(directory_name, 'M.txt'), M)
-#                     print(M)
-#                     inverse_M = np.linalg.inv(M)
-#                     print('inverse_M',inverse_M)
-#                     np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
-
-#                     params = -np.dot(abrr[:2],inverse_M)
-#                     print('params',params)
-#                     print('initial_params1',initial_params1)
-#                     print('initial_params',initial_params)
-#                     # initial_params[8] = initial_params[8] + params[0]
-#                     initial_params[9] = initial_params[9] + params[0]
-#                     # initial_params[10] = initial_params[10] + params[1]
-#                     initial_params[13] = initial_params[13] + params[1]
-#                     initial_params[21] = initial_params[21] + params[0]
-#                     # initial_params[22] = initial_params[22] + params[1]
-#                     initial_params[25] = initial_params[25] + params[1]
-
-#                     option_mpmath = False
-#                     auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
-#                     # auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
-#                     initial_params = Finetuning(initial_params)
-#                     option_mpmath = True
-#                     plot_result_debug(initial_params,'ray')
-#                     plot_result_debug(initial_params,'ray_wave')
-#                     sys.exit()
-
-#             elif option_wolter_3_3_tandem:
-#                 initial_params[9] = -0.0006931946174047766
-#                 initial_params[21] = -0.0006931946174047766
-#                 initial_params[10] = -0.0049
-#                 initial_params[22] = -0.0049
-#                 # initial_params[8] = 0.36
-#                 # initial_params[20] = 0.36
-
-#                 print('')
-#             else:
-#                 ### AKB Large
-#                 # # initial_params[9] =  -0.01264161
-#                 # # initial_params[15] = 0.00455386
-#                 # # initial_params[21] = -0.0027282
-#                 #
-#                 # initial_params[16] = 0.02445858
-#                 # initial_params[20] = -0.01597553
-#                 #
-#                 # ### 1 Oblique
-#                 # initial_params[9] =  -0.0085
-#                 # initial_params[21] =  -0.0085
-#                 # ### 2 Coma
-#                 # initial_params[14] = 0.00023628
-#                 # initial_params[22] = 0.00044446
-#                 # ### 3 Plane rotation
-#                 # initial_params[9] = -0.09595625
-#                 # initial_params[15] = -0.00410658
-#                 # initial_params[21] = -0.01190125
-#                 # ### 4 Coma
-#                 # initial_params[14] = -0.015
-#                 # initial_params[22] = 0.02
-
-#                 # 3 Manual adjust
-#                 # initial_params[15] = -1e-4
-#                 # initial_params[21] = initial_params[21] - 3e-4
-#                 # initial_params[22] = initial_params[22] - 5e-5
-#                 # initial_params[20] = initial_params[20] + 0.022470357969894193
-#                 # initial_params[15] = initial_params[15] - 0.00023172392349930375
-#                 # initial_params[21] = initial_params[21] - 0.0013973110019272002
-#                 # initial_params[22] = initial_params[22] - 0.00010106315071820974
-#                 # initial_params[14] = initial_params[14] - 1.6e-06
-#                 # ###  Best alignment
-#                 # initial_params[14] = 6.25887113e-05
-#                 # initial_params[15] = -7.11817756e-05
-#                 # initial_params[16] = -1.92915809e-03
-#                 # initial_params[20] = 1.84049615e-02
-#                 # initial_params[21] = -8.63695329e-03
-#                 # initial_params[22] = -9.47159502e-04
-#                 # initial_params[9] = -8.78294573e-04
-
-#                 # ### Fix inplane
-#                 # initial_params[9] = 0.00188414
-#                 # initial_params[14] = 1.53960991e-5
-#                 # initial_params[15] = 5.69757870e-4
-#                 # initial_params[21] = -0.00675583
-#                 # initial_params[22] = -0.0011852
-#                 print('')
-#                 # ###  Best alignment?
-#                 initial_params[0] = -3.85600169e-03
-#                 initial_params[1] = -2.72777633e-03
-#                 initial_params[8] = 0.008
-#                 initial_params[9] = -0.00017901
-#                 initial_params[14] = 3.87502992e-5
-#                 initial_params[15] = -5.94770620e-4
-#                 initial_params[16] = -4.86146757e-3
-#                 initial_params[20] = 0.01421587
-#                 initial_params[21] = -0.00901764
-#                 initial_params[22] = -0.00126376
-#     else:
-#         if option_HighNA == False:
-#             # # KB Small omega 0.06236049099088688
-#             # initial_params[8] = 4.87124219e-03
-#             # initial_params[9] = 1.89294655e-12
-#             # initial_params[10] = 4.2566550509431976e-10
-#             # # initial_params[8] = 0.06236049099088688
-#             # # initial_params[8] = 0.056678445743113724 + 4.87124219e-03
-#             # # omegav1 0.009011012477840984
-#             # # omegah1 0.004287211443082652
-#             # # omegav2 0.028688758361589926
-#             # initial_params[1] = -0.00011514
-#             print('KB s')
-#         else:
-#             # ## KB Large
-#             # initial_params[8] = 3.715133e-2 +0.4566017057125132
-#             # initial_params[8] = 0.5038395891681975
-#             # initial_params[9] = 4.65100097e-8
-#             # initial_params[10] = 1.21012885e-7
-
-#             # initial_params[8] = -0.008047143353879311
-#             # initial_params[9] = 6.965038233443645e-07
-#             # initial_params[10] = 1.4269900221215333e-07
-#             # initial_params[12] = 1e-6
-#             print('KB L')
-#             # initial_params[0] = -0.12
-#             # initial_params[1] = -0.09
-
-#             if optKBdesign:
-#                 # l_i1 = np.float64(145.7500024376426)
-
-#                 # # l_o1 = np.float64(0.085)
-#                 # # theta_g1 = np.float64(0.2)
-#                 # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000
-
-#                 # var_l_o1 = np.float64(0.15)
-#                 # theta_g1 = np.float64(0.16)
-#                 # target_l_o2 = np.float64(0.02125) ### WD
-#                 # l_o1 = var_l_o1.copy()  # 初期値の設定
-#                 # na_o_sin = np.float64(0.082)
-#                 # target_gap = np.float64(0.013)
-#                 vals1 = 146 + np.linspace(-100, 1000, 12)
-#                 # vals2 = np.linspace(0.005, 0.02, 5)
-#                 # vals3 = np.linspace(0.01, 0.03, 5)
-#                 # vals4 = np.linspace(0.1, 0.22, 5)
-#                 # vals5 = np.linspace(0.18, 0.22, 5)
-
-#                 pvs = []
-#                 div_angle1 = []
-#                 div_angle2 = []
-#                 mirr_length1 = []
-#                 mirr_length2 = []
-#                 Aperture1 = []
-#                 Aperture2 = []
-#                 Mag1 = []
-#                 Mag2 = []
-
-#                 l_i1 = np.float64(140.)
-#                 target_gap = np.float64(0.005)
-#                 target_l_o2 = np.float64(0.02) ### WD
-#                 theta_g1 = np.float64(0.18)
-#                 l_o1 = np.float64(0.2)
-
-
-
-#                 na_o_sin = np.float64(0.082)
-#                 ast = np.float64(0.)
-#                 for val1 in vals1:
-#                 # for val2 in vals2:
-#                 #     for val3 in vals3:
-#                 #         for val4 in vals4:
-#                 #             for val5 in vals5:
-#                     l_i1 = np.float64(val1)
-#                     # target_gap = np.float64(val2)
-#                     # target_l_o2 = np.float64(val3)  # WD
-#                     # theta_g1 = np.float64(val4)
-#                     # l_o1 = np.float64(val5)
-#                     # 各変数の値を設定
-#                     directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-#                     # 新しいフォルダを作成
-#                     os.makedirs(directory_name, exist_ok=True)
-
-#                     conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
-
-#                     # テキストファイルに変数の値や計算条件を書き込む
-#                     with open(conditions_file_path, 'w') as file:
-#                         file.write("input\n")
-#                         file.write("====================\n")
-#                         file.write(f"l_i1: {l_i1}\n")
-#                         file.write(f"l_o1: {l_o1}\n")
-#                         file.write(f"theta_g1: {theta_g1}\n")
-#                         file.write(f"na_o_sin: {na_o_sin}\n")
-#                         file.write(f"target_l_o2: {target_l_o2}\n")
-#                         file.write(f"target_gap: {target_gap}\n")
-#                         file.write(f"ast: {ast}\n")
-#                     kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
-
-#                     option_mpmath = False
-#                     # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#                     pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
-#                     div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
-#                     div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
-#                     mirr_length1.append(kb_manager.Ell1.mirr_length)
-#                     mirr_length2.append(kb_manager.Ell2.mirr_length)
-#                     Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
-#                     Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
-#                     Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
-#                     Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
-
-#                     plt.close('all')
-
-#                     kb_manager = KBDesignManager()
-
-#                 directory_name = f"output_{timestamp}_KB"
-#                 pvs = np.array(pvs)
-#                 div_angle1 = np.array(div_angle1)
-#                 div_angle2 = np.array(div_angle2)
-#                 mirr_length1 = np.array(mirr_length1)
-#                 mirr_length2 = np.array(mirr_length2)
-#                 Aperture1 = np.array(Aperture1)
-#                 Aperture2 = np.array(Aperture2)
-#                 Mag1 = np.array(Mag1)
-#                 Mag2 = np.array(Mag2)
-#                 names = ['Div Angle1', 'Div Angle2', 'Mirror Length1', 'Mirror Length2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
-#                 param_stack = np.vstack((div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
-
-#                 savenames = ['PV','DivAngle1', 'DivAngle2', 'MirrorLength1', 'MirrorLength2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
-#                 savedata = np.vstack((pvs, div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
-#                 # pandas.DataFrame にする
-#                 df = pd.DataFrame(savedata.T, columns=savenames)
-
-#                 # CSV に保存
-#                 df.to_csv(os.path.join(directory_name,'parameters.csv'), index=False)
-
-#                 num_parameter = 8
-#                 fig, ax = plt.subplots(3,3, figsize=(15, 15))
-#                 ax = ax.ravel()
-#                 fig.suptitle('KB Design PV Dependence on Divergence Angles')
-
-#                 for i in range(num_parameter):
-#                     ax[i].scatter(param_stack[i], pvs, color='k')
-#                     coeff = np.polyfit(param_stack[i], pvs, 1)
-#                     fit_line = np.polyval(coeff, param_stack[i])
-#                     r2 = np.corrcoef(param_stack[i], pvs)[0, 1]**2
-#                     ax[i].plot(param_stack[i], fit_line, '--', label=f'y={coeff[0]:.2e}x + {coeff[1]:.2e} (R²={r2:.2f})', color='k')
-#                     ax[i].set_xlabel(names[i])
-#                     ax[i].set_ylabel('PV')
-#                     ax[i].set_title('KB Design PV')
-#                     ax[i].legend()
-#                 fig.subplots_adjust(hspace=0.5)  # デフォルトは 0.2 くらい
-#                 plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
-#                 plt.show()
-#                 sys.exit()
-
-#     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#     auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-#     sys.exit()
-
-#     with open( rf'output_20250716_093233_KB_wd_forPhotonDiag\7\AlignmentFit\optical_params.txt', encoding="utf-8") as f:
-#             for line in f:
-#                 if line.startswith("params[0]:"):
-#                     initial_params[0] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[1]:"):
-#                     initial_params[1] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[2]:"):
-#                     initial_params[2] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[3]:"):
-#                     initial_params[3] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[4]:"):
-#                     initial_params[4] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[5]:"):
-#                     initial_params[5] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[6]:"):
-#                     initial_params[6] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[7]:"):
-#                     initial_params[7] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[8]:"):
-#                     initial_params[8] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[9]:"):
-#                     initial_params[9] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[10]:"):
-#                     initial_params[10] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[11]:"):
-#                     initial_params[11] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[12]:"):
-#                     initial_params[12] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[13]:"):
-#                     initial_params[13] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[14]:"):
-#                     initial_params[14] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[15]:"):
-#                     initial_params[15] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[16]:"):
-#                     initial_params[16] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[17]:"):
-#                     initial_params[17] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[18]:"):
-#                     initial_params[18] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[19]:"):
-#                     initial_params[19] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[20]:"):
-#                     initial_params[20] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[21]:"):
-#                     initial_params[21] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[22]:"):
-#                     initial_params[22] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[23]:"):
-#                     initial_params[23] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[24]:"):
-#                     initial_params[24] = float(line.split(":")[1].strip())
-#                 if line.startswith("params[25]:"):
-#                     initial_params[25] = float(line.split(":")[1].strip())
-
-#     with open( rf'output_20250716_093233_KB_wd_forPhotonDiag\7\AlignmentFit\kb_design.txt', encoding="utf-8") as f:
-#             for line in f:
-#                 if line.startswith("l1h:"):
-#                     l1h = float(line.split(":")[1].strip())
-#                 if line.startswith("l2h:"):
-#                     l2h = float(line.split(":")[1].strip())
-#                 if line.startswith("inc_h:"):
-#                     inc_h = float(line.split(":")[1].strip())
-#                 if line.startswith("mlen_h:"):
-#                     mlen_h = float(line.split(":")[1].strip())
-#                 if line.startswith("wd_v:"):
-#                     wd_v = float(line.split(":")[1].strip())
-#                 if line.startswith("inc_v:"):
-#                     inc_v = float(line.split(":")[1].strip())
-#                 if line.startswith("mlen_v:"):
-#                     mlen_v = float(line.split(":")[1].strip())
-
-
-
-
-#     if option_AKB:
-#         plot_result_debug(initial_params,'ray')
-#     else:
-#         KB_debug(initial_params.copy(),1,1,'ray',designparams = [l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v])
-#         KB_debug(initial_params.copy(),1,1,'ray_wave',designparams = [l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v])
-#     plt.show()
-#     # # calc_FoC(initial_params)
-#     # # initial_params[2] += 1e-5
-
-#     # # Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
-
-#     # # option_mpmath = False
-
-#     # # initial_params[10] += 1e-5
-#     # # initial_params[2] += 1e-5
-
-#     # # initial_params[2] += 1e-4
-#     # # initial_params[14] += 1e-4
-#     # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#     # # plt.show()
-#     # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-#     # # # KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
-
-#     # # # plot_result_debug(initial_params.copy(),'ray',  source_shift=[0.,-1e-5*146.,2e-5*146],option_save = True)
-
-#     # # # plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
-#     # # plt.show()
-
-#     # # if option_AKB:
-#     # #     print('Angular Tolerance AKB')
-#     # #     length_search = 129
-#     # #     steps1 = np.linspace(-5e-5, 5e-5, length_search) ### h
-#     # #     steps2 = np.linspace(-1e-4, 1e-4, length_search) ### v
-#     # #     pvs = []
-#     # #     for step2 in steps2:
-#     # #         for step1 in steps1:
-#     # #             os.makedirs(directory_name, exist_ok=True)
-#     # #             y_shift = step1* 146.
-#     # #             z_shift = step2* 146.
-
-#     # #             initial_params1 = initial_params.copy()
-
-#     # #             pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift],option_save = False))
-#     # #             # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
-#     # #             plt.close('all')
-#     # #     pvs = np.array(pvs)
-#     # #     pvs = pvs.reshape(length_search,length_search)
-
-#     # #     np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
-#     # #     plt.figure()
-#     # #     plt.pcolormesh(steps1*1e6, steps2*1e6, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
-#     # #     plt.colorbar(label='\u03BB')
-#     # #     plt.xlabel('Horizontal [\u03BCrad]')
-#     # #     plt.ylabel('Vertical [\u03BCrad]')
-#     # #     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
-#     # #     plt.axis('equal')
-#     # #     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance2.png'), transparent=True, dpi=300)
-#     # #     plt.show()
-#     # # else:
-#     # #     print('Angular Tolerance KB')
-#     # #     length_search = 129
-#     # #     steps1 = np.linspace(-1e-5, 1e-5, length_search) ### h
-#     # #     steps2 = np.linspace(-1e-5, 1e-5, length_search) ### v
-#     # #     pvs = []
-#     # #     for step2 in steps2:
-#     # #         for step1 in steps1:
-#     # #             os.makedirs(directory_name, exist_ok=True)
-#     # #             y_shift = step1* 146.
-#     # #             z_shift = step2* 146.
-
-#     # #             initial_params1 = initial_params.copy()
-
-#     # #             # folder = f"{step1:.0e}_{step2:.0e}"
-#     # #             # directory_name = rf"output_{timestamp}_KB\{folder}"
-#     # #             # os.makedirs(directory_name, exist_ok=True)
-#     # #             # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
-
-#     # #             pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
-
-#     # #             plt.close('all')
-#     # #     pvs = np.array(pvs)
-#     # #     pvs = pvs.reshape(length_search,length_search)
-
-#     # #     np.savetxt(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.txt'), pvs)
-#     # #     plt.figure()
-#     # #     plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
-#     # #     plt.colorbar(label='\u03BB')
-#     # #     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
-#     # #     plt.axis('equal')
-#     # #     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
-
-#     # #     plt.show()
-
-#     # # sys.exit()
-
-#     # # steps1 = np.linspace(-1e-4, 1e-4, 5)
-#     # # steps2 = np.linspace(-1e-4, 1e-4, 5)
-#     # # for step1 in steps1:
-#     # #     for step2 in steps2:
-#     # #         initial_params1 = initial_params.copy()
-#     # #         option_set = True
-#     # #         initial_params1[2] += step1
-#     # #         initial_params1[14] += step1
-
-#     # #         initial_params1[10] += step2
-#     # #         initial_params1[22] += step2
-
-#     # #         folder = f"{step1:.0e}_{step2:.0e}"
-#     # #         directory_name = f"output_{timestamp}_KB/{folder}"
-#     # #         os.makedirs(directory_name, exist_ok=True)
-#     # #         txtpath = os.path.join(directory_name, 'initial_params_here.txt')
-#     # #         with open(txtpath, 'w') as f:
-#     # #             f.write('initial_params1\n')
-#     # #             f.write(str(initial_params1) + '\n')
-#     # #         auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray')
-#     # #         # auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-#     # #         plt.close('all')
-
-#     # # sys.exit()
-#     # # plt.show()
-#     # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-#     # # plt.show()
-#     # # print('initial_params', initial_params)
-#     # # sys.exit()
-
-#     # # initial_params1 = initial_params.copy()
-#     # # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-1,1e-1,option = 'matrix', option_eval = '3')
-#     # # M9 = auto_focus_sep(initial_params1.copy(),9,21,-2e-4,2e-4,option = 'matrix', option_eval = '3')
-#     # # M10 = auto_focus_sep(initial_params1.copy(),10,22,-2e-4,2e-4,option = 'matrix', option_eval = '3')
-#     # # M14 = auto_focus_sep(initial_params1.copy(),14,14,-2e-4,2e-4,option = 'matrix', option_eval = '3')
-
-#     # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-#     # # initial_params = Finetuning(initial_params)
-#     # # option_mpmath = True
-#     # # plot_result_debug(initial_params,'ray_wave')
-
-#     # # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-#     # # # option_mpmath = True
-#     # # # plot_result_debug(initial_params,'ray')
-#     # # # plot_result_debug(initial_params,'ray_wave')
-#     # # # option_mpmath = False
-#     # # print('initial_params', initial_params)
-#     # # Legendrealignment(initial_params, [10,22], np.linspace(-2e-5, 2e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [12,24], np.linspace(-2e-3, 2e-3, 5), tuning=True)
-#     # # plt.show()
-#     # # # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [2], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=False)
-
-#     # # ### V Ell
-#     # # # Legendrealignment(initial_params, [14], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [15], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [17], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [19], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-
-#     # # # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [10,22], np.linspace(-1e-3, 1e-3, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [10,22], np.linspace(-5e-4, 5e-4, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [8,20], np.linspace(-1e-3, 1e-3, 5), tuning=False)
-
-#     # # # Legendrealignment(initial_params, [23], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [24], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [20], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-
-#     # # LegendrealignmentKB(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # LegendrealignmentKB(initial_params, [9], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-#     # # LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-
-#     # # # Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
-#     # # # Legendrealignment(initial_params, [2], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [3], np.linspace(-1e-5, 1e-5, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [4], np.linspace(-1e-4, 1e-4, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-#     # # # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
-
-option_energy = 'EUV'  # 'EUV' or 'hardXray' or 'softXray'
-
-# # sys.exit()
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-# plt.show()
-if option_AKB == False:
-    ratio = (np.arange(3)+1)
-    strdata=np.array(["EUV","softXray","hardXray"])
-    ratio = np.linspace(0.1, 1.2, 12)
-    # ratio0 = np.linspace(2.5, 1000, 20)
-    # ratio = 1 / ratio0[::-1]
-    # print('ratio', ratio)
-    initial_params_org = initial_params.copy()
-    for i in range(len(ratio)):
-        initial_params = initial_params_org.copy()
-        var_input = ratio[i]
-        # option_energy = strdata[i]
-        # print("option_energy", option_energy)
-
-        directory_name = f"output_{timestamp}_KB/{i}/Default"
-        os.makedirs(directory_name, exist_ok=True)
-        option_mpmath = False
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-        print('initial_params', initial_params)
-        directory_name = f"output_{timestamp}_KB/{i}/AlignmentFit"
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-        print('initial_params1',initial_params1.copy())
-        M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-        print('initial_params1',initial_params1.copy())
-        M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
-        M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        np.savetxt(os.path.join(directory_name, 'M.txt'), M)
-        print(M)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-        np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
-
-        params = -np.dot(abrr,inverse_M)
-        print('params',params)
-        print('initial_params1',initial_params1)
-        print('initial_params',initial_params)
-        initial_params[8] = initial_params[8] + params[0]
-        initial_params[9] = initial_params[9] + params[1]
-        initial_params[10] = initial_params[10] + params[2]
-
-        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
-        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
-        plt.close('all')
-    sys.exit()
-
-auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-initial_params1 = initial_params.copy()
-# M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-# M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
-if option_wolter_3_1 or option_wolter_3_3_tandem:
-    if False:
-        M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
-        # M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-4,5e-4,option = 'matrix', option_eval = '3_intercept')
-        initial_params[9] = -M9[1,0]/M9[0,0]
-        initial_params[21] = -M9[1,0]/M9[0,0]
-        initial_params1 = initial_params.copy()
-        print('M9',M9)
-        M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
-        # M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-4,5e-4,option = 'matrix', option_eval = '3_intercept')
-        initial_params[10] = -M10[1,1]/M10[0,1]
-        initial_params[22] = -M10[1,1]/M10[0,1]
-        print('M10',M10)
-        initial_params1 = initial_params.copy()
-        param_MinH = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'MinimizeH')
-        print('param_MinH',param_MinH)
-        initial_params[10] = param_MinH
-        initial_params[22] = param_MinH
-
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-
-    if False:
-        base_directory = f"output_{timestamp}"
-        ###### Torerance WolterH
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/WolterH_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[10] += 5e-4
-        initial_params1[22] += 5e-4
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/WolterH_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[9] += 1e-5
-        initial_params1[21] += 1e-5
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ###### Torerance HypH relative angle
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[10] += 1e-4
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[9] += 4e-5
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ### rotation
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_rotation'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[8] += 1e-4
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ###### Torerance EllV relative angle
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[14] += 5e-6
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[15] += 2e-5
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-        ### rotation
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_rotation'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[16] += 1e-5
-        auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
-
-    if True:
-        base_directory = f"output_{timestamp}"
-        ###### Torerance WolterH
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/WolterH_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[10] += 5e-5
-        initial_params1[22] += 5e-5
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/WolterH_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[9] += 1e-6
-        initial_params1[21] += 1e-6
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ###### Torerance HypH relative angle
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[10] += 1e-5
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[9] += 4e-6
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ### rotation
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/HypH_rotation'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[8] += 1e-5
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ###### Torerance EllV relative angle
-        ### incidence
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_incidence'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[14] += 5e-7
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ### Perpendicularity
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_perpendicularity'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[15] += 2e-6
-        plot_result_debug(initial_params1,'ray_wave')
-
-        ### rotation
-        initial_params1 = initial_params.copy()
-        directory_name = base_directory + '/EllV_rotation'
-        os.makedirs(directory_name, exist_ok=True)
-        initial_params1[16] += 1e-6
-        plot_result_debug(initial_params1,'ray_wave')
-
-    sys.exit()
-
-    M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
-    M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
-    M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
-    print('M14',M14)
-    print('M15',M15)
-    print('M16',M16)
-
-else:
-    option_fix2ndcoma = False
-    # option_abrr = 'inplaneadjust'
-    option_abrr = 'inplanefix'
-    # option_abrr = 'inplaneadjustwithcoma'
-    option_adjust_oblique = False
-
-
-
-    option_adjust_coma = False
-    ### 面内回転固定
-    if option_abrr == 'KB_coma':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[10] = - M10[1,1]/M10[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-        print('initial_params',initial_params)
-        print('abrr',abrr)
-    if option_adjust_coma:
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-4,1e-4,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-4,1e-4,option = 'matrix', option_eval = '2')
-
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-        print('initial_params',initial_params)
-        print('abrr',abrr)
-        saveWaveData(initial_params)
-
-    if option_abrr == 'KB':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-        print('initial_params1',initial_params1.copy())
-        M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
-        print('initial_params1',initial_params1.copy())
-        M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
-        M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-
-        params = -np.dot(abrr,inverse_M)
-        print('params',params)
-        print('initial_params1',initial_params1)
-        print('initial_params',initial_params)
-        initial_params[8] = initial_params[8] + params[0]
-        initial_params[9] = initial_params[9] + params[1]
-        initial_params[10] = initial_params[10] + params[2]
-
-        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
-        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = 'KB')
-        print('abrr',abrr)
-        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
-
-        saveWaveData(initial_params)
-
-    if option_abrr == 'inplanefix':
-        initial_params1 = initial_params
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '3')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '3')
-
-        M = np.array(np.vstack([M9[0,:], M15[0,:], M21[0,:]]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-
-        params_woComa = -np.dot(abrr,inverse_M)
-        print('params_woComa',params_woComa)
-
-        initial_params[9] = initial_params[9] + params_woComa[0]
-        initial_params[15] = initial_params[15] + params_woComa[1]
-        initial_params[21] = initial_params[21] + params_woComa[2]
-
-        initial_params1 = initial_params
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-
-        saveWaveData(initial_params)
-
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    elif option_abrr == 'inplanefixwithcoma':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        initial_params1 = initial_params.copy()
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        initial_params1 = initial_params.copy()
-        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        initial_params1 = initial_params.copy()
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        initial_params1 = initial_params.copy()
-        if option_fix2ndcoma:
-            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-            M = np.array(np.vstack([M9, M14, M15, M21, M22]),dtype=np.float64)
+if __name__ == "__main__":
+    #####################################
+    # defocus, astigH, \
+    #    0        1
+    # pitch_hyp_v, roll_hyp_v, yaw_hyp_v, decenterX_hyp_v, decenterY_hyp_v, decenterZ_hyp_v,\
+    #      2           3           4           5                6                7
+    # pitch_hyp_h, roll_hyp_h, yaw_hyp_h, decenterX_hyp_h, decenterY_hyp_h, decenterZ_hyp_h,\
+    #      8           9           10          11               12               13
+    # pitch_ell_v, roll_ell_v, yaw_ell_v, decenterX_ell_v, decenterY_ell_v, decenterZ_ell_v,\
+    #      14          15          16          17               18               19
+    # pitch_ell_h, roll_ell_h, yaw_ell_h, decenterX_ell_h, decenterY_ell_h, decenterZ_ell_h  = params
+    #      20          21          22          23               24               25
+
+    # l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = [np.float64(146.), np.float64(0.8),  np.float64(0.25), np.float64(0.5), np.float64(0.1), np.float64(0.13), np.float64(0.22)]
+    # a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+    # sys.exit()
+
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    # 初期値
+    num_params = 26  # 総パラメータ数
+
+    # initial_params = [0., 0.,
+    #                   0., 0., 0., 0., 0., 0.,
+    #                   0., 0., 0., 0., 0., 0.,
+    #                   0., 0., 0., 0., 0., 0.,
+    #                   0., 0., 0., 0., 0., 0.]
+    initial_params = np.array([0., 0.,
+                    0., 0., 0., 0., 0., 0.,
+                    0., 0., 0., 0., 0., 0.,
+                    0., 0., 0., 0., 0., 0.,
+                    0., 0., 0., 0., 0., 0.],dtype=np.longdouble)
+
+    # initial_params = np.array([0., -3.12012012e-5,
+    #                   0., 0., 0., 0., 0., 0.,
+    #                   -8.877777778e-3, -1.22212440e-4, -1.17e-5, 0., 0., 0.,
+    #                   2.75757575e-7, 0., 2.22222222e-5, 0., 0., 0.,
+    #                   2.5e-4, -1.19963131e-4, -1e-6, 0., 0., 0.],dtype=np.longdouble)
+
+    # plot_result_debug(initial_params,'ray')
+
+    # initial_params[10] = 0.2
+
+    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+    # plt.show()
+
+
+    if option_AKB == True:
+
+        if option_AKB == True:
+            if option_HighNA == False:
+                print('')
+                ### AKB small
+                ### Best alignment
+                initial_params[9] =  -9.33896492e-07 +1.85e-6
+                initial_params[14] = 5.84119937e-08
+                initial_params[15] = -1.24027287e-05
+                initial_params[16] = -8.32392236e-04
+                initial_params[20] = 1.59650980e-03
+                initial_params[21] = -1.37494535e-04 +1.85e-6
+                initial_params[22] = -2.27244686e-06
+
+                # initial_params[21] += 5e-6
+                # initial_params[22] += 5e-6
+                # initial_params[14] += 5e-6
+                # # ### FiX inplane
+                # initial_params[9] =  3.32484327e-5
+                # initial_params[10] = 0.
+                # initial_params[14] = 5.28700262e-9
+                # initial_params[15] = 8.24930354e-6
+                # initial_params[21] = -9.83732562e-5
+                # initial_params[22] = -2.07390025e-6
+
+
+            else:
+
+                print('')
+                if option_wolter_3_1:
+                    initial_params = np.zeros(26, dtype=float)
+                    print('set astigmatism')
+                    initial_params[0] = -5.73452261e-03
+                    initial_params[1] = -2.87624436e-03
+                    # # # initial_params[0] = 5.
+                    # # # initial_params[1] = 10.09
+                    # # # ## Plane rotation
+                    # # # initial_params[8] = 5e-3
+                    # # # initial_params[20] = 5e-3
+
+                    # ### setting1
+                    # initial_params[9] = -27.8843108e-6
+                    # initial_params[21] = -27.8843108e-6
+                    # initial_params[10] = 8e-05
+                    # initial_params[22] = 8e-05
+
+                    # ### setting6
+                    # initial_params[9] = -2.51723411957558e-05
+                    # initial_params[21] = -2.51723411957558e-05
+                    # initial_params[10] = 7e-05
+                    # initial_params[22] = 7e-05
+
+                    ### setting12
+                    option_set = True
+                    initial_params[9] = -3.593990214729709e-05
+                    initial_params[21] = -3.593990214729709e-05
+                    # initial_params[10] = 1.3e-04
+                    # initial_params[22] = 1.3e-04
+
+                    initial_params[13] = 2.3388953500083895e-06 + 5.647457627118644e-08
+                    initial_params[25] = 2.3388953500083895e-06 + 5.647457627118644e-08
+
+                    initial_params[8] = 10.5e-3
+                    initial_params[20] = 10.5e-3
+
+
+                    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                    # initial_params = Finetuning(initial_params)
+                    # # initial_params[0] = 1.3e-04
+                    # # initial_params[1] = 1.3e-04
+
+                    # option_mpmath = True
+                    # plot_result_debug(initial_params,'ray')
+                    # plt.plot()
+                    # plot_result_debug(initial_params,'ray_wave')
+
+                    # plt.show()
+
+                    # initial_params[12] += -2e-3
+                    # initial_params[24] += -2e-3
+                    # initial_params[10] += -6.029604417835369e-05
+                    # initial_params[22] += -6.029604417835369e-05
+
+                    # ### independent
+                    # option_set = False
+                    # initial_params[10] = 1.231404958677686e-05 + 3.0806451612903227e-06
+                    # initial_params[22] = 1.231404958677686e-05 + 3.0806451612903227e-06
+
+                    # initial_params[16] = 1e-3
+
+                    # initial_params[9] += -493e-6-1.173202614379085e-06-4.281045751633987e-06
+                    # initial_params[21] += -493e-6-1.173202614379085e-06-4.281045751633987e-06
+
+                    # initial_params[15] += -106e-6
+
+                    # factor = -10.0
+                    # initial_params[17] = 1e-5 * factor
+                    # initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor +4.2e-6
+                    # initial_params[19] += (-1.68E-04)*1/4 * factor
+                    # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
+
+                    # factor = 10.0
+                    # initial_params[17] = 1e-5 * factor
+                    # # initial_params[14] = 4.5e-4-0.000025
+                    # initial_params[14] = (42e-6+8.814814814814815e-07 +2.5e-6/10) * factor
+                    # initial_params[19] += (-1.68E-04)*1/4 * factor
+                    # initial_params[14] += (1.33E-03 - 3.74E-06)*1/4 * factor
+
+
+                    ##-1.68E-04 1.33E-03
+
+                    # initial_params[10] +=  1e-4
+                    # initial_params[22] +=  1e-4
+                    # initial_params[20] +=  1e-4
+                    # initial_params[21] +=  4e-5
+                    # initial_params[9] +=  1e-5
+                    # initial_params[10] +=  599.5049554e-6
+                    # initial_params[22] +=  599.5049554e-6
+                    # # # initial_params[10] =  -6e-5
+
+                    # initial_params[2] +=  5e-6
+                    # initial_params[14] +=  5e-6
+                    # initial_params[15] +=  2e-5
+                    # initial_params[16] +=  1e-5
+                    # initial_params[10] += 164.1852798e-6*15
+                    # initial_params[10] += 623.752495e-6*15 -4.6e-3
+                    # initial_params[22] += 623.752495e-6 -4.6e-3
+                    # initial_params[9] += +35.2e-6
+
+                    # initial_params[9] += 7.94e-6
+                    # initial_params[21] += 7.94e-6
+
+                    if False:
+                        directory_name = f"output_{timestamp}_wolter_3_1/Default"
+                        os.makedirs(directory_name, exist_ok=True)
+                        option_mpmath = False
+                        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+                        print('initial_params', initial_params)
+                        # option_mpmath = True
+                        directory_name = f"output_{timestamp}_wolter_3_1/AlignmentFit"
+                        os.makedirs(directory_name, exist_ok=True)
+                        initial_params1 = initial_params.copy()
+                        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+                        print('abrr',abrr)
+                        M9 = auto_focus_sep(initial_params1.copy(),9,21,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+                        print('initial_params1',initial_params1.copy())
+                        # M10 = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'KB')
+                        M10 = auto_focus_sep(initial_params1.copy(),13,25,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+                        print('initial_params1',initial_params1.copy())
+                        M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+                        # M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+                        # M = M.astype(np.float64)  # 明示的に float64 に変換
+
+                        M = np.array(np.vstack([M9[:2], M10[:2]]),dtype=np.float64)
+                        M = M.astype(np.float64)  # 明示的に float64 に変換
+
+                        np.savetxt(os.path.join(directory_name, 'M.txt'), M)
+                        print(M)
+                        inverse_M = np.linalg.inv(M)
+                        print('inverse_M',inverse_M)
+                        np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
+
+                        params = -np.dot(abrr[:2],inverse_M)
+                        print('params',params)
+                        print('initial_params1',initial_params1)
+                        print('initial_params',initial_params)
+                        # initial_params[8] = initial_params[8] + params[0]
+                        initial_params[9] = initial_params[9] + params[0]
+                        # initial_params[10] = initial_params[10] + params[1]
+                        initial_params[13] = initial_params[13] + params[1]
+                        initial_params[21] = initial_params[21] + params[0]
+                        # initial_params[22] = initial_params[22] + params[1]
+                        initial_params[25] = initial_params[25] + params[1]
+
+                        option_mpmath = False
+                        auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+                        # auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+                        initial_params = Finetuning(initial_params)
+                        option_mpmath = True
+                        plot_result_debug(initial_params,'ray')
+                        plot_result_debug(initial_params,'ray_wave')
+                        sys.exit()
+
+                elif option_wolter_3_3_tandem:
+                    initial_params[9] = -0.0006931946174047766
+                    initial_params[21] = -0.0006931946174047766
+                    initial_params[10] = -0.0049
+                    initial_params[22] = -0.0049
+                    # initial_params[8] = 0.36
+                    # initial_params[20] = 0.36
+
+                    print('')
+                else:
+                    ### AKB Large
+                    # # initial_params[9] =  -0.01264161
+                    # # initial_params[15] = 0.00455386
+                    # # initial_params[21] = -0.0027282
+                    #
+                    # initial_params[16] = 0.02445858
+                    # initial_params[20] = -0.01597553
+                    #
+                    # ### 1 Oblique
+                    # initial_params[9] =  -0.0085
+                    # initial_params[21] =  -0.0085
+                    # ### 2 Coma
+                    # initial_params[14] = 0.00023628
+                    # initial_params[22] = 0.00044446
+                    # ### 3 Plane rotation
+                    # initial_params[9] = -0.09595625
+                    # initial_params[15] = -0.00410658
+                    # initial_params[21] = -0.01190125
+                    # ### 4 Coma
+                    # initial_params[14] = -0.015
+                    # initial_params[22] = 0.02
+
+                    # 3 Manual adjust
+                    # initial_params[15] = -1e-4
+                    # initial_params[21] = initial_params[21] - 3e-4
+                    # initial_params[22] = initial_params[22] - 5e-5
+                    # initial_params[20] = initial_params[20] + 0.022470357969894193
+                    # initial_params[15] = initial_params[15] - 0.00023172392349930375
+                    # initial_params[21] = initial_params[21] - 0.0013973110019272002
+                    # initial_params[22] = initial_params[22] - 0.00010106315071820974
+                    # initial_params[14] = initial_params[14] - 1.6e-06
+                    # ###  Best alignment
+                    # initial_params[14] = 6.25887113e-05
+                    # initial_params[15] = -7.11817756e-05
+                    # initial_params[16] = -1.92915809e-03
+                    # initial_params[20] = 1.84049615e-02
+                    # initial_params[21] = -8.63695329e-03
+                    # initial_params[22] = -9.47159502e-04
+                    # initial_params[9] = -8.78294573e-04
+
+                    # ### Fix inplane
+                    # initial_params[9] = 0.00188414
+                    # initial_params[14] = 1.53960991e-5
+                    # initial_params[15] = 5.69757870e-4
+                    # initial_params[21] = -0.00675583
+                    # initial_params[22] = -0.0011852
+                    print('')
+                    # ###  Best alignment?
+                    initial_params[0] = -3.85600169e-03
+                    initial_params[1] = -2.72777633e-03
+                    initial_params[8] = 0.008
+                    initial_params[9] = -0.00017901
+                    initial_params[14] = 3.87502992e-5
+                    initial_params[15] = -5.94770620e-4
+                    initial_params[16] = -4.86146757e-3
+                    initial_params[20] = 0.01421587
+                    initial_params[21] = -0.00901764
+                    initial_params[22] = -0.00126376
         else:
-            M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-            M = np.array(np.vstack([M9, M14, M15, M21, M10]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        print(M.dtype)
-        print(np.linalg.det(M))
-        print(abrr.dtype, abrr.shape)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-        params = -np.dot(abrr,inverse_M)
-        print('params_woComa',params)
-        initial_params[9] = initial_params[9] + params[0]
-        initial_params[14] = initial_params[14] + params[1]
-        initial_params[15] = initial_params[15] + params[2]
-        initial_params[21] = initial_params[21] + params[3]
-        if option_fix2ndcoma:
-            initial_params[22] = initial_params[22] + params[4]
+            if option_HighNA == False:
+                # # KB Small omega 0.06236049099088688
+                # initial_params[8] = 4.87124219e-03
+                # initial_params[9] = 1.89294655e-12
+                # initial_params[10] = 4.2566550509431976e-10
+                # # initial_params[8] = 0.06236049099088688
+                # # initial_params[8] = 0.056678445743113724 + 4.87124219e-03
+                # # omegav1 0.009011012477840984
+                # # omegah1 0.004287211443082652
+                # # omegav2 0.028688758361589926
+                # initial_params[1] = -0.00011514
+                print('KB s')
+            else:
+                # ## KB Large
+                # initial_params[8] = 3.715133e-2 +0.4566017057125132
+                # initial_params[8] = 0.5038395891681975
+                # initial_params[9] = 4.65100097e-8
+                # initial_params[10] = 1.21012885e-7
+
+                # initial_params[8] = -0.008047143353879311
+                # initial_params[9] = 6.965038233443645e-07
+                # initial_params[10] = 1.4269900221215333e-07
+                # initial_params[12] = 1e-6
+                print('KB L')
+                # initial_params[0] = -0.12
+                # initial_params[1] = -0.09
+
+                if optKBdesign:
+                    # l_i1 = np.float64(145.7500024376426)
+
+                    # # l_o1 = np.float64(0.085)
+                    # # theta_g1 = np.float64(0.2)
+                    # # l_o1: 0.149786, theta_g1: 0.150881, target_l_o2: 0.021402, aperture_Ell1: 0.015456, aperture_Ell2: 0.005000
+
+                    # var_l_o1 = np.float64(0.15)
+                    # theta_g1 = np.float64(0.16)
+                    # target_l_o2 = np.float64(0.02125) ### WD
+                    # l_o1 = var_l_o1.copy()  # 初期値の設定
+                    # na_o_sin = np.float64(0.082)
+                    # target_gap = np.float64(0.013)
+                    vals1 = 146 + np.linspace(-100, 1000, 12)
+                    # vals2 = np.linspace(0.005, 0.02, 5)
+                    # vals3 = np.linspace(0.01, 0.03, 5)
+                    # vals4 = np.linspace(0.1, 0.22, 5)
+                    # vals5 = np.linspace(0.18, 0.22, 5)
+
+                    pvs = []
+                    div_angle1 = []
+                    div_angle2 = []
+                    mirr_length1 = []
+                    mirr_length2 = []
+                    Aperture1 = []
+                    Aperture2 = []
+                    Mag1 = []
+                    Mag2 = []
+
+                    l_i1 = np.float64(140.)
+                    target_gap = np.float64(0.005)
+                    target_l_o2 = np.float64(0.02) ### WD
+                    theta_g1 = np.float64(0.18)
+                    l_o1 = np.float64(0.2)
+
+
+
+                    na_o_sin = np.float64(0.082)
+                    ast = np.float64(0.)
+                    for val1 in vals1:
+                    # for val2 in vals2:
+                    #     for val3 in vals3:
+                    #         for val4 in vals4:
+                    #             for val5 in vals5:
+                        l_i1 = np.float64(val1)
+                        # target_gap = np.float64(val2)
+                        # target_l_o2 = np.float64(val3)  # WD
+                        # theta_g1 = np.float64(val4)
+                        # l_o1 = np.float64(val5)
+                        # 各変数の値を設定
+                        directory_name = f"output_{timestamp}_KB/{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                        # 新しいフォルダを作成
+                        os.makedirs(directory_name, exist_ok=True)
+
+                        conditions_file_path = os.path.join(directory_name, 'kb_params.txt')
+
+                        # テキストファイルに変数の値や計算条件を書き込む
+                        with open(conditions_file_path, 'w') as file:
+                            file.write("input\n")
+                            file.write("====================\n")
+                            file.write(f"l_i1: {l_i1}\n")
+                            file.write(f"l_o1: {l_o1}\n")
+                            file.write(f"theta_g1: {theta_g1}\n")
+                            file.write(f"na_o_sin: {na_o_sin}\n")
+                            file.write(f"target_l_o2: {target_l_o2}\n")
+                            file.write(f"target_gap: {target_gap}\n")
+                            file.write(f"ast: {ast}\n")
+                        kb_manager.set_design(l_i1, l_o1, theta_g1, na_o_sin, target_l_o2, target_gap, ast)
+
+                        option_mpmath = False
+                        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+                        pvs.append(auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave'))
+                        div_angle1.append(kb_manager.Ell1.theta_i1-kb_manager.Ell1.theta_i2)
+                        div_angle2.append(kb_manager.Ell2.theta_i1-kb_manager.Ell2.theta_i2)
+                        mirr_length1.append(kb_manager.Ell1.mirr_length)
+                        mirr_length2.append(kb_manager.Ell2.mirr_length)
+                        Aperture1.append(kb_manager.Ell1.mirr_length*kb_manager.Ell1.theta_centre)
+                        Aperture2.append(kb_manager.Ell2.mirr_length*kb_manager.Ell2.theta_centre)
+                        Mag1.append((kb_manager.Ell1.m1 + kb_manager.Ell1.m2) / 2)
+                        Mag2.append((kb_manager.Ell2.m1 + kb_manager.Ell2.m2) / 2)
+
+                        plt.close('all')
+
+                        kb_manager = KBDesignManager()
+
+                    directory_name = f"output_{timestamp}_KB"
+                    pvs = np.array(pvs)
+                    div_angle1 = np.array(div_angle1)
+                    div_angle2 = np.array(div_angle2)
+                    mirr_length1 = np.array(mirr_length1)
+                    mirr_length2 = np.array(mirr_length2)
+                    Aperture1 = np.array(Aperture1)
+                    Aperture2 = np.array(Aperture2)
+                    Mag1 = np.array(Mag1)
+                    Mag2 = np.array(Mag2)
+                    names = ['Div Angle1', 'Div Angle2', 'Mirror Length1', 'Mirror Length2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
+                    param_stack = np.vstack((div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+
+                    savenames = ['PV','DivAngle1', 'DivAngle2', 'MirrorLength1', 'MirrorLength2', 'Aperture1', 'Aperture2', 'Magnification1', 'Magnification2']
+                    savedata = np.vstack((pvs, div_angle1, div_angle2, mirr_length1, mirr_length2, Aperture1, Aperture2, Mag1, Mag2))
+                    # pandas.DataFrame にする
+                    df = pd.DataFrame(savedata.T, columns=savenames)
+
+                    # CSV に保存
+                    df.to_csv(os.path.join(directory_name,'parameters.csv'), index=False)
+
+                    num_parameter = 8
+                    fig, ax = plt.subplots(3,3, figsize=(15, 15))
+                    ax = ax.ravel()
+                    fig.suptitle('KB Design PV Dependence on Divergence Angles')
+
+                    for i in range(num_parameter):
+                        ax[i].scatter(param_stack[i], pvs, color='k')
+                        coeff = np.polyfit(param_stack[i], pvs, 1)
+                        fit_line = np.polyval(coeff, param_stack[i])
+                        r2 = np.corrcoef(param_stack[i], pvs)[0, 1]**2
+                        ax[i].plot(param_stack[i], fit_line, '--', label=f'y={coeff[0]:.2e}x + {coeff[1]:.2e} (R²={r2:.2f})', color='k')
+                        ax[i].set_xlabel(names[i])
+                        ax[i].set_ylabel('PV')
+                        ax[i].set_title('KB Design PV')
+                        ax[i].legend()
+                    fig.subplots_adjust(hspace=0.5)  # デフォルトは 0.2 くらい
+                    plt.savefig(os.path.join(directory_name, 'PV_dependence.png'))
+                    plt.show()
+                    sys.exit()
+        # plot_result_debug(initial_params,'ray')
+        # plot_result_debug(initial_params,'ray_wave')
+        # plt.plot()
+        # sys.exit()
+        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+        # sys.exit()
+
+        # with open( rf'output_20250716_093233_KB_wd_forPhotonDiag\7\AlignmentFit\optical_params.txt', encoding="utf-8") as f:
+        #         for line in f:
+        #             if line.startswith("params[0]:"):
+        #                 initial_params[0] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[1]:"):
+        #                 initial_params[1] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[2]:"):
+        #                 initial_params[2] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[3]:"):
+        #                 initial_params[3] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[4]:"):
+        #                 initial_params[4] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[5]:"):
+        #                 initial_params[5] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[6]:"):
+        #                 initial_params[6] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[7]:"):
+        #                 initial_params[7] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[8]:"):
+        #                 initial_params[8] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[9]:"):
+        #                 initial_params[9] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[10]:"):
+        #                 initial_params[10] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[11]:"):
+        #                 initial_params[11] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[12]:"):
+        #                 initial_params[12] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[13]:"):
+        #                 initial_params[13] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[14]:"):
+        #                 initial_params[14] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[15]:"):
+        #                 initial_params[15] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[16]:"):
+        #                 initial_params[16] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[17]:"):
+        #                 initial_params[17] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[18]:"):
+        #                 initial_params[18] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[19]:"):
+        #                 initial_params[19] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[20]:"):
+        #                 initial_params[20] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[21]:"):
+        #                 initial_params[21] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[22]:"):
+        #                 initial_params[22] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[23]:"):
+        #                 initial_params[23] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[24]:"):
+        #                 initial_params[24] = float(line.split(":")[1].strip())
+        #             if line.startswith("params[25]:"):
+        #                 initial_params[25] = float(line.split(":")[1].strip())
+
+        # with open( rf'output_20250716_093233_KB_wd_forPhotonDiag\7\AlignmentFit\kb_design.txt', encoding="utf-8") as f:
+        #         for line in f:
+        #             if line.startswith("l1h:"):
+        #                 l1h = float(line.split(":")[1].strip())
+        #             if line.startswith("l2h:"):
+        #                 l2h = float(line.split(":")[1].strip())
+        #             if line.startswith("inc_h:"):
+        #                 inc_h = float(line.split(":")[1].strip())
+        #             if line.startswith("mlen_h:"):
+        #                 mlen_h = float(line.split(":")[1].strip())
+        #             if line.startswith("wd_v:"):
+        #                 wd_v = float(line.split(":")[1].strip())
+        #             if line.startswith("inc_v:"):
+        #                 inc_v = float(line.split(":")[1].strip())
+        #             if line.startswith("mlen_v:"):
+        #                 mlen_v = float(line.split(":")[1].strip())
+
+        if True: # bestalignment
+            initial_params = np.array([-5.73452479e-03, -2.87624337e-03,  0.00000000e+00,  0.00000000e+00,
+                                0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+                                1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
+                                0.00000000e+00,  2.39536993e-06,  0.00000000e+00,  0.00000000e+00,
+                                0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+                                1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
+                                0.00000000e+00,  2.39536993e-06], dtype=np.float64)
+            option_set = True
+            initial_params[9] -= 1e-6
+            initial_params[21] -= 1e-6
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
+            # np.save(os.path.join(directory_name, 'initial_params.npy'), initial_params)
+            # np.save(os.path.join(directory_name, 'vmirr_hyp.npy'), vmirr_hyp)
+            # np.save(os.path.join(directory_name, 'hmirr_hyp.npy'), hmirr_hyp)
+            # np.save(os.path.join(directory_name, 'vmirr_ell.npy'), vmirr_ell)
+            # np.save(os.path.join(directory_name, 'hmirr_ell.npy'), hmirr_ell)
+            # np.save(os.path.join(directory_name, 'detcenter.npy'), detcenter)
+            plt.show()
+
+        if option_AKB:
+            ### 
+
+            # initial_params[4] += 1e-03
+            # initial_params[16] += 1e-03
+            # initial_params[9] -= 2.5e-4
+            # initial_params[21] -= 2.5e-4
+            # initial_params[15] += 5.5562614711280536e-05
+
+            # factor = -1.5 # -1 -> 0.2777
+            # initial_params[16] += 1e-03 * factor
+            # initial_params[9] -= (4.95e-4 + 2.1931304406505168e-06) * factor ### 0.14819/-5e-6
+            # initial_params[21] -= (4.95e-4 + 2.1931304406505168e-06) * factor
+            # initial_params[15] -= 0.00010532260341663136 * factor
+
+            # initial_params[15] -= 20e-6 ### -20e-6 で 0.2848 PV
+            # initial_params[15] += 5e-05 ### 5e-05 で yawが-0.7083 pv
+
+            # 
+
+            # ### [16] / [9] [21] = 10e-5/-5e-5
+            # initial_params[16] += 10e-05 ###
+            # initial_params[9] -= 5e-5
+            # initial_params[21] -= 5e-5
+            
+            # initial_params[]
+            
+            # initial_params[1] += 8e-7
+            # initial_params[0] += 8e-7 / 2
+
+            # initial_params[2] += 980e-6 *2
+            # initial_params[14] += 980e-6 *2
+            # initial_params[14] += 15e-6
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            # plot_result_debug(initial_params,'ray')
+            # plot_result_debug(initial_params,'ray_wave')
         else:
-            initial_params[10] = initial_params[10] + params[4]
+            KB_debug(initial_params.copy(),1,1,'ray',designparams = [l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v])
+            KB_debug(initial_params.copy(),1,1,'ray_wave',designparams = [l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v])
+        plt.show()
+        # # calc_FoC(initial_params)
+        # # initial_params[2] += 1e-5
 
-        initial_params1 = initial_params.copy()
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    elif option_abrr == 'inplaneadjust':
-        initial_params1 = initial_params
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '5')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5')
-        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5')
-        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5')
-        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5')
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+        # # Legendrealignment(initial_params, [8,20], np.linspace(-2e-3, 2e-3, 5), tuning=True)
+
+        # # option_mpmath = False
+
+        # # initial_params[10] += 1e-5
+        # # initial_params[2] += 1e-5
+
+        # # initial_params[2] += 1e-4
+        # # initial_params[14] += 1e-4
+        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        # # plt.show()
+        # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
+        # # # KB_debug(initial_params.copy(),1,1,'ray',source_shift=[0.,-1e-5,0.])
+
+        # # # plot_result_debug(initial_params.copy(),'ray',  source_shift=[0.,-1e-5*146.,2e-5*146],option_save = True)
+
+        # # # plot_result_debug(initial_params,'ray_wave',  angular_shift = [0.,1e-4])
+        # # plt.show()
+
+        # # if option_AKB:
+        # #     print('Angular Tolerance AKB')
+        # #     length_search = 129
+        # #     steps1 = np.linspace(-5e-5, 5e-5, length_search) ### h
+        # #     steps2 = np.linspace(-1e-4, 1e-4, length_search) ### v
+        # #     pvs = []
+        # #     for step2 in steps2:
+        # #         for step1 in steps1:
+        # #             os.makedirs(directory_name, exist_ok=True)
+        # #             y_shift = step1* 146.
+        # #             z_shift = step2* 146.
+
+        # #             initial_params1 = initial_params.copy()
+
+        # #             pvs.append(plot_result_debug(initial_params1.copy(),'ray_wave',  source_shift=[0.,y_shift,z_shift],option_save = False))
+        # #             # pvs.append(auto_focus_NA(50, initial_params1.copy(),1,1, True,'',option_disp='ray_wave', source_shift0=[0.,y_shift,z_shift]))
+        # #             plt.close('all')
+        # #     pvs = np.array(pvs)
+        # #     pvs = pvs.reshape(length_search,length_search)
+
+        # #     np.savetxt(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.txt'), pvs)
+        # #     plt.figure()
+        # #     plt.pcolormesh(steps1*1e6, steps2*1e6, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+        # #     plt.colorbar(label='\u03BB')
+        # #     plt.xlabel('Horizontal [\u03BCrad]')
+        # #     plt.ylabel('Vertical [\u03BCrad]')
+        # #     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance.png'), transparent=True, dpi=300)
+        # #     plt.axis('equal')
+        # #     plt.savefig(os.path.join(f"output_{timestamp}_wolter_3_1", 'AngularTorelance2.png'), transparent=True, dpi=300)
+        # #     plt.show()
+        # # else:
+        # #     print('Angular Tolerance KB')
+        # #     length_search = 129
+        # #     steps1 = np.linspace(-1e-5, 1e-5, length_search) ### h
+        # #     steps2 = np.linspace(-1e-5, 1e-5, length_search) ### v
+        # #     pvs = []
+        # #     for step2 in steps2:
+        # #         for step1 in steps1:
+        # #             os.makedirs(directory_name, exist_ok=True)
+        # #             y_shift = step1* 146.
+        # #             z_shift = step2* 146.
+
+        # #             initial_params1 = initial_params.copy()
+
+        # #             # folder = f"{step1:.0e}_{step2:.0e}"
+        # #             # directory_name = rf"output_{timestamp}_KB\{folder}"
+        # #             # os.makedirs(directory_name, exist_ok=True)
+        # #             # KB_debug(initial_params1.copy(),1,1,'ray',source_shift=[0.,y_shift,z_shift])
+
+        # #             pvs.append(KB_debug(initial_params1.copy(),1,1,'ray_wave',source_shift=[0.,y_shift,z_shift],option_save = False))
+
+        # #             plt.close('all')
+        # #     pvs = np.array(pvs)
+        # #     pvs = pvs.reshape(length_search,length_search)
+
+        # #     np.savetxt(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.txt'), pvs)
+        # #     plt.figure()
+        # #     plt.pcolormesh(steps1, steps2, pvs, cmap='jet', shading='auto',vmin=0,vmax=0.25)
+        # #     plt.colorbar(label='\u03BB')
+        # #     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance.png'), transparent=True, dpi=300)
+        # #     plt.axis('equal')
+        # #     plt.savefig(os.path.join(f"output_{timestamp}_KB", 'AngularTorelance2.png'), transparent=True, dpi=300)
+
+        # #     plt.show()
+
+        # # sys.exit()
+
+        # # steps1 = np.linspace(-1e-4, 1e-4, 5)
+        # # steps2 = np.linspace(-1e-4, 1e-4, 5)
+        # # for step1 in steps1:
+        # #     for step2 in steps2:
+        # #         initial_params1 = initial_params.copy()
+        # #         option_set = True
+        # #         initial_params1[2] += step1
+        # #         initial_params1[14] += step1
+
+        # #         initial_params1[10] += step2
+        # #         initial_params1[22] += step2
+
+        # #         folder = f"{step1:.0e}_{step2:.0e}"
+        # #         directory_name = f"output_{timestamp}_KB/{folder}"
+        # #         os.makedirs(directory_name, exist_ok=True)
+        # #         txtpath = os.path.join(directory_name, 'initial_params_here.txt')
+        # #         with open(txtpath, 'w') as f:
+        # #             f.write('initial_params1\n')
+        # #             f.write(str(initial_params1) + '\n')
+        # #         auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray')
+        # #         # auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
+        # #         plt.close('all')
+
+        # # sys.exit()
+        # # plt.show()
+        # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+
+        # # plt.show()
+        # # print('initial_params', initial_params)
+        # # sys.exit()
+
+        # # initial_params1 = initial_params.copy()
+        # # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-1,1e-1,option = 'matrix', option_eval = '3')
+        # # M9 = auto_focus_sep(initial_params1.copy(),9,21,-2e-4,2e-4,option = 'matrix', option_eval = '3')
+        # # M10 = auto_focus_sep(initial_params1.copy(),10,22,-2e-4,2e-4,option = 'matrix', option_eval = '3')
+        # # M14 = auto_focus_sep(initial_params1.copy(),14,14,-2e-4,2e-4,option = 'matrix', option_eval = '3')
+
+        # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+        # # initial_params = Finetuning(initial_params)
+        # # option_mpmath = True
+        # # plot_result_debug(initial_params,'ray_wave')
+
+        # # # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        # # # option_mpmath = True
+        # # # plot_result_debug(initial_params,'ray')
+        # # # plot_result_debug(initial_params,'ray_wave')
+        # # # option_mpmath = False
+        # # print('initial_params', initial_params)
+        # # Legendrealignment(initial_params, [10,22], np.linspace(-2e-5, 2e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [12,24], np.linspace(-2e-3, 2e-3, 5), tuning=True)
+        # # plt.show()
+        # # # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [10,22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [10], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [22], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [2], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=False)
+
+        # # ### V Ell
+        # # # Legendrealignment(initial_params, [14], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [15], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [16], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [17], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [19], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+
+        # # # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [10,22], np.linspace(-1e-3, 1e-3, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [10,22], np.linspace(-5e-4, 5e-4, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [8,20], np.linspace(-1e-3, 1e-3, 5), tuning=False)
+
+        # # # Legendrealignment(initial_params, [23], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [24], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [20], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [21], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [22], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+
+        # # LegendrealignmentKB(initial_params, [8], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # LegendrealignmentKB(initial_params, [9], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+        # # LegendrealignmentKB(initial_params, [10], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [11], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [12], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+
+        # # # Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
+        # # # Legendrealignment(initial_params, [2], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [3], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [4], np.linspace(-1e-4, 1e-4, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [5], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+        # # # Legendrealignment(initial_params, [7], np.linspace(-1e-6, 1e-6, 5), tuning=True)
+
+    option_energy = 'EUV'  # 'EUV' or 'hardXray' or 'softXray'
+
+    option_set = True
+    option_mpmath = False
+    # initial_params[10] = -6.5e-05
+    # initial_params[22] = -6.5e-05
+    # initial_params[9] = 2.548076923076923e-07
+    # initial_params[21] = 2.548076923076923e-07
+    # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    # Legendrealignment(initial_params, [2,14], np.linspace(-2e-5, 2e-5, 5), tuning=False)
+    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+    # Legendrealignment(initial_params, [9,21], np.linspace(-1e-5, 1e-5, 5), tuning=True)
+    plt.show()
+    sys.exit()
+    
+    if option_AKB == False:
+        ratio = (np.arange(3)+1)
+        strdata=np.array(["EUV","softXray","hardXray"])
+        ratio = np.linspace(0.5, 1.0, 8)
+        # ratio0 = np.linspace(2.5, 1000, 20)
+        # ratio = 1 / ratio0[::-1]
+        # print('ratio', ratio)
+        initial_params_org = initial_params.copy()
+        initilal_KBdesign_7params = KBdesign_7params.copy()
+        for i in range(len(ratio)):
+            initial_params = initial_params_org.copy()
+            var_input = ratio[i]
+            print(f"initilal_KBdesign_7params: {initilal_KBdesign_7params}")
+            print(f"変化率: {var_input}")
+            # option_energy = strdata[i]
+            # print("option_energy", option_energy)
+
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = initilal_KBdesign_7params.copy()
+
+            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            div_h_s0 = accept_h / l1h
+            div_v_s0 = accept_v / l1v
+            mag_h = np.tan(sita3h) / np.tan(sita1h)
+            mag_v = np.tan(sita3v) / np.tan(sita1v)
+            input_params_KB = [l1h, l2h, inc_h/var_input, mlen_h*var_input, wd_v, inc_v, mlen_v]
+            target_params_KB = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+            target_params_KB_original = target_params_KB.copy()
+
+            index_input_param_KB = 2
+            index_target_param_KB = 4
+            target_fix = target_params_KB[index_target_param_KB]
+            initial_input_KB = input_params_KB[index_input_param_KB]
+
+            def Ell_define_obj(l1, inc, l2):
+                sita1 = arctan(l2*sin(2.*inc) / (l1+l2*cos(2.*inc)))
+
+                a_ell = (l1+l2)/2.
+                if l1 * l2 * sin(inc) ** 2 < 0.:
+                    return None
+                b_ell = sqrt(l1 * l2 * sin(inc) ** 2)
+                # b_ell = sqrt((l1+l2-l1*cos(sita1)-l2*cos(sita1-2.*inc)) * (l1+l2+l1*cos(sita1)+l2*cos(sita1-2*inc))) /2.
+
+                sita3 = arcsin(l1*sin(sita1) / l2)
+
+                return a_ell, b_ell, sita1, sita3
+
+            def KB_define_obj(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v , gapf=0.):
+                values = Ell_define_obj(l1h, inc_h, l2h)
+                if values is None:
+                    return None
+                a_h, b_h, sita1h, sita3h = values
+                s2f_h = sqrt(a_h**2. - b_h**2.) * 2.    ###horizontal source-focus
+
+                xh_s = l1h * cos(sita1h) - mlen_h/2.    ###Hmirror start
+                xh_e = l1h * cos(sita1h) + mlen_h/2.    ###Hmirror end
+                yh_s = calcEll_Yvalue(a_h,b_h,xh_s)
+                yh_e = calcEll_Yvalue(a_h,b_h,xh_e)
+                accept_h = abs(yh_e - yh_s)
+                NA_h = sin(abs(arctan(yh_e/(s2f_h-xh_e)) - arctan(yh_s/(s2f_h-xh_s))))/2.
+
+                l1v = l1h + (l2h - wd_v - mlen_v/2.)         ###1st guess of l1v
+                l2v = wd_v + mlen_v/2.                  ###1st guess of l2v
+
+                while True:
+                    values = Ell_define_obj(l1v, inc_v, l2v)
+                    if values is None:
+                        return None
+                    a_v, b_v, sita1v, sita3v = values
+                    s2f_v = sqrt(a_v**2. - b_v**2.) * 2.    ###horizontal source-focus
+
+                    diff = s2f_h - s2f_v
+                    if abs(diff) < 1e-9:
+                        break
+                    else:
+                        l1v += diff*0.9
+
+                xv_s = l1v * cos(sita1v) - mlen_v/2.    ###Vmirror start
+                xv_e = l1v * cos(sita1v) + mlen_v/2.    ###Vmirror end
+                yv_s = calcEll_Yvalue(a_v,b_v,xv_s)
+                yv_e = calcEll_Yvalue(a_v,b_v,xv_e)
+                accept_v = abs(yv_e - yv_s)
+                NA_v = sin(abs(arctan(yv_e/(s2f_v-xv_e)) - arctan(yv_s/(s2f_v-xv_s))))/2.
+
+                gap = xv_s - xh_e
+                if gap < 0.:
+                    print(' ')
+                    print('!!!!!!!!!!!!')
+                    print('gap = '+str(gap)+' , mirrors interferes')
+                    print('!!!!!!!!!!!!')
+
+                return a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap]
 
 
-        M = np.array(np.vstack([M9, M15, M16, M20, M21]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
+            def objective_function_KB(input, target, index_target, index_input, inputs):
+                inputs[index_input] = input
+                l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = inputs
+                values = KB_define_obj(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+                if values is None:
+                    print('KB_define_obj returned None')
+                    return np.inf
+                a_h, b_h, a_v, b_v, l1v, l2v, params = values
+                xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap = params
+                div_h_s0 = accept_h / l1h
+                div_v_s0 = accept_v / l1v
+                mag_h = np.tan(sita3h) / np.tan(sita1h)
+                mag_v = np.tan(sita3v) / np.tan(sita1v)
+                targets = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+                target_value = targets[index_target]
+                return np.abs(target_value - target)  # 目標値との差を返す
 
-        params_woComa = -np.dot(abrr,inverse_M)
-        print('params_woComa',params_woComa)
-        # params = -np.dot(abrr,inverse_M)
-        # print('params',params)
+            opt_param_KB = fsolve(objective_function_KB, initial_input_KB, args=(target_fix, index_target_param_KB, index_input_param_KB, input_params_KB))[0]
+            input_params_KB[index_input_param_KB] = opt_param_KB
+            l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v = input_params_KB
+            a_h, b_h, a_v, b_v, l1v, l2v, [xh_s, xh_e, yh_s, yh_e, sita1h, sita3h, accept_h, NA_h, xv_s, xv_e, yv_s, yv_e, sita1v, sita3v, accept_v, NA_v, s2f_h, diff, gap] = KB_define(l1h, l2h, inc_h, mlen_h, wd_v, inc_v, mlen_v)
+            div_h_s0 = np.arctan(yh_s/xh_s) - np.arctan(yh_e/xh_e)
+            div_v_s0 = np.arctan(yv_s/xv_s) - np.arctan(yv_e/xv_e)
+            mag_h = np.tan(sita3h) / np.tan(sita1h)
+            mag_v = np.tan(sita3v) / np.tan(sita1v)
+            target_params_KB = [l1v, l2v, div_h_s0, div_v_s0, NA_h, NA_v, mag_h, mag_v]
+            if True:
+                
+                print(f"調整後目標値: {target_params_KB[index_target_param_KB]}")
+                print('=== 最適化後 ===')
+                print(f"目標: {target_fix}")
+                print(f"調整前: {initial_input_KB}")
+                print(f"調整後: {opt_param_KB}")
+                print(f"target_params_KB_original: {target_params_KB_original}")
+                print(f"target_params_KB: {target_params_KB}")
+                print(f"input_params_KB: {input_params_KB}")
+                # sys.exit()
 
-        initial_params[9] = initial_params[9] + params_woComa[0]
-        initial_params[15] = initial_params[15] + params_woComa[1]
-        initial_params[16] = initial_params[16] + params_woComa[2]
-        initial_params[20] = initial_params[20] + params_woComa[3]
-        initial_params[21] = initial_params[21] + params_woComa[4]
-        # initial_params[22] = initial_params[22] - abrr[2]/M22[1]
+            # input_params_KB = [l1h*var_input, l2h*var_input, inc_h, mlen_h*var_input, wd_v*var_input, inc_v, mlen_v*var_input]
 
-        initial_params1 = initial_params
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            KBdesign_7params = input_params_KB.copy()
 
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    elif option_abrr == 'inplaneadjustwithcoma':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '7coma')
-        print('abrr',abrr)
-        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
-        initial_params1 = initial_params.copy()
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+            directory_name = f"output_{timestamp}_KB/{i}/Default"
+            os.makedirs(directory_name, exist_ok=True)
+            option_mpmath = False
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            print('initial_params', initial_params)
+            directory_name = f"output_{timestamp}_KB/{i}/AlignmentFit"
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+            print('initial_params1',initial_params1.copy())
+            M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+            print('initial_params1',initial_params1.copy())
+            M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+            M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            np.savetxt(os.path.join(directory_name, 'M.txt'), M)
+            print(M)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+            np.savetxt(os.path.join(directory_name, 'inverse_M.txt'), inverse_M)
 
-        M = np.array(np.vstack([M9, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
+            params = -np.dot(abrr,inverse_M)
+            print('params',params)
+            print('initial_params1',initial_params1)
+            print('initial_params',initial_params)
+            initial_params[8] = initial_params[8] + params[0]
+            initial_params[9] = initial_params[9] + params[1]
+            initial_params[10] = initial_params[10] + params[2]
 
-        params_woComa = -np.dot(abrr,inverse_M)
-        print('params_woComa',params_woComa)
-        # params = -np.dot(abrr,inverse_M)
-        # print('params',params)
+            auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+            auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+            plt.close('all')
+        sys.exit()
 
-        initial_params[9] = initial_params[9] + params_woComa[0]
-        initial_params[14] = initial_params[14] + params_woComa[1]
-        initial_params[15] = initial_params[15] + params_woComa[2]
-        initial_params[16] = initial_params[16] + params_woComa[3]
-        initial_params[20] = initial_params[20] + params_woComa[4]
-        initial_params[21] = initial_params[21] + params_woComa[5]
-        initial_params[22] = initial_params[22] + params_woComa[6]
+    auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
-        initial_params1 = initial_params.copy()
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+    initial_params1 = initial_params.copy()
+    # M22 = auto_focus_sep(initial_params1.copy(),22,22,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+    # M8 = auto_focus_sep(initial_params1.copy(),8,20,-1e-2,1e-2,option = 'matrix', option_eval = '3')
+    if option_wolter_3_1 or option_wolter_3_3_tandem:
+        if False:
+            M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+            # M9 = auto_focus_sep(initial_params1.copy(),9,21,-5e-4,5e-4,option = 'matrix', option_eval = '3_intercept')
+            initial_params[9] = -M9[1,0]/M9[0,0]
+            initial_params[21] = -M9[1,0]/M9[0,0]
+            initial_params1 = initial_params.copy()
+            print('M9',M9)
+            M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-5,5e-5,option = 'matrix', option_eval = '3_intercept')
+            # M10 = auto_focus_sep(initial_params1.copy(),10,22,-5e-4,5e-4,option = 'matrix', option_eval = '3_intercept')
+            initial_params[10] = -M10[1,1]/M10[0,1]
+            initial_params[22] = -M10[1,1]/M10[0,1]
+            print('M10',M10)
+            initial_params1 = initial_params.copy()
+            param_MinH = auto_focus_sep(initial_params1.copy(),10,22,-1e-5,1e-5,option = 'matrix', option_eval = 'MinimizeH')
+            print('param_MinH',param_MinH)
+            initial_params[10] = param_MinH
+            initial_params[22] = param_MinH
 
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    elif option_abrr == 'alladjust':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-        print('abrr',abrr)
-        M8 = auto_focus_sep(initial_params1,8,8,-1e-4,1e-4,option = 'matrix', option_eval = '9')
-        M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-        M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-        M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '9')
-        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '9')
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '9')
-
-        M = np.array(np.vstack([M8, M9, M10, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        print(M.dtype)
-        print(np.linalg.det(M))
-        print(abrr.dtype, abrr.shape)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-
-        params_woComa = -np.dot(abrr,inverse_M)
-        print('params_woComa',params_woComa)
-
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
 
         if False:
-            def solve_linear_system(A, x0, y0):
-                """
-                線形方程式 Ax + b = 0 を解く。
+            base_directory = f"output_{timestamp}"
+            ###### Torerance WolterH
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/WolterH_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[10] += 5e-4
+            initial_params1[22] += 5e-4
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-                A: nxn の係数行列
-                x0: 初期点 (x1_0, ..., xn_0) の numpy 配列
-                y0: 初期点における y の値 (y1_0, ..., yn_0) の numpy 配列
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/WolterH_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[9] += 1e-5
+            initial_params1[21] += 1e-5
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-                戻り値: y1 = ... = yn = 0 となる (x1, ..., xn)
-                """
-                # 定数ベクトル b の計算
-                b = y0 - A @ x0
-                print(b)
-                print(b.shape)
-                print(np.isnan(b).any())
-                print(np.isinf(b).any())
+            ###### Torerance HypH relative angle
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[10] += 1e-4
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-                # 係数行列 A のランクを確認して特異行列かどうかを判断
-                if np.linalg.matrix_rank(A) < A.shape[0]:
-                    print("警告: 係数行列 A は特異行列です。擬似逆行列を使用して解を求めます。")
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[9] += 4e-5
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-                # 擬似逆行列を用いて解を求める
-                x = np.linalg.pinv(A) @ (-b)
-                return x
+            ### rotation
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_rotation'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[8] += 1e-4
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-            # 例: A, x0, y0 の設定
-            n = 9  # n×n のサイズを指定
-            x0 = np.array([initial_params[9],initial_params[10],initial_params[11],initial_params[14],initial_params[15],initial_params[16],initial_params[20],initial_params[21],initial_params[22]])  # 初期点
-            y0 = abrr.copy()  # 初期 y の値
+            ###### Torerance EllV relative angle
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[14] += 5e-6
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-            # 解を求める
-            x_solution = solve_linear_system(M, x0, y0)
-            print("解 (x1, ..., xn):", x_solution)
-            params_woComa = x_solution.copy()
-        # params = -np.dot(abrr,inverse_M)
-        # print('params',params)
-        initial_params[8] = initial_params[8] + params_woComa[0]
-        initial_params[9] = initial_params[9] + params_woComa[1]
-        initial_params[10] = initial_params[10] + params_woComa[2]
-        initial_params[14] = initial_params[14] + params_woComa[3]
-        initial_params[15] = initial_params[15] + params_woComa[4]
-        initial_params[16] = initial_params[16] + params_woComa[5]
-        initial_params[20] = initial_params[20] + params_woComa[6]
-        initial_params[21] = initial_params[21] + params_woComa[7]
-        initial_params[22] = initial_params[22] + params_woComa[8]
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[15] += 2e-5
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-        initial_params1 = initial_params
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            ### rotation
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_rotation'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[16] += 1e-5
+            auto_focus_NA(50, initial_params1,1,1, True,'',option_disp='ray_wave')
 
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+        if True:
+            base_directory = f"output_{timestamp}"
+            ###### Torerance WolterH
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/WolterH_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[10] += 5e-5
+            initial_params1[22] += 5e-5
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/WolterH_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[9] += 1e-6
+            initial_params1[21] += 1e-6
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ###### Torerance HypH relative angle
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[10] += 1e-5
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[9] += 4e-6
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ### rotation
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/HypH_rotation'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[8] += 1e-5
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ###### Torerance EllV relative angle
+            ### incidence
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_incidence'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[14] += 5e-7
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ### Perpendicularity
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_perpendicularity'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[15] += 2e-6
+            plot_result_debug(initial_params1,'ray_wave')
+
+            ### rotation
+            initial_params1 = initial_params.copy()
+            directory_name = base_directory + '/EllV_rotation'
+            os.makedirs(directory_name, exist_ok=True)
+            initial_params1[16] += 1e-6
+            plot_result_debug(initial_params1,'ray_wave')
+
+        sys.exit()
+
+        M14 = auto_focus_sep(initial_params1.copy(),14,14,-1e-5,1e-5,option = 'matrix', option_eval = '3')
+        M15 = auto_focus_sep(initial_params1.copy(),15,15,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+        M16 = auto_focus_sep(initial_params1.copy(),16,16,-5e-5,5e-5,option = 'matrix', option_eval = '3')
+        print('M14',M14)
+        print('M15',M15)
+        print('M16',M16)
+
+    else:
+        option_fix2ndcoma = False
+        # option_abrr = 'inplaneadjust'
+        option_abrr = 'inplanefix'
+        # option_abrr = 'inplaneadjustwithcoma'
+        option_adjust_oblique = False
+
+
+
+        option_adjust_coma = False
+        ### 面内回転固定
+        if option_abrr == 'KB_coma':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[10] = - M10[1,1]/M10[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+            print('initial_params',initial_params)
+            print('abrr',abrr)
+        if option_adjust_coma:
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-4,1e-4,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-4,1e-4,option = 'matrix', option_eval = '2')
+
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+            print('initial_params',initial_params)
+            print('abrr',abrr)
+            saveWaveData(initial_params)
+
+        if option_abrr == 'KB':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = 'KB')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1.copy(),9,9,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+            print('initial_params1',initial_params1.copy())
+            M10 = auto_focus_sep(initial_params1.copy(),10,10,-1e-6,1e-6,option = 'matrix', option_eval = 'KB')
+            print('initial_params1',initial_params1.copy())
+            M8 = auto_focus_sep(initial_params1.copy(),8,8,-1e-4,1e-4,option = 'matrix', option_eval = 'KB')
+            M = np.array(np.vstack([M8, M9, M10]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+
+            params = -np.dot(abrr,inverse_M)
+            print('params',params)
+            print('initial_params1',initial_params1)
+            print('initial_params',initial_params)
+            initial_params[8] = initial_params[8] + params[0]
+            initial_params[9] = initial_params[9] + params[1]
+            initial_params[10] = initial_params[10] + params[2]
+
+            auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray')
+            abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = 'KB')
+            print('abrr',abrr)
+            auto_focus_NA(50, initial_params.copy(),1,1, True,'',option_disp='ray_wave')
+
+            saveWaveData(initial_params)
+
+        if option_abrr == 'inplanefix':
+            initial_params1 = initial_params
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '3')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+            M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '3')
+
+            M = np.array(np.vstack([M9[0,:], M15[0,:], M21[0,:]]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+
+            params_woComa = -np.dot(abrr,inverse_M)
+            print('params_woComa',params_woComa)
+
+            initial_params[9] = initial_params[9] + params_woComa[0]
+            initial_params[15] = initial_params[15] + params_woComa[1]
+            initial_params[21] = initial_params[21] + params_woComa[2]
+
+            initial_params1 = initial_params
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+            saveWaveData(initial_params)
+
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        elif option_abrr == 'inplanefixwithcoma':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            initial_params1 = initial_params.copy()
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            initial_params1 = initial_params.copy()
+            M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            initial_params1 = initial_params.copy()
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            initial_params1 = initial_params.copy()
+            if option_fix2ndcoma:
+                M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+                M = np.array(np.vstack([M9, M14, M15, M21, M22]),dtype=np.float64)
+            else:
+                M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+                M = np.array(np.vstack([M9, M14, M15, M21, M10]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            print(M.dtype)
+            print(np.linalg.det(M))
+            print(abrr.dtype, abrr.shape)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+            params = -np.dot(abrr,inverse_M)
+            print('params_woComa',params)
+            initial_params[9] = initial_params[9] + params[0]
+            initial_params[14] = initial_params[14] + params[1]
+            initial_params[15] = initial_params[15] + params[2]
+            initial_params[21] = initial_params[21] + params[3]
+            if option_fix2ndcoma:
+                initial_params[22] = initial_params[22] + params[4]
+            else:
+                initial_params[10] = initial_params[10] + params[4]
+
+            initial_params1 = initial_params.copy()
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        elif option_abrr == 'inplaneadjust':
+            initial_params1 = initial_params
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '5')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+            M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+            M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5')
+            M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5')
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5')
+
+
+            M = np.array(np.vstack([M9, M15, M16, M20, M21]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+
+            params_woComa = -np.dot(abrr,inverse_M)
+            print('params_woComa',params_woComa)
+            # params = -np.dot(abrr,inverse_M)
+            # print('params',params)
+
+            initial_params[9] = initial_params[9] + params_woComa[0]
+            initial_params[15] = initial_params[15] + params_woComa[1]
+            initial_params[16] = initial_params[16] + params_woComa[2]
+            initial_params[20] = initial_params[20] + params_woComa[3]
+            initial_params[21] = initial_params[21] + params_woComa[4]
+            # initial_params[22] = initial_params[22] - abrr[2]/M22[1]
+
+            initial_params1 = initial_params
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        elif option_abrr == 'inplaneadjustwithcoma':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '7coma')
+            print('abrr',abrr)
+            M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+            initial_params1 = initial_params.copy()
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '7coma')
+
+            M = np.array(np.vstack([M9, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+
+            params_woComa = -np.dot(abrr,inverse_M)
+            print('params_woComa',params_woComa)
+            # params = -np.dot(abrr,inverse_M)
+            # print('params',params)
+
+            initial_params[9] = initial_params[9] + params_woComa[0]
+            initial_params[14] = initial_params[14] + params_woComa[1]
+            initial_params[15] = initial_params[15] + params_woComa[2]
+            initial_params[16] = initial_params[16] + params_woComa[3]
+            initial_params[20] = initial_params[20] + params_woComa[4]
+            initial_params[21] = initial_params[21] + params_woComa[5]
+            initial_params[22] = initial_params[22] + params_woComa[6]
+
+            initial_params1 = initial_params.copy()
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        elif option_abrr == 'alladjust':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+            print('abrr',abrr)
+            M8 = auto_focus_sep(initial_params1,8,8,-1e-4,1e-4,option = 'matrix', option_eval = '9')
+            M9 = auto_focus_sep(initial_params1,9,9,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+            M10 = auto_focus_sep(initial_params1,10,10,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+            M15 = auto_focus_sep(initial_params1,15,15,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+            M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '9')
+            M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '9')
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '9')
+
+            M = np.array(np.vstack([M8, M9, M10, M14, M15, M16, M20, M21, M22]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            print(M.dtype)
+            print(np.linalg.det(M))
+            print(abrr.dtype, abrr.shape)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+
+            params_woComa = -np.dot(abrr,inverse_M)
+            print('params_woComa',params_woComa)
+
+
+            if False:
+                def solve_linear_system(A, x0, y0):
+                    """
+                    線形方程式 Ax + b = 0 を解く。
+
+                    A: nxn の係数行列
+                    x0: 初期点 (x1_0, ..., xn_0) の numpy 配列
+                    y0: 初期点における y の値 (y1_0, ..., yn_0) の numpy 配列
+
+                    戻り値: y1 = ... = yn = 0 となる (x1, ..., xn)
+                    """
+                    # 定数ベクトル b の計算
+                    b = y0 - A @ x0
+                    print(b)
+                    print(b.shape)
+                    print(np.isnan(b).any())
+                    print(np.isinf(b).any())
+
+                    # 係数行列 A のランクを確認して特異行列かどうかを判断
+                    if np.linalg.matrix_rank(A) < A.shape[0]:
+                        print("警告: 係数行列 A は特異行列です。擬似逆行列を使用して解を求めます。")
+
+                    # 擬似逆行列を用いて解を求める
+                    x = np.linalg.pinv(A) @ (-b)
+                    return x
+
+                # 例: A, x0, y0 の設定
+                n = 9  # n×n のサイズを指定
+                x0 = np.array([initial_params[9],initial_params[10],initial_params[11],initial_params[14],initial_params[15],initial_params[16],initial_params[20],initial_params[21],initial_params[22]])  # 初期点
+                y0 = abrr.copy()  # 初期 y の値
+
+                # 解を求める
+                x_solution = solve_linear_system(M, x0, y0)
+                print("解 (x1, ..., xn):", x_solution)
+                params_woComa = x_solution.copy()
+            # params = -np.dot(abrr,inverse_M)
+            # print('params',params)
+            initial_params[8] = initial_params[8] + params_woComa[0]
+            initial_params[9] = initial_params[9] + params_woComa[1]
+            initial_params[10] = initial_params[10] + params_woComa[2]
+            initial_params[14] = initial_params[14] + params_woComa[3]
+            initial_params[15] = initial_params[15] + params_woComa[4]
+            initial_params[16] = initial_params[16] + params_woComa[5]
+            initial_params[20] = initial_params[20] + params_woComa[6]
+            initial_params[21] = initial_params[21] + params_woComa[7]
+            initial_params[22] = initial_params[22] + params_woComa[8]
+
+            initial_params1 = initial_params
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        elif option_abrr == 'alladjust34':
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
+            M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
+            M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
+
+            M = np.array(np.vstack([M14, M16, M20, M21, M22]),dtype=np.float64)
+            M = M.astype(np.float64)  # 明示的に float64 に変換
+            print(M)
+            print(M.dtype)
+            print(np.linalg.det(M))
+            print(abrr.dtype, abrr.shape)
+            inverse_M = np.linalg.inv(M)
+            print('inverse_M',inverse_M)
+            params = -np.dot(abrr,inverse_M)
+            print('params_woComa',params)
+            initial_params[14] = initial_params[14] + params[0]
+            initial_params[16] = initial_params[16] + params[1]
+            initial_params[20] = initial_params[20] + params[2]
+            initial_params[21] = initial_params[21] + params[3]
+            initial_params[22] = initial_params[22] + params[4]
+
+            initial_params1 = initial_params.copy()
+            abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
+            print('abrr',abrr)
+            M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
+            initial_params[14] = - M14[1,0]/M14[0,0]
+            initial_params[22] = - M22[1,1]/M22[0,1]
+            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
+        print('initial_params',initial_params)
         print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    elif option_abrr == 'alladjust34':
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params.copy(),0,0,0,0,option = 'abrr', option_eval = '5coma')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        M16 = auto_focus_sep(initial_params1,16,16,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
-        M20 = auto_focus_sep(initial_params1,20,20,-1e-3,1e-3,option = 'matrix', option_eval = '5coma')
-        M21 = auto_focus_sep(initial_params1,21,21,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '5coma')
-
-        M = np.array(np.vstack([M14, M16, M20, M21, M22]),dtype=np.float64)
-        M = M.astype(np.float64)  # 明示的に float64 に変換
-        print(M)
-        print(M.dtype)
-        print(np.linalg.det(M))
-        print(abrr.dtype, abrr.shape)
-        inverse_M = np.linalg.inv(M)
-        print('inverse_M',inverse_M)
-        params = -np.dot(abrr,inverse_M)
-        print('params_woComa',params)
-        initial_params[14] = initial_params[14] + params[0]
-        initial_params[16] = initial_params[16] + params[1]
-        initial_params[20] = initial_params[20] + params[2]
-        initial_params[21] = initial_params[21] + params[3]
-        initial_params[22] = initial_params[22] + params[4]
-
-        initial_params1 = initial_params.copy()
-        abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '2')
-        print('abrr',abrr)
-        M14 = auto_focus_sep(initial_params1,14,14,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        M22 = auto_focus_sep(initial_params1,22,22,-1e-6,1e-6,option = 'matrix', option_eval = '2')
-        initial_params[14] = - M14[1,0]/M14[0,0]
-        initial_params[22] = - M22[1,1]/M22[0,1]
-        auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
-    abrr = auto_focus_sep(initial_params,0,0,0,0,option = 'abrr', option_eval = '9')
-    print('initial_params',initial_params)
-    print('abrr',abrr)
-    saveWaveData(initial_params)
+        saveWaveData(initial_params)
