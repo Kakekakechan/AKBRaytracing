@@ -2021,6 +2021,26 @@ if option_wolter_3_1:
                 theta4_h = np.arcsin(2*org_ell_h*np.sin(theta3_h)/l4_h)/2
                 # theta4_v = np.arcsin(2*org_ell_v*np.sin(theta3_v)/l4_v)/2
                 return theta2_h, theta3_h, theta4_h, theta5_h, l1_h, l2_h, l3_h, l4_h
+
+
+            def print_optical_design_wolter1(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h):
+                
+                l1_h = b_ell_h**2/(a_ell_h - org_ell_h*np.cos(theta1_h))
+
+                l2_h = 2*a_ell_h - l1_h
+
+                theta2_h = np.arcsin(np.sqrt(b_ell_h**2 / (l1_h*l2_h)))
+
+                theta3_h = 2*theta2_h - theta1_h
+
+                l3_h = b_hyp_h**2/(org_hyp_h*np.cos(theta3_h) - a_hyp_h)
+
+                l4_h = l3_h - 2*a_hyp_h
+                
+                theta4_h = np.arcsin(np.sqrt(b_hyp_h**2 / (l3_h*l4_h)))
+                theta5_h = 2*theta4_h + theta3_h
+
+                return theta2_h, theta3_h, theta4_h, theta5_h, l1_h, l2_h, l3_h, l4_h
             # theta3_h, theta5_h = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
             # theta3_h1, theta5_h1 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
             # theta3_h2, theta5_h2 = print_optical_design(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
@@ -2029,11 +2049,21 @@ if option_wolter_3_1:
             theta2_v2, theta3_v2, theta4_v2, theta5_v2, l1_v2, l2_v2, l3_v2, l4_v2 = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,np.arctan(y2_v / x2_v))
             theta2_vcnt, theta3_vcnt, theta4_vcnt, theta5_vcnt, l1_vcnt, l2_vcnt, l3_vcnt, l4_vcnt = print_optical_design(a_hyp_v,b_hyp_v,org_hyp_v,a_ell_v,b_ell_v,org_ell_v,(np.arctan(y1_v / x1_v)+np.arctan(y2_v / x2_v))/2.)
             omega_v = (theta5_v1 + theta5_v2 + np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v))/2
+            
+            theta2_h, theta3_h, theta4_h, theta5_h, l1_h, l2_h, l3_h, l4_h = print_optical_design_wolter1(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,theta1_h)
+            theta2_h1, theta3_h1, theta4_h1, theta5_h1, l1_h1, l2_h1, l3_h1, l4_h1 = print_optical_design_wolter1(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y1_h / x1_h))
+            theta2_h2, theta3_h2, theta4_h2, theta5_h2, l1_h2, l2_h2, l3_h2, l4_h2 = print_optical_design_wolter1(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,np.arctan(y2_h / x2_h))
+            theta2_hcnt, theta3_hcnt, theta4_hcnt, theta5_hcnt, l1_hcnt, l2_hcnt, l3_hcnt, l4_hcnt = print_optical_design_wolter1(a_hyp_h,b_hyp_h,org_hyp_h,a_ell_h,b_ell_h,org_ell_h,(np.arctan(y1_h / x1_h)+np.arctan(y2_h / x2_h))/2.)
+            
             # omegah1 = (theta3_h1 + theta3_h2 - np.arctan(y1_h / x1_h) - np.arctan(y2_h / x2_h))/2
             # omegav2 = (np.arctan(y1_v / x1_v) + np.arctan(y2_v / x2_v) + theta5_v1 + theta5_v2)/2
             # omega_v = omega_v*0.6
             if option == 'ray':
                 print('===== ===== =====')
+                print('org_hyp_v',org_hyp_v)
+                print('org_ell_v',org_ell_v)
+                print('org_hyp_h',org_hyp_h)
+                print('org_ell_h',org_ell_h)
                 print('l1_v',l1_v)
                 print('l2_v',l2_v)
                 print('l3_v',l3_v)
@@ -2046,8 +2076,6 @@ if option_wolter_3_1:
                 print('l2_v2',l2_v2)
                 print('l3_v2',l3_v2)
                 print('l4_v2',l4_v2)
-
-
                 print('theta1_v',theta1_v)
                 print('theta1_v1',np.arctan(y1_v / x1_v))
                 print('theta1_v2',np.arctan(y2_v / x2_v))
@@ -2068,6 +2096,40 @@ if option_wolter_3_1:
                 print('theta5_v1',theta5_v1)
                 print('theta5_v2',theta5_v2)
                 print('theta5_vcnt',theta5_vcnt)
+
+                print('l1_h',l1_h)
+                print('l2_h',l2_h)
+                print('l3_h',l3_h)
+                print('l4_h',l4_h)
+                print('l1_h1',l1_h1)
+                print('l2_h1',l2_h1)
+                print('l3_h1',l3_h1)
+                print('l4_h1',l4_h1)
+                print('l1_h2',l1_h2)
+                print('l2_h2',l2_h2)
+                print('l3_h2',l3_h2)
+                print('l4_h2',l4_h2)
+                print('theta1_h',theta1_h)
+                print('theta1_h1',np.arctan(y1_h / x1_h))
+                print('theta1_h2',np.arctan(y2_h / x2_h))
+                print('theta1_hcnt',(np.arctan(y1_h / x1_h)+np.arctan(y2_h / x2_h))/2.)
+                print('theta2_h',theta2_h)
+                print('theta2_h1',theta2_h1)
+                print('theta2_h2',theta2_h2)
+                print('theta2_hcnt',theta2_hcnt)
+                print('theta3_h',theta3_h)
+                print('theta3_h1',theta3_h1)
+                print('theta3_h2',theta3_h2)
+                print('theta3_hcnt',theta3_hcnt)
+                print('theta4_h',theta4_h)
+                print('theta4_h1',theta4_h1)
+                print('theta4_h2',theta4_h2)
+                print('theta4_hcnt',theta4_hcnt)
+                print('theta5_h',theta5_h)
+                print('theta5_h1',theta5_h1)
+                print('theta5_h2',theta5_h2)
+                print('theta5_hcnt',theta5_hcnt)
+
                 print('omega_v',omega_v)
                 # print('na_h',np.sin((theta5_h1 - theta5_h2))/2.)
                 print('na_v',np.sin((theta5_v1 - theta5_v2))/2.)
@@ -14514,18 +14576,27 @@ if __name__ == "__main__":
         #                 mlen_v = float(line.split(":")[1].strip())
 
         if True: # bestalignment
-            initial_params = np.array([-5.73452479e-03, -2.87624337e-03,  0.00000000e+00,  0.00000000e+00,
+            # initial_params = np.array([-5.73452479e-03, -2.87624337e-03,  0.00000000e+00,  0.00000000e+00,
+            #                     0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+            #                     1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
+            #                     0.00000000e+00,  2.39536993e-06,  0.00000000e+00,  0.00000000e+00,
+            #                     0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+            #                     1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
+            #                     0.00000000e+00,  2.39536993e-06], dtype=np.float64)
+            initial_params = np.array([-5.73452570e-03, -2.87624337e-03,  0.00000000e+00,  0.00000000e+00,
                                 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
                                 1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
                                 0.00000000e+00,  2.39536993e-06,  0.00000000e+00,  0.00000000e+00,
                                 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
                                 1.05000000e-02, -3.59399021e-05,  0.00000000e+00,  0.00000000e+00,
-                                0.00000000e+00,  2.39536993e-06], dtype=np.float64)
+                                0.00000000e+00,  2.39536993e-06], dtype=np.float64)              
             option_set = True
-            initial_params[9] -= 1e-6
-            initial_params[21] -= 1e-6
-            auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-            # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
+            # initial_params[9] -= 1e-6
+            # initial_params[21] -= 1e-6
+            # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
+            
+            # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
+            vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
             # np.save(os.path.join(directory_name, 'initial_params.npy'), initial_params)
             # np.save(os.path.join(directory_name, 'vmirr_hyp.npy'), vmirr_hyp)
             # np.save(os.path.join(directory_name, 'hmirr_hyp.npy'), hmirr_hyp)
