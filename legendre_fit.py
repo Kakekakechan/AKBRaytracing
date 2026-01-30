@@ -92,6 +92,13 @@ def match_legendre_multi(data, order):
                 inner_products[count] = inner_product
                 count += 1
     return fit_datas, inner_products, orders
+def output_legendre_data(inner_product, order,size=129):
+    x = np.linspace(-1, 1, size)
+    y = np.linspace(-1, 1, size)
+    Z = aberration_legendre_component(x, y, order[1], order[0])
+    Z /= np.sqrt(np.nansum(Z * Z))
+    fit_data = inner_product * Z
+    return fit_data
 
 # メインの処理
 if __name__ == "__main__":

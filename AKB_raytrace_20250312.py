@@ -73,7 +73,7 @@ downsample_h2 = 0
 downsample_v2 = 0
 downsample_h_f = 0
 downsample_v_f = 0
-unit = 129
+unit = 65
 wave_num_H=unit
 wave_num_V=unit
 # option_AKB = True
@@ -14593,10 +14593,22 @@ if __name__ == "__main__":
             option_set = True
             # initial_params[9] -= 1e-6
             # initial_params[21] -= 1e-6
+            
+
             # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray')
             
             # auto_focus_NA(50, initial_params,1,1, True,'',option_disp='ray_wave')
-            vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
+            # vmirr_hyp, hmirr_hyp, vmirr_ell, hmirr_ell, detcenter, angle = plot_result_debug(initial_params,'ray')
+
+            values = [0e-7, 1e-7, 4e-7, 5e-7, 4e-6]
+            for val in values:
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                directory_name = f"output_{timestamp}_wolter_3_1"
+                os.makedirs(directory_name, exist_ok=True)
+                initial_params[2] += val # ell_v x
+                plot_result_debug(initial_params,'ray_wave')
+                plt.close('all')
+            sys.exit()
             # np.save(os.path.join(directory_name, 'initial_params.npy'), initial_params)
             # np.save(os.path.join(directory_name, 'vmirr_hyp.npy'), vmirr_hyp)
             # np.save(os.path.join(directory_name, 'hmirr_hyp.npy'), hmirr_hyp)
